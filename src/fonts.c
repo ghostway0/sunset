@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -6,6 +7,21 @@
 #include "sunset/fonts.h"
 
 #define PSF2_MAGIC 0x864AB572
+
+enum psf2_flags {
+    PSF2_HAS_UNICODE_TABLE = 1 << 0,
+    PSF2_HAS_DEFAULT_WIDTH = 1 << 1,
+    PSF2_HAS_DEFAULT_HEIGHT = 1 << 2,
+    PSF2_HAS_WIDTH = 1 << 3,
+    PSF2_HAS_HEIGHT = 1 << 4,
+    PSF2_HAS_MAX_WIDTH = 1 << 5,
+    PSF2_HAS_MAX_HEIGHT = 1 << 6,
+    PSF2_HAS_WIDTH_HEIGHT = 1 << 7,
+    PSF2_HAS_FONT_SIZE = 1 << 8,
+    PSF2_HAS_XY_OFFSET = 1 << 9,
+    PSF2_HAS_UNICODE = 1 << 10,
+    PSF2_HAS_FONT_BBX = 1 << 11,
+};
 
 struct psf2_header {
     uint8_t magic[4];
@@ -17,23 +33,19 @@ struct psf2_header {
     uint32_t height, width;
 };
 
-static int load_bitmaps(
+static int load_glyphs(
         FILE *file, struct psf2_header const *header, struct font *font_out) {
-    font_out->num_glyphs = header->length;
-    font_out->glyphs = malloc(sizeof(struct glyph) * font_out->num_glyphs);
-
     uint8_t *bitmap = malloc(header->height * header->width);
-
     uint8_t row_size = (header->width + 7) / 8;
 
     for (size_t i = 0; i < font_out->num_glyphs; ++i) {
-        font_out->glyphs[i].codepoint = i;
+        font_out->glyph_map[i] = i;
         font_out->glyphs[i].image.w = header->width;
         font_out->glyphs[i].image.h = header->height;
         font_out->glyphs[i].image.pixels =
                 calloc(header->width * header->height, sizeof(struct color));
 
-        fread(bitmap, header->height * header->width, 1, file);
+        fread(bitmap, header->height * row_size, 1, file);
 
         for (size_t y = 0; y < header->height; y++) {
             for (size_t x = 0; x < header->width; x++) {
@@ -42,18 +54,44 @@ static int load_bitmaps(
                 font_out->glyphs[i].image.pixels[y * header->width + x] =
                         bit ? COLOR_WHITE : COLOR_BLACK;
             }
-
-            for (size_t i = header->height; i < row_size; i++) {
-                if (bitmap[y * row_size + i] != 0) {
-                    return -ERROR_PARSE;
-                }
-            }
         }
 
         fseek(file, header->charsize - header->height * row_size, SEEK_CUR);
     }
 
     free(bitmap);
+    return 0;
+}
+
+static int correct_glyph_table(FILE *file, struct font *font_out) {
+    for (size_t glyph_index = 0; glyph_index < font_out->num_glyphs;
+            glyph_index++) {
+        uint8_t length;
+        fread(&length, 1, 1, file);
+
+        if (feof(file)) {
+            break;
+        }
+
+        if (length == 0xFF) {
+            continue;
+        }
+
+        for (uint8_t i = 0; i < length; ++i) {
+            uint32_t unicode_code_point;
+            if (fread(&unicode_code_point, sizeof(uint32_t), 1, file) != 1) {
+                break;
+            }
+
+            if (unicode_code_point > 0x10FFFF) {
+                // should not happen, but does?
+                continue;
+            }
+
+            font_out->glyph_map[unicode_code_point] = glyph_index;
+        }
+    }
+
     return 0;
 }
 
@@ -74,9 +112,20 @@ int load_font_psf2(char const *path, char const *name, struct font *font_out) {
     }
 
     font_out->name = name;
+    font_out->num_glyphs = header.length;
+    font_out->glyphs = malloc(sizeof(struct glyph) * font_out->num_glyphs);
+    font_out->glyph_map = calloc(0x10FFFF, sizeof(uint16_t));
 
-    if ((retval = load_bitmaps(file, &header, font_out))) {
+    if ((retval = load_glyphs(file, &header, font_out))) {
         goto cleanup;
+    }
+
+    fseek(file,
+            font_out->num_glyphs * header.charsize + header.headersize,
+            SEEK_SET);
+
+    if (header.flags & PSF2_HAS_UNICODE_TABLE) {
+        retval = correct_glyph_table(file, font_out);
     }
 
 cleanup:
@@ -101,32 +150,5 @@ void show_image_grayscale(struct image const *image) {
 
 struct glyph const *font_get_glyph(
         struct font const *font, uint32_t codepoint) {
-    if (font->num_glyphs < 256) {
-        for (size_t i = 0; i < font->num_glyphs; i++) {
-            if (font->glyphs[i].codepoint == codepoint) {
-                return &font->glyphs[i];
-            }
-        }
-    } else {
-        size_t left = 0;
-        size_t right = font->num_glyphs;
-
-        while (left < right) {
-            size_t mid = (left + right) / 2;
-            if (font->glyphs[mid].codepoint == codepoint) {
-                return &font->glyphs[mid];
-            } else if (font->glyphs[mid].codepoint < codepoint) {
-                left = mid + 1;
-            } else {
-                right = mid;
-            }
-        }
-
-        if (left < font->num_glyphs &&
-            font->glyphs[left].codepoint == codepoint) {
-            return &font->glyphs[left];
-        }
-    }
-
-    return NULL;
+    return &font->glyphs[font->glyph_map[codepoint]];
 }

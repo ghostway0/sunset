@@ -17,7 +17,6 @@ struct image {
 };
 
 struct glyph {
-    uint32_t codepoint;
     struct image image;
     int x0;
     int y0;
@@ -30,6 +29,7 @@ struct glyph {
 struct font {
     char const *name;
     struct glyph *glyphs;
+    uint16_t *glyph_map;
     size_t num_glyphs;
 };
 

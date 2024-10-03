@@ -270,18 +270,12 @@ int main() {
     command_buffer_free(&command_buffer);
 
     struct font font;
-    if ((retval = load_font_psf2("Inconsolata-32r.psf", "test", &font))) {
+    if ((retval = load_font_psf2("Tamsyn6x12b.psf", "test", &font))) {
         log_error("load_font_psf2 failed: %d", retval);
         return retval;
     }
 
-    struct glyph const *glyph = font_get_glyph(&font, 13);
-
-    if (glyph == NULL) {
-        log_error("font_get_glyph failed");
-        return -1;
-    }
-
+    struct glyph const *glyph = font_get_glyph(&font, 'B');
     show_image_grayscale(&glyph->image);
 
     return retval;
