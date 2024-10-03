@@ -3,6 +3,7 @@
 
 #include <log.h>
 
+#include "sunset/fonts.h"
 #include "sunset/ring_buffer.h"
 
 enum command_type : uint8_t {
@@ -122,29 +123,6 @@ void command_text_init(struct command *command,
     command->type = COMMAND_TEXT;
     command->data.text = (struct command_text){x, y, font, text, text_len};
 }
-
-struct bitmap {
-    size_t w;
-    size_t h;
-    uint32_t *pixels;
-};
-
-struct glyph {
-    uint32_t codepoint;
-    struct bitmap bitmap;
-    int x0;
-    int y0;
-    int x1;
-    int y1;
-    int advance_x;
-    int advance_y;
-};
-
-struct font {
-    char const *name;
-    struct glyph *glyphs;
-    size_t num_glyphs;
-};
 
 struct command_buffer_options {
     size_t buffer_size;
@@ -290,6 +268,21 @@ int main() {
     }
 
     command_buffer_free(&command_buffer);
+
+    struct font font;
+    if ((retval = load_font_psf2("Inconsolata-32r.psf", "test", &font))) {
+        log_error("load_font_psf2 failed: %d", retval);
+        return retval;
+    }
+
+    struct glyph const *glyph = font_get_glyph(&font, 13);
+
+    if (glyph == NULL) {
+        log_error("font_get_glyph failed");
+        return -1;
+    }
+
+    show_image_grayscale(&glyph->image);
 
     return retval;
 }

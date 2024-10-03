@@ -11,10 +11,13 @@ struct color color_from_hex(char const *hex_str) {
 
     sscanf(hex_str, "#%x", &hex);
     return (struct color){
-        .r = (hex >> 16) & 0xFF,
-        .g = (hex >> 8) & 0xFF,
-        .b = hex & 0xFF,
-        .a = 255,
+            .r = (hex >> 16) & 0xFF,
+            .g = (hex >> 8) & 0xFF,
+            .b = hex & 0xFF,
+            .a = 255,
     };
 }
 
+bool colors_equal(struct color a, struct color b) {
+    return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+}

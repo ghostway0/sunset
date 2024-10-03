@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 
+#define COLOR_WHITE color_from_rgb(255, 255, 255)
+#define COLOR_BLACK color_from_rgb(0, 0, 0)
+
 struct color {
     uint8_t r;
     uint8_t g;
@@ -12,3 +15,5 @@ struct color {
 struct color color_from_rgb(uint8_t r, uint8_t g, uint8_t b);
 
 struct color color_from_hex(char const *hex_str);
+
+bool colors_equal(struct color a, struct color b);
