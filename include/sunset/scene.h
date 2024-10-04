@@ -26,7 +26,9 @@ struct effect {
 
 struct object {
     struct box bounding_box;
-    struct mesh mesh;
+    // TODO: can there be multiple meshes?
+    struct mesh *meshes;
+    size_t num_meshes;
     vec3 position;
     vec3 rotation;
     float scale;
@@ -36,6 +38,11 @@ struct object {
     struct object *parent;
     struct object **children;
     size_t num_children;
+};
+
+enum light_type {
+    LIGHT_DIRECTIONAL,
+    LIGHT_SPOTLIGHT,
 };
 
 struct light {

@@ -4,7 +4,7 @@ project(
   default_options: ['c_std=gnu2x', 'warning_level=3', 'werror=true'],
 )
 
-add_project_arguments(['-Wno-gnu-empty-struct', '-Wno-newline-eof', '-Wno-empty-translation-unit'], language: 'c')
+add_project_arguments(['-Wno-gnu-empty-struct', '-Wno-newline-eof', '-Wno-empty-translation-unit', '-Wno-gnu-statement-expression-from-macro-expansion'], language: 'c')
 
 is_debug = get_option('debug')
 is_release = not is_debug
@@ -28,6 +28,7 @@ sunset_files = [
   'src/camera.c',
   'src/input.c',
   'src/scene.c',
+  'src/json.c',
 ]
 
 sunset_lib = static_library(

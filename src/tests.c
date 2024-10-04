@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <string.h>
 
 // clang-format off
 #include <setjmp.h>
@@ -9,6 +10,7 @@
 
 #include "sunset/camera.h"
 #include "sunset/color.h"
+#include "sunset/json.h"
 #include "sunset/ring_buffer.h"
 #include "sunset/utils.h"
 
@@ -79,11 +81,60 @@ void test_camera_movement(void **state) {
     assert_float_equal(camera.position[2], 100.0f, 0.1f);
 }
 
+void test_json_parse(void **state) {
+    unused(state);
+
+    char const *json = "{\"key\": \"value\"}";
+
+    struct json_value value;
+    json_parse(json, strlen(json), &value);
+
+    assert_int_equal(value.type, JSON_OBJECT);
+
+    assert_int_equal(vector_size(value.data.object), 1);
+
+    assert_string_equal(value.data.object[0].key, "key");
+
+    assert_int_equal(value.data.object[0].value->type, JSON_STRING);
+    assert_string_equal(value.data.object[0].value->data.string, "value");
+
+    json = "{\"key\": 42}";
+
+    json_parse(json, strlen(json), &value);
+
+    assert_int_equal(value.type, JSON_OBJECT);
+    assert_float_equal(value.data.object[0].value->data.number, 42.0, 0.1);
+
+    json = "{\"key\": true}";
+
+    json_parse(json, strlen(json), &value);
+
+    assert_int_equal(value.type, JSON_OBJECT);
+    assert_int_equal(value.data.object[0].value->type, JSON_TRUE);
+
+    json = "{\"key\": [1, 2, true, \"value\"]}";
+
+    json_parse(json, strlen(json), &value);
+
+    assert_int_equal(value.type, JSON_OBJECT);
+    assert_int_equal(value.data.object[0].value->type, JSON_ARRAY);
+    assert_int_equal(vector_size(value.data.object[0].value->data.array), 4);
+
+    assert_int_equal(value.data.object[0].value->data.array[0].type, JSON_NUMBER);
+    assert_int_equal(value.data.object[0].value->data.array[0].data.number, 1);
+    assert_int_equal(value.data.object[0].value->data.array[1].type, JSON_NUMBER);
+    assert_int_equal(value.data.object[0].value->data.array[1].data.number, 2);
+    assert_int_equal(value.data.object[0].value->data.array[2].type, JSON_TRUE);
+    assert_int_equal(value.data.object[0].value->data.array[3].type, JSON_STRING);
+    assert_string_equal(value.data.object[0].value->data.array[3].data.string, "value");
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(test_ring_buffer),
             cmocka_unit_test(test_color_from_hex),
             cmocka_unit_test(test_camera_movement),
+            cmocka_unit_test(test_json_parse),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
