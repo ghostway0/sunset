@@ -4,8 +4,9 @@
 
 #include <log.h>
 
-#include "sunset/fonts.h"
 #include "sunset/errors.h"
+#include "sunset/fonts.h"
+#include "sunset/gfx.h"
 
 #define PSF2_MAGIC 0x864AB572
 
@@ -143,13 +144,37 @@ void show_image_grayscale(struct image const *image) {
         for (size_t x = 0; x < image->w; x++) {
             uint8_t pixel =
                     convert_to_grayscale(image->pixels[y * image->w + x]);
-            printf("%c", " .:-=+*#%@"[pixel / 32]);
+            printf("%c", " .:-=+*#"[pixel / 32]);
         }
         printf("\n");
     }
 }
 
+void show_image_grayscale_at(struct image const *image, struct point pos) {
+    for (size_t y = 0; y < image->h; y++) {
+        printf("\033[%lu;%luH", pos.y + y, pos.x);
+
+        for (size_t x = 0; x < image->w; x++) {
+            uint8_t pixel =
+                    convert_to_grayscale(image->pixels[y * image->w + x]);
+            printf("%c", " .:-=+*#"[pixel / 32]);
+        }
+        printf("\n");
+    }
+
+    printf("\033[%lu;%luH", pos.y + image->h, (size_t)1);
+}
+
 struct glyph const *font_get_glyph(
         struct font const *font, uint32_t codepoint) {
     return &font->glyphs[font->glyph_map[codepoint]];
+}
+
+void font_free(struct font *font) {
+    for (size_t i = 0; i < font->num_glyphs; ++i) {
+        free(font->glyphs[i].image.pixels);
+    }
+
+    free(font->glyphs);
+    free(font->glyph_map);
 }

@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "sunset/color.h"
+#include "sunset/gfx.h"
 
 struct image {
     size_t w;
@@ -32,4 +33,8 @@ int load_font_psf2(char const *path, char const *name, struct font *font_out);
 
 void show_image_grayscale(struct image const *image);
 
+void show_image_grayscale_at(struct image const *image, struct point pos);
+
 struct glyph const *font_get_glyph(struct font const *font, uint32_t codepoint);
+
+void font_free(struct font *font);

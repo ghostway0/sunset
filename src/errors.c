@@ -1,0 +1,19 @@
+#include <log.h>
+
+#include "sunset/errors.h"
+
+void error_print(const char *scope, int retval) {
+    enum error err = -retval;
+
+    switch (err) {
+        case ERROR_IO:
+            log_error("%s: io error\n", scope);
+            break;
+        case ERROR_PARSE:
+            log_error("%s: parse error\n", scope);
+            break;
+        default:
+            log_error("%s: unknown error\n", scope);
+            break;
+    }
+}
