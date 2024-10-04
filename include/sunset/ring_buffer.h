@@ -5,10 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-enum ring_buffer_error {
-    ERROR_PTR_OVERRUN = 1,
-};
-
 struct ring_buffer {
     _Atomic size_t head;
     _Atomic size_t tail;

@@ -5,6 +5,7 @@
 #include <log.h>
 
 #include "sunset/fonts.h"
+#include "sunset/errors.h"
 
 #define PSF2_MAGIC 0x864AB572
 
@@ -100,7 +101,7 @@ int load_font_psf2(char const *path, char const *name, struct font *font_out) {
 
     FILE *file = fopen(path, "rb");
     if (!file) {
-        return -ERROR_OPEN_FILE;
+        return -ERROR_IO;
     }
 
     struct psf2_header header;

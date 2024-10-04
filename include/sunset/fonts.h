@@ -5,11 +5,6 @@
 
 #include "sunset/color.h"
 
-enum font_error {
-    ERROR_OPEN_FILE = 1,
-    ERROR_PARSE,
-};
-
 struct image {
     size_t w;
     size_t h;

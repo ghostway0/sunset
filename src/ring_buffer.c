@@ -2,11 +2,12 @@
 #include <string.h>
 
 #include "sunset/ring_buffer.h"
+#include "sunset/errors.h"
 
 int ring_buffer_append(struct ring_buffer *ring_buffer, void const *data) {
     if (((ring_buffer->head + 1) & (ring_buffer->buffer_size))
             > ring_buffer->tail) {
-        return -ERROR_PTR_OVERRUN;
+        return -ERROR_RINGBUFFER_PTR_OVERRUN;
     }
 
     memcpy((char *)ring_buffer->buffer + ring_buffer->head * ring_buffer->element_size,
@@ -22,7 +23,7 @@ int ring_buffer_append(struct ring_buffer *ring_buffer, void const *data) {
 int ring_buffer_pop(struct ring_buffer *ring_buffer, void *data_out) {
     if (((ring_buffer->tail + 1) & (ring_buffer->buffer_size - 1))
             > ring_buffer->head) {
-        return -ERROR_PTR_OVERRUN;
+        return -ERROR_RINGBUFFER_PTR_OVERRUN;
     }
 
     memcpy(data_out,

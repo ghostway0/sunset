@@ -17,7 +17,7 @@ subdir('external')
 
 sunset_lib = static_library(
   'sunset',
-  files('src/color.c', 'src/ring_buffer.c', 'src/fonts.c'),
+  files('src/color.c', 'src/ring_buffer.c', 'src/fonts.c', 'src/errors.c'),
   include_directories: [gaming_inc],
   dependencies: [
     glew_dep,

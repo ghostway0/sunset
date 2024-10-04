@@ -5,6 +5,7 @@
 
 #include "sunset/fonts.h"
 #include "sunset/ring_buffer.h"
+#include "sunset/errors.h"
 
 enum command_type : uint8_t {
     COMMAND_NOP,
@@ -271,7 +272,7 @@ int main() {
 
     struct font font;
     if ((retval = load_font_psf2("Tamsyn6x12b.psf", "test", &font))) {
-        log_error("load_font_psf2 failed: %d", retval);
+        error_print("load_font_psf2", retval);
         return retval;
     }
 
