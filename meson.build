@@ -68,6 +68,7 @@ tests_exe = executable(
     cmocka_dep,
     logc_dep,
     sunset_dep,
+    cglm_dep,
   ],
   include_directories: [sunset_inc],
 )

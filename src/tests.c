@@ -7,6 +7,7 @@
 #include <cmocka.h>
 // clang-format on
 
+#include "sunset/camera.h"
 #include "sunset/color.h"
 #include "sunset/ring_buffer.h"
 #include "sunset/utils.h"
@@ -48,10 +49,41 @@ void test_color_from_hex(void **state) {
     assert_int_equal(c.b, 255);
 }
 
+void test_camera_movement(void **state) {
+    unused(state);
+
+    struct camera camera;
+    camera_init(&camera,
+            (struct camera_state){
+                    {0.0f, 0.0f, 0.0f},
+                    {0.0f, 1.0f, 0.0f},
+                    0.0f,
+                    0.0f,
+
+            },
+            (struct camera_options){
+                    0.1f,
+                    100.0f,
+                    45.0f,
+            });
+
+    camera_rotate(&camera, M_PI / 2, 0.0f);
+
+    vec3 direction = {1.0f, 0.0f, 0.0f};
+    camera_to_world(&camera, direction);
+
+    camera_move(&camera, direction);
+
+    assert_float_equal(camera.position[0], 0.0f, 0.1f);
+    assert_float_equal(camera.position[1], 0.0f, 0.1f);
+    assert_float_equal(camera.position[2], 100.0f, 0.1f);
+}
+
 int main(void) {
     const struct CMUnitTest tests[] = {
             cmocka_unit_test(test_ring_buffer),
             cmocka_unit_test(test_color_from_hex),
+            cmocka_unit_test(test_camera_movement),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);

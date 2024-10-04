@@ -36,6 +36,7 @@ void camera_rotate(struct camera *camera, float x_angle, float y_angle) {
     camera->pitch += y_angle;
 
     camera->pitch = clamp(camera->pitch, -M_PI_2, M_PI_2);
+    camera->yaw = fmodf(camera->yaw, 2 * M_PI);
 
     glm_vec3_rotate(
             camera->direction, x_angle * camera->sensitivity, camera->up);
@@ -49,6 +50,12 @@ void camera_rotate(struct camera *camera, float x_angle, float y_angle) {
 
     glm_vec3_normalize(camera->right);
     glm_vec3_normalize(camera->up);
+}
+
+// camera direction to world space
+void camera_to_world(struct camera *camera, vec3 direction) {
+    glm_vec3_rotate(direction, -camera->yaw, camera->up);
+    glm_vec3_rotate(direction, -camera->pitch, camera->right);
 }
 
 void camera_move(struct camera *camera, vec3 direction) {

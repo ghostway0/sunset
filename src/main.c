@@ -3,6 +3,7 @@
 
 #include <log.h>
 
+#include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/errors.h"
 #include "sunset/fonts.h"
