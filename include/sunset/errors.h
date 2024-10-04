@@ -6,4 +6,4 @@ enum error {
     ERROR_RINGBUFFER_PTR_OVERRUN,
 };
 
-void error_print(const char *scope, int retval);
+void error_print(char const *scope, int retval);

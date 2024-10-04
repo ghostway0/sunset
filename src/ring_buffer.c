@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sunset/ring_buffer.h"
 #include "sunset/errors.h"
+#include "sunset/ring_buffer.h"
 
 int ring_buffer_append(struct ring_buffer *ring_buffer, void const *data) {
     if (((ring_buffer->head + 1) & (ring_buffer->buffer_size))
@@ -10,7 +10,8 @@ int ring_buffer_append(struct ring_buffer *ring_buffer, void const *data) {
         return -ERROR_RINGBUFFER_PTR_OVERRUN;
     }
 
-    memcpy((char *)ring_buffer->buffer + ring_buffer->head * ring_buffer->element_size,
+    memcpy((char *)ring_buffer->buffer
+                    + ring_buffer->head * ring_buffer->element_size,
             data,
             ring_buffer->element_size);
 
@@ -27,7 +28,8 @@ int ring_buffer_pop(struct ring_buffer *ring_buffer, void *data_out) {
     }
 
     memcpy(data_out,
-            (char *)ring_buffer->buffer + ring_buffer->tail * ring_buffer->element_size,
+            (char *)ring_buffer->buffer
+                    + ring_buffer->tail * ring_buffer->element_size,
             ring_buffer->element_size);
 
     ring_buffer->tail =

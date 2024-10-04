@@ -3,12 +3,11 @@
 
 #include <log.h>
 
+#include "sunset/commands.h"
 #include "sunset/errors.h"
 #include "sunset/fonts.h"
-#include "sunset/ring_buffer.h"
-#include "sunset/utils.h"
-#include "sunset/commands.h"
 #include "sunset/gfx.h"
+#include "sunset/utils.h"
 
 #define container_of(p, T, a)                                                  \
     ((T *)((uintptr_t)(p) - (uintptr_t)(&((T *)(0))->a)))
@@ -66,7 +65,8 @@ int stub_render_command(
             break;
         }
         case COMMAND_FILLED_RECT: {
-            struct command_filled_rect const *filled_rect = &command->data.filled_rect;
+            struct command_filled_rect const *filled_rect =
+                    &command->data.filled_rect;
             log_info("command_filled_rect: %d %d %d %d",
                     filled_rect->rect.pos.x,
                     filled_rect->rect.pos.y,
@@ -85,7 +85,8 @@ int stub_render_command(
             break;
         }
         case COMMAND_FILLED_ARC: {
-            struct command_filled_arc const *filled_arc = &command->data.filled_arc;
+            struct command_filled_arc const *filled_arc =
+                    &command->data.filled_arc;
             log_info("command_filled_arc: %d %d %d %f %f",
                     filled_arc->center.x,
                     filled_arc->center.y,
@@ -128,8 +129,11 @@ int main() {
     context_init(&context, COMMAND_BUFFER_DEFAULT, NULL, 0, NULL);
 
     command_buffer_add_nop(&context.command_buffer);
-    command_buffer_add_line(&context.command_buffer, (struct point){0, 0}, (struct point){1, 1});
-    command_buffer_add_rect(&context.command_buffer, (struct rect){{0, 0}, 1, 1});
+    command_buffer_add_line(&context.command_buffer,
+            (struct point){0, 0},
+            (struct point){1, 1});
+    command_buffer_add_rect(
+            &context.command_buffer, (struct rect){{0, 0}, 1, 1});
 
     struct font font;
     if ((retval = load_font_psf2("Tamsyn6x12b.psf", "test", &font))) {
@@ -140,7 +144,8 @@ int main() {
     struct glyph const *glyph = font_get_glyph(&font, 'B');
     show_image_grayscale(&glyph->image);
 
-    command_buffer_add_image(&context.command_buffer, (struct point){50, 20}, &glyph->image);
+    command_buffer_add_image(
+            &context.command_buffer, (struct point){50, 20}, &glyph->image);
 
     while (true) {
         struct command command;

@@ -2,7 +2,7 @@
 
 #include "sunset/errors.h"
 
-void error_print(const char *scope, int retval) {
+void error_print(char const *scope, int retval) {
     enum error err = -retval;
 
     switch (err) {

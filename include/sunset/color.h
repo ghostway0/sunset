@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define COLOR_WHITE color_from_rgb(255, 255, 255)
 #define COLOR_BLACK color_from_rgb(0, 0, 0)

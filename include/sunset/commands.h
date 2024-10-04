@@ -138,9 +138,7 @@ struct command_buffer_options {
 };
 
 #define COMMAND_BUFFER_DEFAULT                                                 \
-    (struct command_buffer_options) {                                          \
-        .buffer_size = 1024                                                    \
-    }
+    (struct command_buffer_options){.buffer_size = 1024}
 
 struct command_buffer {
     struct ring_buffer ring_buffer;

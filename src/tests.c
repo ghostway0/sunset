@@ -1,13 +1,15 @@
 #include <stddef.h>
 
-#include <stdlib.h>
+// clang-format off
 #include <setjmp.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <cmocka.h>
+// clang-format on
 
-#include "sunset/utils.h"
 #include "sunset/color.h"
 #include "sunset/ring_buffer.h"
+#include "sunset/utils.h"
 
 struct element {
     int x;
@@ -48,8 +50,8 @@ void test_color_from_hex(void **state) {
 
 int main(void) {
     const struct CMUnitTest tests[] = {
-        cmocka_unit_test(test_ring_buffer),
-        cmocka_unit_test(test_color_from_hex),
+            cmocka_unit_test(test_ring_buffer),
+            cmocka_unit_test(test_color_from_hex),
     };
 
     return cmocka_run_group_tests(tests, NULL, NULL);
