@@ -27,3 +27,15 @@ struct camera {
     float speed;
     float sensitivity;
 };
+
+void camera_init(struct camera *camera,
+        struct camera_state state,
+        struct camera_options options);
+
+void camera_rotate(struct camera *camera, float x_angle, float y_angle);
+
+void camera_move(struct camera *camera, vec3 direction);
+
+void camera_recalculate_vectors(struct camera *camera);
+
+void camera_get_view_matrix(struct camera *camera, mat4 dest);

@@ -5,4 +5,6 @@
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
+#define clamp(x, lower, upper) (min(max((x), (lower)), (upper)))
+
 #endif // MATH_H
