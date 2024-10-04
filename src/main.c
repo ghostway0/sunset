@@ -20,7 +20,7 @@ struct context {
     struct font *fonts;
     size_t num_fonts;
     void *render_context;
-    // custom_command custom_commands[MAX_NUM_CUSTOM_COMMANDS];
+    custom_command custom_commands[MAX_NUM_CUSTOM_COMMANDS];
 };
 
 void context_init(struct context *context,
@@ -32,6 +32,7 @@ void context_init(struct context *context,
     context->num_fonts = num_fonts;
     context->render_context = render_context;
     command_buffer_init(&context->command_buffer, command_buffer_options);
+    memset(context->custom_commands, 0, sizeof(context->custom_commands));
 }
 
 void context_free(struct context *context) {
@@ -124,28 +125,29 @@ int stub_render_command(
 
 int main() {
     struct context context;
+    struct font font;
     int retval = 0;
 
-    context_init(&context, COMMAND_BUFFER_DEFAULT, NULL, 0, NULL);
-
-    command_buffer_add_nop(&context.command_buffer);
-    command_buffer_add_line(&context.command_buffer,
-            (struct point){0, 0},
-            (struct point){1, 1});
-    command_buffer_add_rect(
-            &context.command_buffer, (struct rect){{0, 0}, 1, 1});
-
-    struct font font;
     if ((retval = load_font_psf2("Tamsyn6x12b.psf", "test", &font))) {
         error_print("load_font_psf2", retval);
         goto cleanup;
     }
 
     struct glyph const *glyph = font_get_glyph(&font, 'B');
-    show_image_grayscale(&glyph->image);
+
+    context_init(&context, COMMAND_BUFFER_DEFAULT, NULL, 0, NULL);
+
+    command_buffer_add_nop(&context.command_buffer);
+
+    command_buffer_add_line(&context.command_buffer,
+            (struct point){0, 0},
+            (struct point){1, 1});
+
+    command_buffer_add_rect(
+            &context.command_buffer, (struct rect){{0, 0}, 1, 1});
 
     command_buffer_add_image(
-            &context.command_buffer, (struct point){50, 20}, &glyph->image);
+            &context.command_buffer, (struct point){50, 2}, &glyph->image);
 
     while (true) {
         struct command command;

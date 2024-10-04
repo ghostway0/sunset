@@ -64,7 +64,7 @@ void camera_recalculate_vectors(struct camera *camera) {
     glm_vec3_normalize(camera->right);
 }
 
-// camera transformation matrix
+// world->camera transformation matrix
 void camera_get_view_matrix(struct camera *camera, mat4 dest) {
     vec3 center;
 

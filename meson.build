@@ -15,7 +15,7 @@ glew_dep = dependency('glew', required: true)
 glfw_dep = dependency('glfw3', required: true)
 opengl_dep = dependency('opengl', required: true)
 
-gaming_inc = include_directories('include/')
+sunset_inc = include_directories('include/')
 
 subdir('external')
 
@@ -26,12 +26,13 @@ sunset_files = [
   'src/ring_buffer.c',
   'src/gfx.c',
   'src/camera.c',
+  'src/input.c',
+  'src/scene.c',
 ]
 
 sunset_lib = static_library(
   'sunset',
   files(sunset_files),
-  include_directories: [gaming_inc],
   dependencies: [
     glew_dep,
     glfw_dep,
@@ -39,6 +40,7 @@ sunset_lib = static_library(
     logc_dep,
     cglm_dep,
   ],
+  include_directories: [sunset_inc],
 )
 
 sunset_dep = declare_dependency(
@@ -54,8 +56,9 @@ executable(
     glfw_dep,
     opengl_dep,
     sunset_dep,
+    cglm_dep,
   ],
-  include_directories: [gaming_inc],
+  include_directories: [sunset_inc],
 )
 
 tests_exe = executable(
@@ -66,5 +69,5 @@ tests_exe = executable(
     logc_dep,
     sunset_dep,
   ],
-  include_directories: [gaming_inc],
+  include_directories: [sunset_inc],
 )

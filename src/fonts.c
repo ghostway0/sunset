@@ -4,9 +4,11 @@
 
 #include <log.h>
 
+#include "sunset/color.h"
 #include "sunset/errors.h"
-#include "sunset/fonts.h"
 #include "sunset/gfx.h"
+
+#include "sunset/fonts.h"
 
 #define PSF2_MAGIC 0x864AB572
 
@@ -137,7 +139,17 @@ cleanup:
 
 struct glyph const *font_get_glyph(
         struct font const *font, uint32_t codepoint) {
-    return &font->glyphs[font->glyph_map[codepoint]];
+    if (codepoint > 0x10FFFF) {
+        return NULL;
+    }
+
+    size_t glyph_index = font->glyph_map[codepoint];
+
+    if (glyph_index >= font->num_glyphs) {
+        return NULL;
+    }
+
+    return &font->glyphs[glyph_index];
 }
 
 void font_free(struct font *font) {
