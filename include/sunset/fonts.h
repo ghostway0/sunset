@@ -6,12 +6,6 @@
 #include "sunset/color.h"
 #include "sunset/gfx.h"
 
-struct image {
-    size_t w;
-    size_t h;
-    struct color *pixels;
-};
-
 struct glyph {
     struct image image;
     int x0;

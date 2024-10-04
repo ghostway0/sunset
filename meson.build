@@ -1,6 +1,10 @@
-project('gaming', 'c', default_options: ['c_std=gnu2x', 'warning_level=3', 'werror=true'])
+project(
+  'gaming',
+  'c',
+  default_options: ['c_std=gnu2x', 'warning_level=3', 'werror=true'],
+)
 
-add_project_arguments('-Wno-gnu-empty-struct', language: 'c')
+add_project_arguments(['-Wno-gnu-empty-struct', '-Wno-newline-eof', '-Wno-empty-translation-unit'], language: 'c')
 
 is_debug = get_option('debug')
 is_release = not is_debug
@@ -15,15 +19,25 @@ gaming_inc = include_directories('include/')
 
 subdir('external')
 
+sunset_files = [
+  'src/color.c',
+  'src/errors.c',
+  'src/fonts.c',
+  'src/ring_buffer.c',
+  'src/gfx.c',
+  'src/camera.c',
+]
+
 sunset_lib = static_library(
   'sunset',
-  files('src/color.c', 'src/ring_buffer.c', 'src/fonts.c', 'src/errors.c'),
+  files(sunset_files),
   include_directories: [gaming_inc],
   dependencies: [
     glew_dep,
     glfw_dep,
     opengl_dep,
     logc_dep,
+    cglm_dep,
   ],
 )
 

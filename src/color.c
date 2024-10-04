@@ -21,3 +21,7 @@ struct color color_from_hex(char const *hex_str) {
 bool colors_equal(struct color a, struct color b) {
     return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
 }
+
+uint8_t color_to_grayscale(struct color color) {
+    return 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
+}

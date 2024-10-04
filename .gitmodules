@@ -1,3 +1,6 @@
 [submodule "external/log.c"]
 	path = external/log.c
 	url = git@github.com:rxi/log.c.git
+[submodule "external/cglm"]
+	path = external/cglm
+	url = https://github.com/recp/cglm.git

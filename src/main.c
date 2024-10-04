@@ -21,6 +21,7 @@ struct context {
     struct font *fonts;
     size_t num_fonts;
     void *render_context;
+    // custom_command custom_commands[MAX_NUM_CUSTOM_COMMANDS];
 };
 
 void context_init(struct context *context,

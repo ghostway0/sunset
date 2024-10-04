@@ -5,6 +5,7 @@
 
 #include "sunset/color.h"
 #include "sunset/gfx.h"
+#include "sunset/ring_buffer.h"
 
 enum command_type : uint8_t {
     COMMAND_NOP,
