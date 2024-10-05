@@ -7,7 +7,9 @@
 #include "sunset/errors.h"
 #include "sunset/fonts.h"
 #include "sunset/gfx.h"
+#include "sunset/gltf.h"
 #include "sunset/utils.h"
+#include "sunset/vector.h"
 
 #define container_of(p, T, a)                                                  \
     ((T *)((uintptr_t)(p) - (uintptr_t)(&((T *)(0))->a)))
@@ -155,7 +157,21 @@ int main() {
             break;
         }
 
-        stub_render_command(&context, &command);
+        // stub_render_command(&context, &command);
+    }
+
+    struct gltf_file gltf_file;
+    if ((retval = gltf_load_file("resources/AnimatedCube.gltf", &gltf_file))) {
+        error_print("gltf_file_load", retval);
+        goto cleanup;
+    }
+
+    for (size_t i = 0; i < vector_size(gltf_file.buffers); ++i) {
+        log_info("buffer %zu: %s", i, gltf_file.buffers[i].uri);
+    }
+
+    for (size_t i = 0; i < vector_size(gltf_file.accessors); i++) {
+        log_info("accessors %zu: %u", i, gltf_file.accessors[i].type);
     }
 
 cleanup:

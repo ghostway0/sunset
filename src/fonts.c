@@ -118,7 +118,7 @@ int load_font_psf2(char const *path, char const *name, struct font *font_out) {
     font_out->name = name;
     font_out->num_glyphs = header.length;
     font_out->glyphs = malloc(sizeof(struct glyph) * font_out->num_glyphs);
-    font_out->glyph_map = calloc(0x10FFFF, sizeof(uint16_t));
+    font_out->glyph_map = calloc(0x10FFFF, sizeof(uint32_t));
 
     if ((retval = load_glyphs(file, &header, font_out))) {
         goto cleanup;

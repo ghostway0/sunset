@@ -15,7 +15,7 @@ struct glyph {
 struct font {
     char const *name;
     struct glyph *glyphs;
-    uint16_t *glyph_map;
+    uint32_t *glyph_map;
     size_t num_glyphs;
 };
 

@@ -175,6 +175,32 @@ void test_json_parse_invalid_number_format(void **state) {
     json_value_free(&value);
 }
 
+void test_json_parse_weird_number(void **state) {
+    unused(state);
+
+    char const *json = "-8.742278e-008";
+
+    struct json_value value;
+    int err = json_parse(json, strlen(json), &value);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(value.type, JSON_NUMBER);
+    assert_float_equal(value.data.number, -8.742278e-008, EPSILON);
+}
+
+void test_json_parse_empty_object(void **state) {
+    unused(state);
+
+    char const *json = "{}";
+
+    struct json_value value;
+    int err = json_parse(json, strlen(json), &value);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(value.type, JSON_OBJECT);
+    assert_int_equal(vector_size(value.data.object), 0);
+}
+
 int main(void) {
     const struct CMUnitTest json_tests[] = {
             cmocka_unit_test(test_json_parse_simple_object),
@@ -188,6 +214,8 @@ int main(void) {
             cmocka_unit_test(test_json_parse_extra_comma),
             cmocka_unit_test(test_json_parse_null_key),
             cmocka_unit_test(test_json_parse_invalid_number_format),
+            cmocka_unit_test(test_json_parse_weird_number),
+            cmocka_unit_test(test_json_parse_empty_object),
     };
 
     return cmocka_run_group_tests(json_tests, NULL, NULL);

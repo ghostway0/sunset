@@ -58,7 +58,7 @@ struct gltf_scene {
 };
 
 struct gltf_buffer {
-    char const *uri;
+    char *uri;
     size_t byte_length;
     char const *data;
 };
@@ -140,6 +140,45 @@ struct material {
     char const *name;
 };
 
+enum interpolation_type {
+    INTERPOLATION_LINEAR,
+    INTERPOLATION_STEP,
+    INTERPOLATION_CUBICSPLINE,
+};
+
+enum animation_path_type {
+    ANIMATION_PATH_TRANSLATION,
+    ANIMATION_PATH_ROTATION,
+    ANIMATION_PATH_SCALE,
+    ANIMATION_PATH_WEIGHTS,
+};
+
+struct gltf_animation_target {
+    size_t node;
+    enum animation_path_type path;
+};
+
+struct gltf_animation_channel {
+    size_t sampler;
+    struct gltf_animation_target target;
+};
+
+struct gltf_animation_sampler {
+    size_t input;
+    size_t output;
+    enum interpolation_type interpolation;
+};
+
+struct gltf_animation {
+    char const *name;
+    vector(struct gltf_animation_channel) channels;
+    vector(struct gltf_animation_sampler) samplers;
+};
+
+struct gltf_image {
+    char *uri;
+};
+
 struct gltf_file {
     vector(struct gltf_scene) scenes;
     vector(struct gltf_node) nodes;
@@ -147,6 +186,11 @@ struct gltf_file {
     vector(struct gltf_buffer) buffers;
     vector(struct gltf_buffer_view) buffer_views;
     vector(struct accessor) accessors;
+    vector(struct material) materials;
+    vector(struct gltf_animation) animations;
+    vector(struct gltf_image) images;
 };
 
 int gltf_parse(FILE *file, struct gltf_file *file_out);
+
+int gltf_load_file(char const *path, struct gltf_file *file_out);

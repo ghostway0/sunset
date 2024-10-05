@@ -31,6 +31,7 @@ struct parser {
     char const *buffer;
     size_t json_size;
     size_t cursor;
+    size_t line_num;
 };
 
 static int parse_value(struct parser *p, struct json_value *value_out);
@@ -42,6 +43,8 @@ static int skip_whitespace(struct parser *p) {
             p->cursor--;
             break;
         }
+
+        p->line_num += c == '\n';
     }
 
     return 0;
@@ -72,39 +75,28 @@ static int parse_string(struct parser *p, struct json_value *value_out) {
 }
 
 static int parse_number(struct parser *p, struct json_value *value_out) {
-    size_t start = p->cursor;
+    char const *start = p->buffer + p->cursor;
+    char *end = NULL;
 
-    if (p->buffer[p->cursor] == '-') {
-        bump(p);
+    double result = strtod(start, &end);
+
+    if (start == end) {
+        return -ERROR_PARSE;
     }
 
+    p->cursor += (end - start);
+
     bool seen_special = false;
-
-    while (p->cursor < p->json_size) {
-        char c = bump(p);
-
-        if (c == '.' || c == 'e' || c == 'E') {
-            if (!seen_special) {
-                seen_special = true;
-                continue;
-            } else {
-                return -ERROR_PARSE;
-            }
-        }
-
-        if (c < '0' || c > '9') {
-            p->cursor--;
-            break;
-        }
+    for (char const *curr = start; curr < end; curr++) {
+        seen_special |= *curr == '.' || *curr == 'e' || *curr == 'E';
     }
 
     if (seen_special) {
         value_out->type = JSON_NUMBER;
-        value_out->data.number = strtod(p->buffer + start, NULL);
-        return 0;
+        value_out->data.number = result;
     } else {
         value_out->type = JSON_WHOLE_NUMBER;
-        value_out->data.whole_number = strtoul(p->buffer + start, NULL, 10);
+        value_out->data.whole_number = (size_t)result;
     }
 
     return 0;
@@ -119,7 +111,12 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
 
     vector_create(value_out->data.object, struct key_value);
 
-    p->cursor++;
+    bump(p);
+
+    if (p->buffer[p->cursor] == '}') {
+        bump(p);
+        return 0;
+    }
 
     for (;;) {
         if ((retval = skip_whitespace(p))) {
@@ -269,6 +266,7 @@ int json_parse(
             .buffer = input,
             .json_size = input_size,
             .cursor = 0,
+            .line_num = 1,
     };
 
     return parse_value(&p, value_out);
