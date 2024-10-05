@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 // clang-format off
@@ -14,6 +15,8 @@
 #include "sunset/json.h"
 #include "sunset/ring_buffer.h"
 #include "sunset/utils.h"
+
+#define EPSILON 0.001
 
 struct element {
     int x;
@@ -77,9 +80,9 @@ void test_camera_movement(void **state) {
 
     camera_move(&camera, direction);
 
-    assert_float_equal(camera.position[0], 0.0f, 0.1f);
-    assert_float_equal(camera.position[1], 0.0f, 0.1f);
-    assert_float_equal(camera.position[2], 100.0f, 0.1f);
+    assert_float_equal(camera.position[0], 0.0f, EPSILON);
+    assert_float_equal(camera.position[1], 0.0f, EPSILON);
+    assert_float_equal(camera.position[2], 100.0f, EPSILON);
 }
 
 void test_json_parse_simple_object(void **state) {
@@ -106,7 +109,7 @@ void test_json_parse_number(void **state) {
     int err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, 0);
     assert_int_equal(value.type, JSON_OBJECT);
-    assert_float_equal(value.data.object[0].value->data.number, 42.5, 0.1);
+    assert_float_equal(value.data.object[0].value->data.number, 42.5, EPSILON);
 }
 
 void test_json_parse_boolean(void **state) {
@@ -124,21 +127,25 @@ void test_json_parse_boolean(void **state) {
 void test_json_parse_array(void **state) {
     unused(state);
 
-    char const *json = "{\"key\": [1, 2, true, \"value\"]}";
+    char const *json = "{\"key\": [1, 2.0, true, \"value\"]}";
 
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, 0);
+
     assert_int_equal(value.type, JSON_OBJECT);
     assert_int_equal(value.data.object[0].value->type, JSON_ARRAY);
     assert_int_equal(vector_size(value.data.object[0].value->data.array), 4);
+
     assert_int_equal(
-            value.data.object[0].value->data.array[0].type, JSON_NUMBER);
-    assert_int_equal(value.data.object[0].value->data.array[0].data.number, 1);
+            value.data.object[0].value->data.array[0].type, JSON_WHOLE_NUMBER);
+    assert_int_equal(value.data.object[0].value->data.array[0].data.whole_number, 1);
+
     assert_int_equal(
             value.data.object[0].value->data.array[1].type, JSON_NUMBER);
-    assert_int_equal(value.data.object[0].value->data.array[1].data.number, 2);
+    assert_float_equal(value.data.object[0].value->data.array[1].data.number, 2.0, EPSILON);
     assert_int_equal(value.data.object[0].value->data.array[2].type, JSON_TRUE);
+
     assert_int_equal(
             value.data.object[0].value->data.array[3].type, JSON_STRING);
     assert_string_equal(
