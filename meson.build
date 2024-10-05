@@ -68,9 +68,30 @@ tests_exe = executable(
   files('src/tests.c'),
   dependencies: [
     cmocka_dep,
-    logc_dep,
     sunset_dep,
     cglm_dep,
   ],
   include_directories: [sunset_inc],
+)
+
+json_test_exe = executable(
+  'json_test',
+  files('src/json_test.c'),
+  dependencies: [
+    cmocka_dep,
+    sunset_dep,
+  ],
+  include_directories: [sunset_inc],
+)
+
+test(
+  'tests',
+  tests_exe,
+  suite: 'tests',
+)
+
+test(
+  'json_test',
+  json_test_exe,
+  suite: 'tests',
 )
