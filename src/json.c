@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -7,6 +8,24 @@
 
 #define MAX_JSON_SIZE 4096
 
+#define bump(p)                                                                \
+    ({                                                                         \
+        if (p->cursor >= p->json_size) {                                       \
+            return -ERROR_PARSE;                                               \
+        }                                                                      \
+        p->buffer[p->cursor++];                                                \
+    })
+
+#define multi_bump(p, n)                                                       \
+    ({                                                                         \
+        size_t start = p->cursor;                                              \
+        p->cursor += n;                                                        \
+        if (p->cursor >= p->json_size) {                                       \
+            return -ERROR_PARSE;                                               \
+        }                                                                      \
+        p->buffer + start;                                                     \
+    })
+
 struct parser {
     char const *buffer;
     size_t json_size;
@@ -15,32 +34,31 @@ struct parser {
 
 static int parse_value(struct parser *p, struct json_value *value_out);
 
-static void skip_whitespace(struct parser *p) {
+static int skip_whitespace(struct parser *p) {
     while (p->cursor < p->json_size) {
-        char c = p->buffer[p->cursor];
+        char c = bump(p);
         if (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
+            p->cursor--;
             break;
         }
-        p->cursor++;
     }
+
+    return 0;
 }
 
 static int parse_string(struct parser *p, struct json_value *value_out) {
-    if (p->buffer[p->cursor] != '"') {
+    if (bump(p) != '"') {
         return -ERROR_PARSE;
     }
 
-    p->cursor++;
-
     size_t start = p->cursor;
 
+    bump(p);
+
     for (;;) {
-        if (p->buffer[p->cursor] == '"') {
-            p->cursor++;
+        if (bump(p) == '"') {
             break;
         }
-
-        p->cursor++;
     }
 
     value_out->type = JSON_STRING;
@@ -59,22 +77,27 @@ static int parse_number(struct parser *p, struct json_value *value_out) {
     size_t start = p->cursor;
 
     if (p->buffer[p->cursor] == '-') {
-        p->cursor++;
+        bump(p);
     }
 
+    bool seen_special = false;
+
     while (p->cursor < p->json_size) {
-        char c = p->buffer[p->cursor];
+        char c = bump(p);
 
         if (c == '.' || c == 'e' || c == 'E') {
-            p->cursor++;
-            continue;
+            if (!seen_special) {
+                seen_special = true;
+                continue;
+            } else {
+                return -ERROR_PARSE;
+            }
         }
 
         if (c < '0' || c > '9') {
+            p->cursor--;
             break;
         }
-
-        p->cursor++;
     }
 
     value_out->type = JSON_NUMBER;
@@ -84,6 +107,8 @@ static int parse_number(struct parser *p, struct json_value *value_out) {
 }
 
 static int parse_object(struct parser *p, struct json_value *value_out) {
+    int retval;
+
     if (p->buffer[p->cursor] != '{') {
         return -ERROR_PARSE;
     }
@@ -93,38 +118,29 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
     p->cursor++;
 
     for (;;) {
-        skip_whitespace(p);
-
-        if (p->buffer[p->cursor] == '}') {
-            p->cursor++;
-            break;
-        }
-
-        if (p->buffer[p->cursor] == ',') {
-            p->cursor++;
-            continue;
+        if ((retval = skip_whitespace(p))) {
+            return retval;
         }
 
         struct json_value key;
-        int ret = parse_string(p, &key);
 
-        if (ret) {
-            return ret;
+        if ((retval = parse_string(p, &key))) {
+            return retval;
         }
 
-        skip_whitespace(p);
+        if ((retval = skip_whitespace(p))) {
+            return retval;
+        }
 
         if (p->buffer[p->cursor] != ':') {
             return -ERROR_PARSE;
         }
 
-        p->cursor++;
+        bump(p);
 
         struct json_value value;
-        ret = parse_value(p, &value);
-
-        if (ret) {
-            return ret;
+        if ((retval = parse_value(p, &value))) {
+            return retval;
         }
 
         struct key_value kv = {
@@ -135,6 +151,21 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
         *kv.value = value;
 
         vector_append(value_out->data.object, kv);
+
+        if ((retval = skip_whitespace(p))) {
+            return retval;
+        }
+
+        if (p->buffer[p->cursor] == '}') {
+            bump(p);
+            break;
+        }
+
+        if (p->buffer[p->cursor] != ',') {
+            return -ERROR_PARSE;
+        }
+
+        bump(p);
     }
 
     value_out->type = JSON_OBJECT;
@@ -143,35 +174,43 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
 }
 
 static int parse_array(struct parser *p, struct json_value *value_out) {
+    int retval;
+
     if (p->buffer[p->cursor] != '[') {
         return -ERROR_PARSE;
     }
 
-    p->cursor++;
+    bump(p);
 
     vector(struct json_value) array;
     vector_create(array, struct json_value);
 
     for (;;) {
-        skip_whitespace(p);
-
-        if (p->buffer[p->cursor] == ']') {
-            p->cursor++;
-            break;
-        }
-
-        if (p->buffer[p->cursor] == ',') {
-            p->cursor++;
-            continue;
+        if ((retval = skip_whitespace(p))) {
+            return retval;
         }
 
         struct json_value value;
-        int ret = parse_value(p, &value);
-        if (ret) {
-            return ret;
+        if ((retval = parse_value(p, &value))) {
+            return retval;
         }
 
         vector_append(array, value);
+
+        if ((retval = skip_whitespace(p))) {
+            return retval;
+        }
+
+        if (p->buffer[p->cursor] == ']') {
+            bump(p);
+            break;
+        }
+
+        if (p->buffer[p->cursor] != ',') {
+            return -ERROR_PARSE;
+        }
+
+        bump(p);
     }
 
     value_out->type = JSON_ARRAY;
@@ -203,13 +242,19 @@ static int parse_value(struct parser *p, struct json_value *value_out) {
 
     if (strncmp(p->buffer + p->cursor, "true", 4) == 0) {
         value_out->type = JSON_TRUE;
-        p->cursor += 4;
+        multi_bump(p, 4);
         return 0;
     }
 
     if (strncmp(p->buffer + p->cursor, "false", 5) == 0) {
         value_out->type = JSON_FALSE;
-        p->cursor += 5;
+        multi_bump(p, 5);
+        return 0;
+    }
+
+    if (strncmp(p->buffer + p->cursor, "null", 4) == 0) {
+        value_out->type = JSON_NULL;
+        multi_bump(p, 4);
         return 0;
     }
 
