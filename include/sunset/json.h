@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "vector.h"
 
@@ -38,9 +38,9 @@ int json_parse(
 
 void json_value_free(struct json_value *json);
 
-#define json_assert_type(value, T) \
-    do { \
-        if ((value)->type != (T)) { \
-            return -ERROR_PARSE; \
-        } \
+#define json_assert_type(value, T)                                             \
+    do {                                                                       \
+        if ((value)->type != (T)) {                                            \
+            return -ERROR_PARSE;                                               \
+        }                                                                      \
     } while (0)

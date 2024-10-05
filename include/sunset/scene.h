@@ -77,4 +77,3 @@ void scene_load_chunks(
         struct scene *scene, struct chunk *chunks, size_t num_chunks);
 
 void scene_move_camera(struct scene *scene, vec3 direction);
-

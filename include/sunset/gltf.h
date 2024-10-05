@@ -14,26 +14,26 @@
 
 #define parse_vecn_json(json, n, vec_out)                                      \
     do {                                                                       \
-        json_assert_type(&json, JSON_ARRAY);                                    \
-        if (vector_size(json.data.array) != n) {                              \
+        json_assert_type(&json, JSON_ARRAY);                                   \
+        if (vector_size(json.data.array) != n) {                               \
             return -ERROR_PARSE;                                               \
         }                                                                      \
         for (size_t i = 0; i < n; i++) {                                       \
-            json_assert_type(&json.data.array[i], JSON_NUMBER);               \
-            vec_out[i] = json.data.array[i].data.number;                      \
+            json_assert_type(&json.data.array[i], JSON_NUMBER);                \
+            vec_out[i] = json.data.array[i].data.number;                       \
         }                                                                      \
     } while (0)
 
 #define parse_matn_json(json, n, vec_out)                                      \
     do {                                                                       \
-        json_assert_type(&json, JSON_ARRAY);                                    \
-        if (vector_size(json.data.array) != n * n) {                          \
+        json_assert_type(&json, JSON_ARRAY);                                   \
+        if (vector_size(json.data.array) != n * n) {                           \
             return -ERROR_PARSE;                                               \
         }                                                                      \
         for (size_t i = 0; i < n; i++) {                                       \
             for (size_t j = 0; j < n; j++) {                                   \
-                json_assert_type(&json.data.array[i * n + j], JSON_NUMBER);   \
-                vec_out[i][j] = json.data.array[i * n + j].data.number;       \
+                json_assert_type(&json.data.array[i * n + j], JSON_NUMBER);    \
+                vec_out[i][j] = json.data.array[i * n + j].data.number;        \
             }                                                                  \
         }                                                                      \
     } while (0)

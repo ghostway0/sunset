@@ -10,6 +10,19 @@
 
 #include "sunset/json.h"
 
+#define parse_multiple_json(json, T, vec_out, parse_fn)                        \
+    do {                                                                       \
+        json_assert_type(json, JSON_ARRAY);                                    \
+        for (size_t i = 0; i < vector_size((json)->data.array); i++) {         \
+            struct json_value *value_json = &(json)->data.array[i];            \
+            T value;                                                           \
+            if (parse_fn(value_json, &value)) {                                \
+                return -ERROR_PARSE;                                           \
+            }                                                                  \
+            vector_append(vec_out, value);                                     \
+        }                                                                      \
+    } while (0)
+
 static void gltf_file_init(struct gltf_file *file) {
     vector_create(file->accessors, struct accessor);
     vector_create(file->buffers, struct gltf_buffer);
@@ -253,7 +266,7 @@ static int parse_primitive_properties(
     return 0;
 }
 
-static int parse_primitive(
+static int parse_primitive_json(
         const struct json_value *json, struct gltf_primitive *primitive_out) {
     json_assert_type(json, JSON_OBJECT);
 
@@ -283,28 +296,21 @@ static int parse_meshes_json(
         struct gltf_mesh mesh;
         vector_create(mesh.primitives, struct gltf_primitive);
 
-        for (size_t j = 0; j < vector_size(mesh_json->data.object); j++) {
-            struct key_value kv = mesh_json->data.object[j];
-
-            if (kv.value.type == JSON_NULL) {
-                continue;
-            }
-
-            if (strcmp(kv.key, "primitives") == 0) {
-                json_assert_type(&kv.value, JSON_ARRAY);
-
-                for (size_t k = 0; k < vector_size(kv.value.data.array); k++) {
-                    struct json_value *primitive_json = &kv.value.data.array[k];
-
-                    struct gltf_primitive primitive;
-                    if (parse_primitive(primitive_json, &primitive)) {
-                        return -ERROR_PARSE;
-                    }
-
-                    vector_append(mesh.primitives, primitive);
-                }
-            }
+        if (vector_size(mesh_json->data.object) != 1) {
+            return -ERROR_PARSE;
         }
+
+        struct key_value kv = mesh_json->data.object[0];
+
+        if (strcmp(kv.key, "primitives") != 0) {
+            return -ERROR_PARSE;
+        }
+
+        json_assert_type(&kv.value, JSON_ARRAY);
+        parse_multiple_json(&kv.value,
+                struct gltf_primitive,
+                mesh.primitives,
+                parse_primitive_json);
 
         vector_append(*mesh_out, mesh);
     }
@@ -360,25 +366,6 @@ static int parse_node_json(
                 vector_append(node_out->weights, weight_json->data.number);
             }
         }
-    }
-
-    return 0;
-}
-
-static int parse_nodes_json(
-        const struct json_value *json, vector(struct gltf_node) * nodes_out) {
-    json_assert_type(json, JSON_ARRAY);
-
-    for (size_t i = 0; i < vector_size(json->data.array); i++) {
-        struct json_value *node_json = &json->data.array[i];
-        json_assert_type(node_json, JSON_OBJECT);
-
-        struct gltf_node node;
-        if (parse_node_json(node_json, &node)) {
-            return -ERROR_PARSE;
-        }
-
-        vector_append(*nodes_out, node);
     }
 
     return 0;
@@ -460,9 +447,10 @@ int parse_gltf_json(const struct json_value *json, struct gltf_file *file_out) {
                 return retval;
             }
         } else if (strcmp(kv.key, "nodes") == 0) {
-            if ((retval = parse_nodes_json(&kv.value, &file_out->nodes))) {
-                return retval;
-            }
+            parse_multiple_json(&kv.value,
+                    struct gltf_node,
+                    file_out->nodes,
+                    parse_node_json);
         } else if (strcmp(kv.key, "scenes") == 0) {
             if ((retval = parse_scenes_json(&kv.value, &file_out->scenes))) {
                 return retval;

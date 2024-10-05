@@ -12,11 +12,10 @@ struct vector_metadata {
 
 #define vector_metadata(v) ((struct vector_metadata *)(v) - 1)
 
-#define vector_create(v, T)                                                       \
+#define vector_create(v, T)                                                    \
     ({                                                                         \
-        struct vector_metadata *meta =                                         \
-                (struct vector_metadata *)malloc(                               \
-                        sizeof(struct vector_metadata) + sizeof(T) * 16);       \
+        struct vector_metadata *meta = (struct vector_metadata *)malloc(       \
+                sizeof(struct vector_metadata) + sizeof(T) * 16);              \
         assert(meta);                                                          \
         meta->size = 0;                                                        \
         meta->capacity = 16;                                                   \
@@ -40,5 +39,5 @@ struct vector_metadata {
             assert(meta);                                                      \
             v = (void *)(meta + 1);                                            \
         }                                                                      \
-        v[meta->size++] = value;                                               \
+        (v)[meta->size++] = value;                                             \
     } while (0)

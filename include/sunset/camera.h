@@ -32,7 +32,8 @@ void camera_init(struct camera *camera,
         struct camera_state state,
         struct camera_options options);
 
-void camera_rotate_absolute(struct camera *camera, float x_angle, float y_angle);
+void camera_rotate_absolute(
+        struct camera *camera, float x_angle, float y_angle);
 
 void camera_rotate(struct camera *camera, float x_angle, float y_angle);
 

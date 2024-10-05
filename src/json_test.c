@@ -73,11 +73,13 @@ void test_json_parse_array(void **state) {
 
     assert_int_equal(
             value.data.object[0].value.data.array[0].type, JSON_WHOLE_NUMBER);
-    assert_int_equal(value.data.object[0].value.data.array[0].data.whole_number, 1);
+    assert_int_equal(
+            value.data.object[0].value.data.array[0].data.whole_number, 1);
 
     assert_int_equal(
             value.data.object[0].value.data.array[1].type, JSON_NUMBER);
-    assert_float_equal(value.data.object[0].value.data.array[1].data.number, 2.0, EPSILON);
+    assert_float_equal(
+            value.data.object[0].value.data.array[1].data.number, 2.0, EPSILON);
     assert_int_equal(value.data.object[0].value.data.array[2].type, JSON_TRUE);
 
     assert_int_equal(
@@ -165,7 +167,7 @@ void test_json_parse_invalid_number_format(void **state) {
     unused(state);
 
     char const *json = "{\"key\": 42.5.6}";
-    
+
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, -ERROR_PARSE);

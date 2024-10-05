@@ -26,7 +26,8 @@ static float distance_to_camera(vec3 camera_position, struct box bounding_box) {
 }
 
 #ifdef __APPLE__
-static int compare_chunks(void *camera_position_ptr, void const *a, void const *b) {
+static int compare_chunks(
+        void *camera_position_ptr, void const *a, void const *b) {
 #else
 int compare_chunks(void const *a, void const *b, void *camera_position_ptr) {
 #endif
