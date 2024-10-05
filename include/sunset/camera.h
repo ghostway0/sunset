@@ -35,7 +35,7 @@ void camera_init(struct camera *camera,
 void camera_rotate_absolute(
         struct camera *camera, float x_angle, float y_angle);
 
-void camera_rotate(struct camera *camera, float x_angle, float y_angle);
+void camera_rotate_scaled(struct camera *camera, float x_angle, float y_angle);
 
 void camera_move(struct camera *camera, vec3 direction);
 
@@ -45,4 +45,5 @@ void camera_get_view_matrix(struct camera *camera, mat4 dest);
 
 void camera_vec_to_world(struct camera *camera, vec3 direction);
 
-void camera_free(struct camera *camera);
+void camera_get_projection_matrix(
+        struct camera *camera, float aspect, mat4 dest);

@@ -56,11 +56,8 @@ static int parse_string(struct parser *p, struct json_value *value_out) {
 
     bump(p);
 
-    for (;;) {
-        if (bump(p) == '"') {
-            break;
-        }
-    }
+    for (; bump(p) != '"';)
+        ;
 
     value_out->type = JSON_STRING;
     value_out->data.string = malloc(p->cursor - start);

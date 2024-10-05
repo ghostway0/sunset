@@ -83,24 +83,6 @@ static int parse_accessor_json(
     return 0;
 }
 
-static int parse_accessors_json(const struct json_value *json,
-        vector(struct accessor) * accessors_out) {
-    json_assert_type(json, JSON_ARRAY);
-
-    for (size_t i = 0; i < vector_size(json->data.array); i++) {
-        struct json_value *accessor_json = &json->data.array[i];
-
-        struct accessor accessor = {};
-        if (parse_accessor_json(accessor_json, &accessor)) {
-            return -ERROR_PARSE;
-        }
-
-        vector_append(*accessors_out, accessor);
-    }
-
-    return 0;
-}
-
 static int parse_buffers_json(
         const struct json_value *json, vector(struct gltf_buffer) * buffers) {
     json_assert_type(json, JSON_ARRAY);
@@ -273,10 +255,6 @@ static int parse_primitive_json(
     for (size_t i = 0; i < vector_size(json->data.object); i++) {
         struct key_value kv = json->data.object[i];
 
-        if (kv.value.type == JSON_NULL) {
-            continue;
-        }
-
         if (parse_primitive_properties(&kv, primitive_out) != 0) {
             return -ERROR_PARSE;
         }
@@ -318,6 +296,19 @@ static int parse_meshes_json(
     return 0;
 }
 
+static int parse_float_json(const struct json_value *json, float *float_out) {
+    json_assert_type(json, JSON_NUMBER);
+    *float_out = json->data.number;
+    return 0;
+}
+
+static int parse_whole_number_json(
+        const struct json_value *json, size_t *whole_number_out) {
+    json_assert_type(json, JSON_WHOLE_NUMBER);
+    *whole_number_out = json->data.whole_number;
+    return 0;
+}
+
 static int parse_node_json(
         const struct json_value *json, struct gltf_node *node_out) {
     json_assert_type(json, JSON_OBJECT);
@@ -329,17 +320,10 @@ static int parse_node_json(
             json_assert_type(&kv.value, JSON_WHOLE_NUMBER);
             node_out->camera = kv.value.data.whole_number;
         } else if (strcmp(kv.key, "children") == 0) {
-            json_assert_type(&kv.value, JSON_ARRAY);
-
-            vector_create(node_out->children, size_t);
-
-            for (size_t j = 0; j < vector_size(kv.value.data.array); j++) {
-                struct json_value *child_json = &kv.value.data.array[j];
-                json_assert_type(child_json, JSON_WHOLE_NUMBER);
-
-                vector_append(
-                        node_out->children, child_json->data.whole_number);
-            }
+            parse_multiple_json(&kv.value,
+                    size_t,
+                    node_out->children,
+                    parse_whole_number_json);
         } else if (strcmp(kv.key, "skin") == 0) {
             json_assert_type(&kv.value, JSON_WHOLE_NUMBER);
             node_out->skin = kv.value.data.whole_number;
@@ -355,16 +339,8 @@ static int parse_node_json(
         } else if (strcmp(kv.key, "translation") == 0) {
             parse_vecn_json(kv.value, 3, node_out->translation);
         } else if (strcmp(kv.key, "weights") == 0) {
-            json_assert_type(&kv.value, JSON_ARRAY);
-
-            vector_create(node_out->weights, float);
-
-            for (size_t j = 0; j < vector_size(kv.value.data.array); j++) {
-                struct json_value *weight_json = &kv.value.data.array[j];
-                json_assert_type(weight_json, JSON_NUMBER);
-
-                vector_append(node_out->weights, weight_json->data.number);
-            }
+            parse_multiple_json(
+                    &kv.value, float, node_out->weights, parse_float_json);
         }
     }
 
@@ -399,25 +375,6 @@ static int parse_scene_json(
     return 0;
 }
 
-static int parse_scenes_json(
-        const struct json_value *json, vector(struct gltf_scene) * scenes_out) {
-    json_assert_type(json, JSON_ARRAY);
-
-    for (size_t i = 0; i < vector_size(json->data.array); i++) {
-        struct json_value *scene_json = &json->data.array[i];
-        json_assert_type(scene_json, JSON_OBJECT);
-
-        struct gltf_scene scene;
-        if (parse_scene_json(scene_json, &scene)) {
-            return -ERROR_PARSE;
-        }
-
-        vector_append(*scenes_out, scene);
-    }
-
-    return 0;
-}
-
 int parse_gltf_json(const struct json_value *json, struct gltf_file *file_out) {
     int retval = 0;
 
@@ -429,10 +386,10 @@ int parse_gltf_json(const struct json_value *json, struct gltf_file *file_out) {
         struct key_value kv = json->data.object[i];
 
         if (strcmp(kv.key, "accessors") == 0) {
-            if ((retval = parse_accessors_json(
-                         &kv.value, &file_out->accessors))) {
-                return retval;
-            }
+            parse_multiple_json(&kv.value,
+                    struct accessor,
+                    file_out->accessors,
+                    parse_accessor_json);
         } else if (strcmp(kv.key, "buffers") == 0) {
             if ((retval = parse_buffers_json(&kv.value, &file_out->buffers))) {
                 return retval;
@@ -452,9 +409,10 @@ int parse_gltf_json(const struct json_value *json, struct gltf_file *file_out) {
                     file_out->nodes,
                     parse_node_json);
         } else if (strcmp(kv.key, "scenes") == 0) {
-            if ((retval = parse_scenes_json(&kv.value, &file_out->scenes))) {
-                return retval;
-            }
+            parse_multiple_json(json,
+                    struct gltf_scene,
+                    file_out->scenes,
+                    parse_scene_json);
         }
     }
 

@@ -54,7 +54,7 @@ void camera_rotate_absolute(
     glm_vec3_normalize(camera->up);
 }
 
-void camera_rotate(struct camera *camera, float x_angle, float y_angle) {
+void camera_rotate_scaled(struct camera *camera, float x_angle, float y_angle) {
     camera_rotate_absolute(camera,
             x_angle * camera->sensitivity,
             y_angle * camera->sensitivity);
@@ -87,6 +87,8 @@ void camera_get_view_matrix(struct camera *camera, mat4 dest) {
     glm_lookat(camera->position, center, camera->up, dest);
 }
 
-void camera_free(struct camera *camera) {
-    unused(camera);
+// camera->clip transformation matrix
+void camera_get_projection_matrix(
+        struct camera *camera, float aspect, mat4 dest) {
+    glm_perspective(camera->fov, aspect, 0.1f, 100.0f, dest);
 }
