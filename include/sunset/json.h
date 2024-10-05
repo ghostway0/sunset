@@ -10,6 +10,7 @@ enum json_type {
     JSON_ARRAY,
     JSON_STRING,
     JSON_NUMBER,
+    JSON_WHOLE_NUMBER,
     JSON_TRUE,
     JSON_FALSE,
     JSON_NULL,
@@ -29,9 +30,17 @@ struct json_value {
         double number;
         vector(struct key_value) object;
         vector(struct json_value) array;
+        size_t whole_number;
         bool boolean;
     } data;
 };
 
 int json_parse(
         char const *input, size_t input_size, struct json_value *value_out);
+
+#define json_assert_type(value, T) \
+    do { \
+        if ((value)->type != (T)) { \
+            return -ERROR_PARSE; \
+        } \
+    } while (0)

@@ -6,6 +6,7 @@
 
 #include "sunset/camera.h"
 #include "sunset/math.h"
+#include "sunset/utils.h"
 
 void camera_init(struct camera *camera,
         struct camera_state state,
@@ -84,4 +85,8 @@ void camera_get_view_matrix(struct camera *camera, mat4 dest) {
 
     glm_vec3_add(camera->position, camera->direction, center);
     glm_lookat(camera->position, center, camera->up, dest);
+}
+
+void camera_free(struct camera *camera) {
+    unused(camera);
 }

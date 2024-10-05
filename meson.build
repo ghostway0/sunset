@@ -29,6 +29,7 @@ sunset_files = [
   'src/input.c',
   'src/scene.c',
   'src/json.c',
+  'src/gltf.c',
 ]
 
 sunset_lib = static_library(

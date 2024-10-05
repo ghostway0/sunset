@@ -100,8 +100,14 @@ static int parse_number(struct parser *p, struct json_value *value_out) {
         }
     }
 
-    value_out->type = JSON_NUMBER;
-    value_out->data.number = strtod(p->buffer + start, NULL);
+    if (seen_special) {
+        value_out->type = JSON_NUMBER;
+        value_out->data.number = strtod(p->buffer + start, NULL);
+        return 0;
+    } else {
+        value_out->type = JSON_WHOLE_NUMBER;
+        value_out->data.whole_number = strtoul(p->buffer + start, NULL, 10);
+    }
 
     return 0;
 }

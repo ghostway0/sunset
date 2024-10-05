@@ -43,3 +43,5 @@ void camera_recalculate_vectors(struct camera *camera);
 void camera_get_view_matrix(struct camera *camera, mat4 dest);
 
 void camera_vec_to_world(struct camera *camera, vec3 direction);
+
+void camera_free(struct camera *camera);
