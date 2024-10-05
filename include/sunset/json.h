@@ -16,23 +16,21 @@ enum json_type {
     JSON_NULL,
 };
 
-struct json_value;
-
-struct key_value {
-    char const *key;
-    struct json_value *value;
-};
-
 struct json_value {
     enum json_type type;
     union {
-        char const *string;
+        char *string;
         double number;
         vector(struct key_value) object;
         vector(struct json_value) array;
         size_t whole_number;
         bool boolean;
     } data;
+};
+
+struct key_value {
+    char const *key;
+    struct json_value value;
 };
 
 int json_parse(

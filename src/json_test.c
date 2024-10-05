@@ -24,8 +24,8 @@ void test_json_parse_simple_object(void **state) {
     assert_int_equal(value.type, JSON_OBJECT);
     assert_int_equal(vector_size(value.data.object), 1);
     assert_string_equal(value.data.object[0].key, "key");
-    assert_int_equal(value.data.object[0].value->type, JSON_STRING);
-    assert_string_equal(value.data.object[0].value->data.string, "value");
+    assert_int_equal(value.data.object[0].value.type, JSON_STRING);
+    assert_string_equal(value.data.object[0].value.data.string, "value");
 
     json_value_free(&value);
 }
@@ -39,7 +39,7 @@ void test_json_parse_number(void **state) {
     int err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, 0);
     assert_int_equal(value.type, JSON_OBJECT);
-    assert_float_equal(value.data.object[0].value->data.number, 42.5, EPSILON);
+    assert_float_equal(value.data.object[0].value.data.number, 42.5, EPSILON);
 
     json_value_free(&value);
 }
@@ -53,7 +53,7 @@ void test_json_parse_boolean(void **state) {
     int err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, 0);
     assert_int_equal(value.type, JSON_OBJECT);
-    assert_int_equal(value.data.object[0].value->type, JSON_TRUE);
+    assert_int_equal(value.data.object[0].value.type, JSON_TRUE);
 
     json_value_free(&value);
 }
@@ -68,22 +68,22 @@ void test_json_parse_array(void **state) {
     assert_int_equal(err, 0);
 
     assert_int_equal(value.type, JSON_OBJECT);
-    assert_int_equal(value.data.object[0].value->type, JSON_ARRAY);
-    assert_int_equal(vector_size(value.data.object[0].value->data.array), 4);
+    assert_int_equal(value.data.object[0].value.type, JSON_ARRAY);
+    assert_int_equal(vector_size(value.data.object[0].value.data.array), 4);
 
     assert_int_equal(
-            value.data.object[0].value->data.array[0].type, JSON_WHOLE_NUMBER);
-    assert_int_equal(value.data.object[0].value->data.array[0].data.whole_number, 1);
+            value.data.object[0].value.data.array[0].type, JSON_WHOLE_NUMBER);
+    assert_int_equal(value.data.object[0].value.data.array[0].data.whole_number, 1);
 
     assert_int_equal(
-            value.data.object[0].value->data.array[1].type, JSON_NUMBER);
-    assert_float_equal(value.data.object[0].value->data.array[1].data.number, 2.0, EPSILON);
-    assert_int_equal(value.data.object[0].value->data.array[2].type, JSON_TRUE);
+            value.data.object[0].value.data.array[1].type, JSON_NUMBER);
+    assert_float_equal(value.data.object[0].value.data.array[1].data.number, 2.0, EPSILON);
+    assert_int_equal(value.data.object[0].value.data.array[2].type, JSON_TRUE);
 
     assert_int_equal(
-            value.data.object[0].value->data.array[3].type, JSON_STRING);
+            value.data.object[0].value.data.array[3].type, JSON_STRING);
     assert_string_equal(
-            value.data.object[0].value->data.array[3].data.string, "value");
+            value.data.object[0].value.data.array[3].data.string, "value");
 
     json_value_free(&value);
 }
@@ -110,7 +110,6 @@ void test_json_parse_unbalanced_braces(void **state) {
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, -ERROR_PARSE);
-
     json_value_free(&value);
 }
 

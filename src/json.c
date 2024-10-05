@@ -152,10 +152,8 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
 
         struct key_value kv = {
                 .key = key.data.string,
-                .value = malloc(sizeof(struct json_value)),
+                .value = value,
         };
-
-        *kv.value = value;
 
         vector_append(value_out->data.object, kv);
 
@@ -282,7 +280,7 @@ int json_parse(
 void json_value_free(struct json_value *json) {
     if (json->type == JSON_OBJECT) {
         for (size_t i = 0; i < vector_size(json->data.object); i++) {
-            json_value_free(&json->data.object->value[i]);
+            json_value_free(&json->data.object->value);
         }
 
         vector_free(json->data.object);
@@ -297,5 +295,9 @@ void json_value_free(struct json_value *json) {
 
         vector_free(json->data.object);
         return;
+    }
+
+    if (json->type == JSON_STRING) {
+        free(json->data.string);
     }
 }
