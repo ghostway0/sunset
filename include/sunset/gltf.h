@@ -6,25 +6,55 @@
 
 #include <cglm/cglm.h>
 
-#include "gfx.h"
 #include "vector.h"
 
 #define GLB_MAGIC "0x46546C67"
 #define GLB_VERSION 2
 #define GLTF_VERSION "2.0"
 
-struct node {
+#define parse_vecn_json(json, n, vec_out)                                      \
+    do {                                                                       \
+        json_assert_type(json, JSON_ARRAY);                                    \
+        if (vector_size(json->data.array) != n) {                              \
+            return -ERROR_PARSE;                                               \
+        }                                                                      \
+        for (size_t i = 0; i < n; i++) {                                       \
+            json_assert_type(&json->data.array[i], JSON_NUMBER);               \
+            vec_out[i] = json->data.array[i].data.number;                      \
+        }                                                                      \
+    } while (0)
+
+#define parse_matn_json(json, n, vec_out)                                      \
+    do {                                                                       \
+        json_assert_type(json, JSON_ARRAY);                                    \
+        if (vector_size(json->data.array) != n * n) {                          \
+            return -ERROR_PARSE;                                               \
+        }                                                                      \
+        for (size_t i = 0; i < n; i++) {                                       \
+            for (size_t j = 0; j < n; j++) {                                   \
+                json_assert_type(&json->data.array[i * n + j], JSON_NUMBER);   \
+                vec_out[i][j] = json->data.array[i * n + j].data.number;       \
+            }                                                                  \
+        }                                                                      \
+    } while (0)
+
+struct gltf_node {
+    size_t camera;
+    vector(size_t) children;
+    size_t skin;
+    mat4 matrix;
     size_t mesh;
-    size_t *children;
-    size_t num_children;
+    vec4 rotation;
+    vec3 scale;
     vec3 translation;
-    vec4 rotation[4];
-    vec3 scale[3];
+    vector(size_t) weights;
+    char const *name;
+    // extensions
+    // extras
 };
 
 struct gltf_scene {
-    struct node *nodes;
-    size_t num_nodes;
+    vector(size_t) nodes;
 };
 
 struct gltf_buffer {
@@ -112,7 +142,7 @@ struct material {
 
 struct gltf_file {
     vector(struct gltf_scene) scenes;
-    vector(struct node) nodes;
+    vector(struct gltf_node) nodes;
     vector(struct gltf_mesh) meshes;
     vector(struct gltf_buffer) buffers;
     vector(struct gltf_buffer_view) buffer_views;

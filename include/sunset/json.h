@@ -38,6 +38,8 @@ struct json_value {
 int json_parse(
         char const *input, size_t input_size, struct json_value *value_out);
 
+void json_value_free(struct json_value *json);
+
 #define json_assert_type(value, T) \
     do { \
         if ((value)->type != (T)) { \

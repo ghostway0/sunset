@@ -14,8 +14,8 @@ static void gltf_file_init(struct gltf_file *file) {
     vector_create(file->accessors, struct accessor);
     vector_create(file->buffers, struct gltf_buffer);
     vector_create(file->buffer_views, struct gltf_buffer_view);
-    vector_create(file->meshes, struct mesh);
-    vector_create(file->nodes, struct node);
+    vector_create(file->meshes, struct gltf_mesh);
+    vector_create(file->nodes, struct gltf_node);
     vector_create(file->scenes, struct gltf_scene);
 }
 
@@ -115,7 +115,19 @@ static int parse_buffers_json(
             }
         }
 
+        if (buffer.byte_length == 0) {
+            return -ERROR_PARSE;
+        }
+
+        if (buffer.uri == NULL) {
+            return -ERROR_PARSE;
+        }
+
         vector_append(*buffers, buffer);
+    }
+
+    if (vector_size(*buffers) == 0) {
+        return -ERROR_PARSE;
     }
 
     return 0;
@@ -164,6 +176,83 @@ static int parse_buffer_views_json(const struct json_value *json,
     return 0;
 }
 
+static int parse_primitive_attribute(const struct key_value *attribute_kv,
+        struct gltf_primitive *primitive_out) {
+    if (strcmp(attribute_kv->key, "POSITION") == 0) {
+        primitive_out->attributes[PRIMITIVE_POSITION] =
+                attribute_kv->value->data.whole_number;
+    } else if (strcmp(attribute_kv->key, "NORMAL") == 0) {
+        primitive_out->attributes[PRIMITIVE_NORMAL] =
+                attribute_kv->value->data.whole_number;
+    } else if (strcmp(attribute_kv->key, "TANGENT") == 0) {
+        primitive_out->attributes[PRIMITIVE_TANGENT] =
+                attribute_kv->value->data.whole_number;
+    } else if (strcmp(attribute_kv->key, "TEXCOORD_0") == 0) {
+        primitive_out->attributes[PRIMITIVE_TEXCOORD_0] =
+                attribute_kv->value->data.whole_number;
+    } else if (strcmp(attribute_kv->key, "TEXCOORD_1") == 0) {
+        primitive_out->attributes[PRIMITIVE_TEXCOORD_1] =
+                attribute_kv->value->data.whole_number;
+    } else if (strcmp(attribute_kv->key, "COLOR_0") == 0) {
+        primitive_out->attributes[PRIMITIVE_COLOR_0] =
+                attribute_kv->value->data.whole_number;
+    } else if (strcmp(attribute_kv->key, "JOINTS_0") == 0) {
+        primitive_out->attributes[PRIMITIVE_JOINTS_0] =
+                attribute_kv->value->data.whole_number;
+    } else {
+        return -ERROR_PARSE;
+    }
+
+    return 0;
+}
+
+static int parse_primitive_attributes(
+        const struct json_value *json, struct gltf_primitive *primitive_out) {
+    json_assert_type(json, JSON_OBJECT);
+
+    memset(primitive_out->attributes, 0, sizeof(primitive_out->attributes));
+
+    for (size_t j = 0; j < vector_size(json->data.object); j++) {
+        struct key_value attribute_kv = json->data.object[j];
+
+        if (attribute_kv.value->type == JSON_NULL) {
+            continue;
+        }
+
+        json_assert_type(attribute_kv.value, JSON_WHOLE_NUMBER);
+        if (parse_primitive_attribute(&attribute_kv, primitive_out) != 0) {
+            return -ERROR_PARSE;
+        }
+    }
+
+    return 0;
+}
+
+static int parse_primitive_properties(
+        const struct key_value *kv, struct gltf_primitive *primitive_out) {
+    if (strcmp(kv->key, "attributes") == 0) {
+        return parse_primitive_attributes(kv->value, primitive_out);
+    } else if (strcmp(kv->key, "indices") == 0) {
+        json_assert_type(kv->value, JSON_WHOLE_NUMBER);
+        primitive_out->indices = kv->value->data.whole_number;
+    } else if (strcmp(kv->key, "mode") == 0) {
+        json_assert_type(kv->value, JSON_WHOLE_NUMBER);
+
+        if (kv->value->data.whole_number >= NUM_PRIMITIVE_TYPES) {
+            return -ERROR_PARSE;
+        }
+
+        primitive_out->mode = kv->value->data.whole_number;
+    } else if (strcmp(kv->key, "material") == 0) {
+        json_assert_type(kv->value, JSON_WHOLE_NUMBER);
+        primitive_out->material = kv->value->data.whole_number;
+    } else {
+        return -ERROR_PARSE;
+    }
+
+    return 0;
+}
+
 static int parse_primitive(
         const struct json_value *json, struct gltf_primitive *primitive_out) {
     json_assert_type(json, JSON_OBJECT);
@@ -175,65 +264,8 @@ static int parse_primitive(
             continue;
         }
 
-        if (strcmp(kv.key, "attributes") == 0) {
-            memset(primitive_out->attributes,
-                    0,
-                    sizeof(primitive_out->attributes));
-
-            json_assert_type(kv.value, JSON_OBJECT);
-
-            for (size_t j = 0; j < vector_size(kv.value->data.object); j++) {
-                struct key_value attribute_kv = kv.value->data.object[j];
-
-                if (attribute_kv.value->type == JSON_NULL) {
-                    continue;
-                }
-
-                json_assert_type(attribute_kv.value, JSON_WHOLE_NUMBER);
-
-                if (strcmp(attribute_kv.key, "POSITION") == 0) {
-                    json_assert_type(attribute_kv.value, JSON_WHOLE_NUMBER);
-                    primitive_out->attributes[PRIMITIVE_POSITION] =
-                            attribute_kv.value->data.whole_number;
-                } else if (strcmp(attribute_kv.key, "NORMAL") == 0) {
-                    json_assert_type(attribute_kv.value, JSON_WHOLE_NUMBER);
-                    primitive_out->attributes[PRIMITIVE_NORMAL] =
-                            attribute_kv.value->data.whole_number;
-                } else if (strcmp(attribute_kv.key, "TANGENT") == 0) {
-                    json_assert_type(attribute_kv.value, JSON_WHOLE_NUMBER);
-                    primitive_out->attributes[PRIMITIVE_TANGENT] =
-                            attribute_kv.value->data.whole_number;
-                } else if (strcmp(attribute_kv.key, "TEXCOORD_0") == 0) {
-                    json_assert_type(attribute_kv.value, JSON_WHOLE_NUMBER);
-                    primitive_out->attributes[PRIMITIVE_TEXCOORD_0] =
-                            attribute_kv.value->data.whole_number;
-                } else if (strcmp(attribute_kv.key, "TEXCOORD_1") == 0) {
-                    json_assert_type(attribute_kv.value, JSON_WHOLE_NUMBER);
-                    primitive_out->attributes[PRIMITIVE_TEXCOORD_1] =
-                            attribute_kv.value->data.whole_number;
-                } else if (strcmp(attribute_kv.key, "COLOR_0") == 0) {
-                    json_assert_type(attribute_kv.value, JSON_WHOLE_NUMBER);
-                    primitive_out->attributes[PRIMITIVE_COLOR_0] =
-                            attribute_kv.value->data.whole_number;
-                } else if (strcmp(attribute_kv.key, "JOINTS_0") == 0) {
-                    primitive_out->attributes[PRIMITIVE_JOINTS_0] =
-                            attribute_kv.value->data.whole_number;
-                }
-            }
-        } else if (strcmp(kv.key, "indices") == 0) {
-            json_assert_type(kv.value, JSON_WHOLE_NUMBER);
-            primitive_out->indices = kv.value->data.whole_number;
-        } else if (strcmp(kv.key, "mode") == 0) {
-            json_assert_type(kv.value, JSON_WHOLE_NUMBER);
-
-            if (kv.value->data.whole_number >= NUM_PRIMITIVE_TYPES) {
-                return -ERROR_PARSE;
-            }
-
-            primitive_out->mode = kv.value->data.whole_number;
-        } else if (strcmp(kv.key, "material") == 0) {
-            json_assert_type(kv.value, JSON_WHOLE_NUMBER);
-            primitive_out->material = kv.value->data.whole_number;
+        if (parse_primitive_properties(&kv, primitive_out) != 0) {
+            return -ERROR_PARSE;
         }
     }
 
@@ -281,6 +313,125 @@ static int parse_meshes_json(
     return 0;
 }
 
+static int parse_node_json(
+        const struct json_value *json, struct gltf_node *node_out) {
+    json_assert_type(json, JSON_OBJECT);
+
+    for (size_t i = 0; i < vector_size(json->data.object); i++) {
+        struct key_value kv = json->data.object[i];
+
+        if (strcmp(kv.key, "camera") == 0) {
+            json_assert_type(kv.value, JSON_WHOLE_NUMBER);
+            node_out->camera = kv.value->data.whole_number;
+        } else if (strcmp(kv.key, "children") == 0) {
+            json_assert_type(kv.value, JSON_ARRAY);
+
+            vector_create(node_out->children, size_t);
+
+            for (size_t j = 0; j < vector_size(kv.value->data.array); j++) {
+                struct json_value *child_json = &kv.value->data.array[j];
+                json_assert_type(child_json, JSON_WHOLE_NUMBER);
+
+                vector_append(
+                        node_out->children, child_json->data.whole_number);
+            }
+        } else if (strcmp(kv.key, "skin") == 0) {
+            json_assert_type(kv.value, JSON_WHOLE_NUMBER);
+            node_out->skin = kv.value->data.whole_number;
+        } else if (strcmp(kv.key, "matrix") == 0) {
+            parse_matn_json(kv.value, 4, node_out->matrix);
+        } else if (strcmp(kv.key, "mesh") == 0) {
+            json_assert_type(kv.value, JSON_WHOLE_NUMBER);
+            node_out->mesh = kv.value->data.whole_number;
+        } else if (strcmp(kv.key, "rotation") == 0) {
+            parse_vecn_json(kv.value, 4, node_out->rotation);
+        } else if (strcmp(kv.key, "scale") == 0) {
+            parse_vecn_json(kv.value, 3, node_out->scale);
+        } else if (strcmp(kv.key, "translation") == 0) {
+            parse_vecn_json(kv.value, 3, node_out->translation);
+        } else if (strcmp(kv.key, "weights") == 0) {
+            json_assert_type(kv.value, JSON_ARRAY);
+
+            vector_create(node_out->weights, float);
+
+            for (size_t j = 0; j < vector_size(kv.value->data.array); j++) {
+                struct json_value *weight_json = &kv.value->data.array[j];
+                json_assert_type(weight_json, JSON_NUMBER);
+
+                vector_append(node_out->weights, weight_json->data.number);
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int parse_nodes_json(
+        const struct json_value *json, vector(struct gltf_node) * nodes_out) {
+    json_assert_type(json, JSON_ARRAY);
+
+    for (size_t i = 0; i < vector_size(json->data.array); i++) {
+        struct json_value *node_json = &json->data.array[i];
+        json_assert_type(node_json, JSON_OBJECT);
+
+        struct gltf_node node;
+        if (parse_node_json(node_json, &node)) {
+            return -ERROR_PARSE;
+        }
+
+        vector_append(*nodes_out, node);
+    }
+
+    return 0;
+}
+
+static int parse_scene_json(
+        const struct json_value *json, struct gltf_scene *scene_out) {
+    json_assert_type(json, JSON_OBJECT);
+
+    vector_create(scene_out->nodes, size_t);
+
+    for (size_t i = 0; i < vector_size(json->data.object); i++) {
+        struct key_value kv = json->data.object[i];
+
+        if (kv.value->type == JSON_NULL) {
+            continue;
+        }
+
+        if (strcmp(kv.key, "nodes") == 0) {
+            json_assert_type(kv.value, JSON_ARRAY);
+
+            for (size_t j = 0; j < vector_size(kv.value->data.array); j++) {
+                struct json_value *node_json = &kv.value->data.array[j];
+                json_assert_type(node_json, JSON_WHOLE_NUMBER);
+
+                vector_append(scene_out->nodes, node_json->data.whole_number);
+            }
+        }
+    }
+
+    return 0;
+}
+
+static int parse_scenes_json(
+        const struct json_value *json, vector(struct gltf_scene) * scenes_out) {
+    json_assert_type(json, JSON_ARRAY);
+
+    for (size_t i = 0; i < vector_size(json->data.array); i++) {
+        struct json_value *scene_json = &json->data.array[i];
+        json_assert_type(scene_json, JSON_OBJECT);
+
+        struct gltf_scene scene;
+        if (parse_scene_json(scene_json, &scene)) {
+            return -ERROR_PARSE;
+        }
+
+        vector_append(*scenes_out, scene);
+    }
+
+    return 0;
+}
+
 int parse_gltf_json(const struct json_value *json, struct gltf_file *file_out) {
     int retval = 0;
 
@@ -310,9 +461,13 @@ int parse_gltf_json(const struct json_value *json, struct gltf_file *file_out) {
                 return retval;
             }
         } else if (strcmp(kv.key, "nodes") == 0) {
-            // TODO
+            if ((retval = parse_nodes_json(kv.value, &file_out->nodes))) {
+                return retval;
+            }
         } else if (strcmp(kv.key, "scenes") == 0) {
-            // TODO
+            if ((retval = parse_scenes_json(kv.value, &file_out->scenes))) {
+                return retval;
+            }
         }
     }
 
@@ -332,8 +487,12 @@ int gltf_parse(FILE *file, struct gltf_file *file_out) {
 
     struct json_value root;
     if ((retval = json_parse(buffer, file_size, &root))) {
-        return retval;
+        goto cleanup;
     }
 
-    return parse_gltf_json(&root, file_out);
+    retval = parse_gltf_json(&root, file_out);
+
+cleanup:
+    munmap(buffer, file_size);
+    return retval;
 }

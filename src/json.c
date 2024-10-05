@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "sunset/errors.h"
+#include "sunset/vector.h"
 
 #include "sunset/json.h"
 
@@ -276,4 +277,25 @@ int json_parse(
     };
 
     return parse_value(&p, value_out);
+}
+
+void json_value_free(struct json_value *json) {
+    if (json->type == JSON_OBJECT) {
+        for (size_t i = 0; i < vector_size(json->data.object); i++) {
+            json_value_free(&json->data.object->value[i]);
+        }
+
+        vector_free(json->data.object);
+
+        return;
+    }
+
+    if (json->type == JSON_ARRAY) {
+        for (size_t i = 0; i < vector_size(json->data.array); i++) {
+            json_value_free(&json->data.array[i]);
+        }
+
+        vector_free(json->data.object);
+        return;
+    }
 }
