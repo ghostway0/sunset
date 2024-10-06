@@ -174,6 +174,14 @@ int main() {
         log_info("accessors %zu: %u", i, gltf_file.accessors[i].type);
     }
 
+    for (size_t i = 0; i < vector_size(gltf_file.nodes); i++) {
+        log_info("node %zu", i);
+    }
+
+    for (size_t i = 0; i < vector_size(gltf_file.animations); i++) {
+        log_info("animation %zu: %s", i, gltf_file.animations[i].name);
+    }
+
 cleanup:
     context_free(&context);
     font_free(&font);

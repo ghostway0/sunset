@@ -42,6 +42,8 @@ static void gltf_file_init(struct gltf_file *file) {
     vector_create(file->scenes, struct gltf_scene);
     vector_create(file->animations, struct gltf_animation);
     vector_create(file->images, struct gltf_image);
+    vector_create(file->textures, struct gltf_texture);
+    vector_create(file->materials, struct gltf_material);
 }
 
 static int parse_accessor_json(
@@ -481,13 +483,16 @@ static int parse_animation_json(
                     struct gltf_animation_sampler,
                     animation_out->samplers,
                     parse_animation_sampler_json);
+        } else if (strcmp(kv.key, "name") == 0) {
+            json_assert_type(&kv.value, JSON_STRING);
+            string_copy(animation_out->name, kv.value.data.string);
         }
     }
 
     return 0;
 }
 
-int parse_image_json(
+static int parse_image_json(
         const struct json_value *json, struct gltf_image *image_out) {
     json_assert_type(json, JSON_OBJECT);
 
@@ -503,6 +508,59 @@ int parse_image_json(
 
     json_assert_type(&kv.value, JSON_STRING);
     string_copy(image_out->uri, kv.value.data.string);
+
+    return 0;
+}
+
+static int parse_texture_json(
+        const struct json_value *json, struct gltf_texture *texture_out) {
+    json_assert_type(json, JSON_OBJECT);
+
+    for (size_t i = 0; i < vector_size(json->data.object); i++) {
+        struct key_value kv = json->data.object[i];
+
+        if (strcmp(kv.key, "sampler") == 0) {
+            json_assert_type(&kv.value, JSON_WHOLE_NUMBER);
+            texture_out->sampler = kv.value.data.whole_number;
+        } else if (strcmp(kv.key, "source") == 0) {
+            json_assert_type(&kv.value, JSON_WHOLE_NUMBER);
+            texture_out->source = kv.value.data.whole_number;
+        }
+    }
+
+    return 0;
+}
+
+static int parse_material_json(
+        const struct json_value *json, struct gltf_material *material_out) {
+    json_assert_type(json, JSON_OBJECT);
+
+    for (size_t i = 0; i < vector_size(json->data.object); i++) {
+        struct key_value kv = json->data.object[i];
+
+        if (strcmp(kv.key, "name") == 0) {
+            json_assert_type(&kv.value, JSON_STRING);
+            string_copy(material_out->name, kv.value.data.string);
+        } else if (strcmp(kv.key, "pbrMetallicRoughness") == 0) {
+            json_assert_type(&kv.value, JSON_OBJECT);
+
+            for (size_t j = 0; j < vector_size(kv.value.data.object); j++) {
+                struct key_value pbr_kv = kv.value.data.object[j];
+
+                if (strcmp(pbr_kv.key, "baseColorFactor") == 0) {
+                    json_assert_type(&pbr_kv.value, JSON_ARRAY);
+                    parse_vecn_json(
+                            pbr_kv.value, 4, material_out->base_color_factor);
+                } else if (strcmp(pbr_kv.key, "metallicFactor") == 0) {
+                    parse_float_json(
+                            &pbr_kv.value, &material_out->metallic_factor);
+                } else if (strcmp(pbr_kv.key, "roughnessFactor") == 0) {
+                    parse_float_json(
+                            &pbr_kv.value, &material_out->roughness_factor);
+                }
+            }
+        }
+    }
 
     return 0;
 }
@@ -555,6 +613,16 @@ int parse_gltf_json(const struct json_value *json, struct gltf_file *file_out) {
                     struct gltf_image,
                     file_out->images,
                     parse_image_json);
+        } else if (strcmp(kv.key, "textures") == 0) {
+            parse_multiple_json(&kv.value,
+                    struct gltf_texture,
+                    file_out->textures,
+                    parse_texture_json);
+        } else if (strcmp(kv.key, "materials") == 0) {
+            parse_multiple_json(&kv.value,
+                    struct gltf_material,
+                    file_out->materials,
+                    parse_material_json);
         }
     }
 

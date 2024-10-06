@@ -6,6 +6,7 @@
 
 #include <cglm/cglm.h>
 
+#include "cglm/types.h"
 #include "vector.h"
 
 #define GLB_MAGIC "0x46546C67"
@@ -136,8 +137,11 @@ struct gltf_mesh {
     vector(struct gltf_primitive) primitives;
 };
 
-struct material {
-    char const *name;
+struct gltf_material {
+    char *name;
+    vec4 base_color_factor;
+    float metallic_factor;
+    float roughness_factor;
 };
 
 enum interpolation_type {
@@ -170,9 +174,14 @@ struct gltf_animation_sampler {
 };
 
 struct gltf_animation {
-    char const *name;
+    char *name;
     vector(struct gltf_animation_channel) channels;
     vector(struct gltf_animation_sampler) samplers;
+};
+
+struct gltf_texture {
+    size_t sampler;
+    size_t source;
 };
 
 struct gltf_image {
@@ -186,9 +195,10 @@ struct gltf_file {
     vector(struct gltf_buffer) buffers;
     vector(struct gltf_buffer_view) buffer_views;
     vector(struct accessor) accessors;
-    vector(struct material) materials;
+    vector(struct gltf_material) materials;
     vector(struct gltf_animation) animations;
     vector(struct gltf_image) images;
+    vector(struct gltf_texture) textures;
 };
 
 int gltf_parse(FILE *file, struct gltf_file *file_out);

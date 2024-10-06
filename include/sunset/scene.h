@@ -34,6 +34,8 @@ struct object {
     float scale;
     struct effect *effects;
     size_t num_effects;
+    struct animation *animations;
+    size_t num_animations;
 
     struct object *parent;
     struct object **children;
