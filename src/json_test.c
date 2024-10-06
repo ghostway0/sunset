@@ -56,7 +56,6 @@ void test_json_parse_boolean(void **state) {
     assert_int_equal(value.data.object[0].value.type, JSON_BOOLEAN);
     assert_true(value.data.object[0].value.data.boolean);
 
-
     json_value_free(&value);
 }
 
@@ -82,7 +81,8 @@ void test_json_parse_array(void **state) {
             value.data.object[0].value.data.array[1].type, JSON_NUMBER);
     assert_float_equal(
             value.data.object[0].value.data.array[1].data.number, 2.0, EPSILON);
-    assert_int_equal(value.data.object[0].value.data.array[2].type, JSON_BOOLEAN);
+    assert_int_equal(
+            value.data.object[0].value.data.array[2].type, JSON_BOOLEAN);
     assert_true(value.data.object[0].value.data.array[2].data.boolean);
 
     assert_int_equal(

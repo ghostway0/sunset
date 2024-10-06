@@ -5,8 +5,9 @@
 #include <stdint.h>
 
 #include <cglm/cglm.h>
+#include <cglm/types.h>
 
-#include "cglm/types.h"
+#include "gfx.h"
 #include "vector.h"
 
 #define GLB_MAGIC "0x46546C67"
@@ -142,12 +143,6 @@ struct gltf_material {
     vec4 base_color_factor;
     float metallic_factor;
     float roughness_factor;
-};
-
-enum interpolation_type {
-    INTERPOLATION_LINEAR,
-    INTERPOLATION_STEP,
-    INTERPOLATION_CUBICSPLINE,
 };
 
 enum animation_path_type {

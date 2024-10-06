@@ -9,6 +9,7 @@
 
 #include "camera.h"
 #include "gfx.h"
+#include "vector.h"
 
 struct uniform {
     char const *name;
@@ -34,8 +35,6 @@ struct object {
     float scale;
     struct effect *effects;
     size_t num_effects;
-    struct animation *animations;
-    size_t num_animations;
 
     struct object *parent;
     struct object **children;
@@ -69,6 +68,7 @@ struct scene {
     struct mesh skybox;
     struct effect *effects;
     size_t num_effects;
+    vector(struct active_animation) active_animations;
 };
 
 bool position_within_box(vec3 position, struct box box);
