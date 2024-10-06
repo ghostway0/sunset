@@ -26,9 +26,12 @@
     } while (0)
 
 #define string_copy(dest, from)                                                \
-    size_t len = strlen(from);                                                 \
-    dest = malloc(len);                                                        \
-    memcpy(dest, from, len + 1);
+    do {                                                                       \
+        size_t len = strlen(from);                                             \
+        dest = malloc(len);                                                    \
+        memset(dest, 0, len);                                                  \
+        memcpy(dest, from, len + 1);                                           \
+    } while (0)
 
 static void gltf_file_init(struct gltf_file *file) {
     vector_create(file->accessors, struct accessor);

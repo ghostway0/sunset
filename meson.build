@@ -4,7 +4,16 @@ project(
   default_options: ['c_std=gnu2x', 'warning_level=3', 'werror=true'],
 )
 
-add_project_arguments(['-Wno-gnu-empty-struct', '-Wno-newline-eof', '-Wno-empty-translation-unit', '-Wno-gnu-statement-expression-from-macro-expansion'], language: 'c')
+add_project_arguments(
+  [
+    '-Wno-gnu-empty-struct',
+    '-Wno-newline-eof',
+    '-Wno-empty-translation-unit',
+    '-Wno-gnu-statement-expression-from-macro-expansion',
+    '-Wno-gnu-zero-variadic-macro-arguments',
+  ],
+  language: 'c',
+)
 
 is_debug = get_option('debug')
 is_release = not is_debug

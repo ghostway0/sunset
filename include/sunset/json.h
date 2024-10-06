@@ -11,8 +11,7 @@ enum json_type {
     JSON_STRING,
     JSON_NUMBER,
     JSON_WHOLE_NUMBER,
-    JSON_TRUE,
-    JSON_FALSE,
+    JSON_BOOLEAN,
     JSON_NULL,
 };
 

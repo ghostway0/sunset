@@ -240,13 +240,15 @@ static int parse_value(struct parser *p, struct json_value *value_out) {
     }
 
     if (strncmp(p->buffer + p->cursor, "true", 4) == 0) {
-        value_out->type = JSON_TRUE;
+        value_out->type = JSON_BOOLEAN;
+        value_out->data.boolean = true;
         multi_bump(p, 4);
         return 0;
     }
 
     if (strncmp(p->buffer + p->cursor, "false", 5) == 0) {
-        value_out->type = JSON_FALSE;
+        value_out->type = JSON_BOOLEAN;
+        value_out->data.boolean = false;
         multi_bump(p, 5);
         return 0;
     }
