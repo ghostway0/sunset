@@ -71,7 +71,7 @@ void test_camera_movement(void **state) {
                     45.0f,
             });
 
-    camera_rotate_absolute(&camera, M_PI / 2, 0.0f);
+    camera_rotate_absolute(&camera, GLM_PI / 2, 0.0f);
 
     vec3 direction = {1.0f, 0.0f, 0.0f};
     camera_vec_to_world(&camera, direction);

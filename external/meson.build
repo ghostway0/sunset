@@ -47,7 +47,6 @@ cglm_files = [
   'cglm/src/box.c',
   'cglm/src/aabb2d.c',
   'cglm/src/vec2.c',
-  'cglm/src/swift/empty.c',
   'cglm/src/cam.c',
   'cglm/src/bezier.c',
   'cglm/src/mat3x2.c',

@@ -6,7 +6,6 @@
 
 #include "sunset/camera.h"
 #include "sunset/math.h"
-#include "sunset/utils.h"
 
 void camera_init(struct camera *camera,
         struct camera_state state,
@@ -37,8 +36,8 @@ void camera_rotate_absolute(
     camera->yaw += x_angle;
     camera->pitch += y_angle;
 
-    camera->pitch = clamp(camera->pitch, -M_PI_2, M_PI_2);
-    camera->yaw = fmodf(camera->yaw, 2 * M_PI);
+    camera->pitch = clamp(camera->pitch, -GLM_PI_2, GLM_PI_2);
+    camera->yaw = fmodf(camera->yaw, 2 * GLM_PI);
 
     glm_vec3_rotate(
             camera->direction, x_angle * camera->sensitivity, camera->up);

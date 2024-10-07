@@ -1,4 +1,8 @@
+// #define _GNU_SOURCE
+#include <stdlib.h>
+
 #include "sunset/scene.h"
+#include "sunset/utils.h"
 
 bool position_within_box(vec3 position, struct box box) {
     return position[0] >= box.min[0] && position[0] <= box.max[0]
@@ -49,7 +53,7 @@ int compare_chunks(void const *a, void const *b, void *camera_position_ptr) {
 
 void scene_load_chunks(
         struct scene *scene, struct chunk *chunks, size_t num_chunks) {
-    qsort_r(chunks,
+    sunset_qsort(chunks,
             num_chunks,
             sizeof(struct chunk),
             scene->camera->position,
@@ -64,7 +68,7 @@ void scene_move_camera(struct scene *scene, vec3 direction) {
 
     // TODO: partial sort
 
-    qsort_r(scene->chunks,
+    sunset_qsort(scene->chunks,
             scene->num_chunks,
             sizeof(struct chunk),
             scene->camera->position,

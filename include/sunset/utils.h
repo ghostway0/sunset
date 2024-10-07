@@ -14,3 +14,15 @@
 
 #define __VA_ARGS_FOR_EACH_STEP(macro, first, ...)                             \
     , macro(first) __VA_OPT__(__VA_ARGS_FOR_EACH_STEP(macro, __VA_ARGS__))
+
+#ifdef __APPLE__
+
+#define sunset_qsort(base, nmemb, size, arg, compar)                                \
+    qsort_r(base, nmemb, size, arg, compar)
+
+#elif defined(__linux__)
+
+#define sunset_qsort(base, nmemb, size, arg, compar)                                \
+    qsort_r(base, nmemb, size, compar, arg)
+
+#endif

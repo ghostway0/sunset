@@ -1,7 +1,7 @@
 project(
   'gaming',
   'c',
-  default_options: ['c_std=gnu2x', 'warning_level=3', 'werror=true'],
+  default_options: ['c_std=gnu2x', 'warning_level=2', 'werror=true']
 )
 
 add_project_arguments(
@@ -11,6 +11,7 @@ add_project_arguments(
     '-Wno-empty-translation-unit',
     '-Wno-gnu-statement-expression-from-macro-expansion',
     '-Wno-gnu-zero-variadic-macro-arguments',
+    '-D_GNU_SOURCE',
   ],
   language: 'c',
 )
@@ -23,6 +24,8 @@ cmocka_dep = dependency('cmocka')
 glew_dep = dependency('glew', required: true)
 glfw_dep = dependency('glfw3', required: true)
 opengl_dep = dependency('opengl', required: true)
+
+m_dep = cc.find_library('m', required: true)
 
 sunset_inc = include_directories('include/')
 
@@ -50,6 +53,7 @@ sunset_lib = static_library(
     opengl_dep,
     logc_dep,
     cglm_dep,
+    m_dep,
   ],
   include_directories: [sunset_inc],
 )
@@ -68,6 +72,7 @@ executable(
     opengl_dep,
     sunset_dep,
     cglm_dep,
+    m_dep,
   ],
   include_directories: [sunset_inc],
 )
@@ -79,6 +84,7 @@ tests_exe = executable(
     cmocka_dep,
     sunset_dep,
     cglm_dep,
+    m_dep,
   ],
   include_directories: [sunset_inc],
 )
@@ -89,6 +95,7 @@ json_test_exe = executable(
   dependencies: [
     cmocka_dep,
     sunset_dep,
+    m_dep,
   ],
   include_directories: [sunset_inc],
 )

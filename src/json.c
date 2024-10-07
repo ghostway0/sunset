@@ -36,9 +36,9 @@ struct parser {
 
 static int parse_value(struct parser *p, struct json_value *value_out);
 
-static int skip_whitespace(struct parser *p) {
+static void skip_whitespace(struct parser *p) {
     while (p->cursor < p->json_size) {
-        char c = bump(p);
+        char c = p->buffer[p->cursor++];
         if (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
             p->cursor--;
             break;
@@ -46,8 +46,6 @@ static int skip_whitespace(struct parser *p) {
 
         p->line_num += c == '\n';
     }
-
-    return 0;
 }
 
 static int parse_string(struct parser *p, struct json_value *value_out) {
@@ -69,7 +67,7 @@ static int parse_string(struct parser *p, struct json_value *value_out) {
             p->buffer + start,
             p->cursor - start - 1);
 
-    ((char *)value_out->data.string)[p->cursor - start] = '\0';
+    ((char *)value_out->data.string)[p->cursor - start - 1] = '\0';
 
     return 0;
 }
@@ -105,6 +103,8 @@ static int parse_number(struct parser *p, struct json_value *value_out) {
 static int parse_object(struct parser *p, struct json_value *value_out) {
     int retval;
 
+    value_out->type = JSON_OBJECT;
+
     if (p->buffer[p->cursor] != '{') {
         return -ERROR_PARSE;
     }
@@ -119,19 +119,16 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
     }
 
     for (;;) {
-        if ((retval = skip_whitespace(p))) {
-            return retval;
-        }
+        skip_whitespace(p);
 
         struct json_value key;
+
 
         if ((retval = parse_string(p, &key))) {
             return retval;
         }
 
-        if ((retval = skip_whitespace(p))) {
-            return retval;
-        }
+        skip_whitespace(p);
 
         if (p->buffer[p->cursor] != ':') {
             return -ERROR_PARSE;
@@ -151,9 +148,7 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
 
         vector_append(value_out->data.object, kv);
 
-        if ((retval = skip_whitespace(p))) {
-            return retval;
-        }
+        skip_whitespace(p);
 
         if (p->buffer[p->cursor] == '}') {
             bump(p);
@@ -166,8 +161,6 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
 
         bump(p);
     }
-
-    value_out->type = JSON_OBJECT;
 
     return 0;
 }
@@ -185,9 +178,7 @@ static int parse_array(struct parser *p, struct json_value *value_out) {
     vector_create(array, struct json_value);
 
     for (;;) {
-        if ((retval = skip_whitespace(p))) {
-            return retval;
-        }
+        skip_whitespace(p);
 
         struct json_value value;
         if ((retval = parse_value(p, &value))) {
@@ -196,9 +187,7 @@ static int parse_array(struct parser *p, struct json_value *value_out) {
 
         vector_append(array, value);
 
-        if ((retval = skip_whitespace(p))) {
-            return retval;
-        }
+        skip_whitespace(p);
 
         if (p->buffer[p->cursor] == ']') {
             bump(p);
