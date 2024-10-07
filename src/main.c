@@ -4,10 +4,10 @@
 #include <log.h>
 
 #include "sunset/commands.h"
-#include "sunset/errors.h"
 #include "sunset/fonts.h"
 #include "sunset/gfx.h"
-#include "sunset/gltf.h"
+#include "sunset/quadtree.h"
+#include "sunset/scene.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
@@ -61,20 +61,20 @@ int stub_render_command(
         case COMMAND_RECT: {
             struct command_rect const *rect = &command->data.rect;
             log_info("command_rect: %d %d %d %d",
-                    rect->rect.pos.x,
-                    rect->rect.pos.y,
-                    rect->rect.w,
-                    rect->rect.h);
+                    rect->rect.x,
+                    rect->rect.y,
+                    rect->rect.width,
+                    rect->rect.height);
             break;
         }
         case COMMAND_FILLED_RECT: {
             struct command_filled_rect const *filled_rect =
                     &command->data.filled_rect;
             log_info("command_filled_rect: %d %d %d %d",
-                    filled_rect->rect.pos.x,
-                    filled_rect->rect.pos.y,
-                    filled_rect->rect.w,
-                    filled_rect->rect.h);
+                    filled_rect->rect.x,
+                    filled_rect->rect.y,
+                    filled_rect->rect.width,
+                    filled_rect->rect.height);
             break;
         }
         case COMMAND_ARC: {
@@ -125,65 +125,100 @@ int stub_render_command(
     return 0;
 }
 
+bool should_split(struct quad_tree *tree, struct quad_node *node) {
+    unused(tree);
+
+    struct chunk *chunk = node->data;
+
+    return chunk->num_objects > 5;
+}
+
+void *split(struct quad_tree *tree, void *data, struct rect new_bounds) {
+    unused(tree);
+
+    struct chunk *chunk = data;
+
+    struct chunk *new_chunk = malloc(sizeof(struct chunk));
+    *new_chunk = *chunk;
+    new_chunk->bounds = new_bounds;
+
+    size_t in_new_bounds = 0;
+
+    for (size_t i = 0; i < chunk->num_objects; ++i) {
+        struct object *object = chunk->objects + i;
+
+        if (position_within_rect(object->position, new_bounds)) {
+            in_new_bounds++;
+            log_trace("object %zu: " vec3_format " in chunk " rect_format,
+                    i,
+                    vec3_args(object->position),
+                    rect_args(new_bounds));
+        }
+    }
+
+    log_trace("in_new_bounds: %zu", in_new_bounds);
+
+    new_chunk->num_objects = in_new_bounds;
+    new_chunk->objects = malloc(in_new_bounds * sizeof(struct object));
+
+    for (size_t i = 0, j = 0; i < chunk->num_objects; ++i) {
+        struct object *object = chunk->objects + i;
+
+        if (position_within_rect(object->position, new_bounds)) {
+            new_chunk->objects[j++] = *object;
+        }
+    }
+
+    chunk->num_objects -= in_new_bounds;
+
+    return new_chunk;
+}
+
 int main() {
-    struct context context;
-    struct font font;
     int retval = 0;
 
-    if ((retval = load_font_psf2("Tamsyn6x12b.psf", "test", &font))) {
-        error_print("load_font_psf2", retval);
-        goto cleanup;
+    struct quad_tree tree;
+
+    struct rect root_bounds = {0, 0, 200, 200};
+
+    struct object *objects = calloc(10, sizeof(struct object));
+
+    struct object pobjects[10] = {
+            {.position = {10, 10, 0}},
+            {.position = {20, 20, 0}},
+            {.position = {30, 30, 0}},
+            {.position = {40, 40, 0}},
+            {.position = {50, 50, 0}},
+            {.position = {110, 10, 0}},
+            {.position = {120, 20, 0}},
+            {.position = {130, 30, 0}},
+            {.position = {140, 40, 0}},
+            {.position = {150, 50, 0}},
+    };
+
+    memcpy(objects, pobjects, sizeof(pobjects));
+
+    struct chunk root_chunk = {
+            .bounds = root_bounds,
+            .objects = objects,
+            .num_objects = 10,
+            .lights = NULL,
+            .num_lights = 0,
+    };
+
+    quad_tree_create(
+            3, 5, should_split, split, NULL, &root_chunk, root_bounds, &tree);
+
+    for (size_t i = 0; i < 10; ++i) {
+        struct object *object = objects + i;
+        struct chunk *chunk = quad_tree_query(&tree, object->position);
+
+        log_info("object %zu: " vec3_format " in chunk " rect_format,
+                i,
+                vec3_args(object->position), rect_args(chunk->bounds));
     }
 
-    struct glyph const *glyph = font_get_glyph(&font, 'B');
+    quad_tree_destroy(&tree);
 
-    context_init(&context, COMMAND_BUFFER_DEFAULT, NULL, 0, NULL);
-
-    command_buffer_add_nop(&context.command_buffer);
-
-    command_buffer_add_line(&context.command_buffer,
-            (struct point){0, 0},
-            (struct point){1, 1});
-
-    command_buffer_add_rect(
-            &context.command_buffer, (struct rect){{0, 0}, 1, 1});
-
-    command_buffer_add_image(
-            &context.command_buffer, (struct point){50, 2}, &glyph->image);
-
-    while (true) {
-        struct command command;
-        if (command_buffer_pop(&context.command_buffer, &command)) {
-            break;
-        }
-
-        stub_render_command(&context, &command);
-    }
-
-    // struct gltf_file gltf_file;
-    // if ((retval = gltf_load_file("resources/AnimatedCube.gltf", &gltf_file))) {
-    //     error_print("gltf_file_load", retval);
-    //     goto cleanup;
-    // }
-    //
-    // for (size_t i = 0; i < vector_size(gltf_file.buffers); ++i) {
-    //     log_info("buffer %zu: %s", i, gltf_file.buffers[i].uri);
-    // }
-    //
-    // for (size_t i = 0; i < vector_size(gltf_file.accessors); i++) {
-    //     log_info("accessors %zu: %u", i, gltf_file.accessors[i].type);
-    // }
-    //
-    // for (size_t i = 0; i < vector_size(gltf_file.nodes); i++) {
-    //     log_info("node %zu", i);
-    // }
-    //
-    // for (size_t i = 0; i < vector_size(gltf_file.animations); i++) {
-    //     log_info("animation %zu: %s", i, gltf_file.animations[i].name);
-    // }
-
-cleanup:
-    context_free(&context);
-    font_free(&font);
     return retval;
 }

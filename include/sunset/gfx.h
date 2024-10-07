@@ -6,15 +6,22 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
+#define vec3_format "vec3(%f, %f, %f)"
+#define vec3_args(v) v[0], v[1], v[2]
+
+#define rect_format "rect(%zu, %zu, %zu, %zu)"
+#define rect_args(r) r.x, r.y, r.width, r.height
+
 struct point {
     size_t x;
     size_t y;
 };
 
 struct rect {
-    struct point pos;
-    int w;
-    int h;
+    size_t x;
+    size_t y;
+    size_t width;
+    size_t height;
 };
 
 struct rect rect_from_center(struct point center, struct point size);
@@ -24,7 +31,9 @@ struct point rect_center(struct rect rect);
 struct point rect_size(struct rect rect);
 
 // subdivide and get the ith quadrant
-struct rect rect_subdivide_i(struct rect rect, size_t i);
+struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n);
+
+bool position_within_rect(vec3 position, struct rect rect);
 
 struct image {
     size_t w;

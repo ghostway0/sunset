@@ -53,7 +53,7 @@ struct light {
 };
 
 struct chunk {
-    struct box bounding_box;
+    struct rect bounds;
     struct object *objects;
     size_t num_objects;
     struct light *lights;
