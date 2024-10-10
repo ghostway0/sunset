@@ -35,7 +35,7 @@ static void split_node(struct quad_tree *tree, struct quad_node *node) {
 void quad_tree_create(size_t max_depth,
         size_t max_objects,
         bool (*should_split)(struct quad_tree *, struct quad_node *),
-        void *(*split)(struct quad_tree *, void *,  struct rect bounds),
+        void *(*split)(struct quad_tree *, void *, struct rect bounds),
         void (*destroy_data)(void *),
         void *node_data,
         struct rect root_bounds,
@@ -95,7 +95,8 @@ void *quad_tree_query(struct quad_tree *tree, vec3 position) {
 
         for (size_t i = 0; i < 4; ++i) {
             if (current->children[i] != NULL
-                    && position_within_rect(position, current->children[i]->bounds)) {
+                    && position_within_rect(
+                            position, current->children[i]->bounds)) {
                 next = current->children[i];
                 break;
             }
@@ -110,7 +111,6 @@ void *quad_tree_query(struct quad_tree *tree, vec3 position) {
 
     return NULL;
 }
-
 
 void quad_tree_destroy(struct quad_tree *tree) {
     assert(tree != NULL);

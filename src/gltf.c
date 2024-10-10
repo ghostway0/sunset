@@ -1,7 +1,7 @@
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
-#include <stdio.h>
 
 #include <cglm/cglm.h>
 #include <log.h>

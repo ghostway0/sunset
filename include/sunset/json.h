@@ -1,8 +1,8 @@
 #pragma once
 
-#include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "vector.h"
 
@@ -12,7 +12,6 @@
             return -ERROR_PARSE;                                               \
         }                                                                      \
     } while (0)
-
 
 enum json_type {
     JSON_OBJECT,

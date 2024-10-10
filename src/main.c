@@ -4,11 +4,11 @@
 #include <log.h>
 
 #include "sunset/commands.h"
-#include "sunset/shader.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/quadtree.h"
 #include "sunset/scene.h"
+#include "sunset/shader.h"
 #include "sunset/utils.h"
 
 #define container_of(p, T, a)                                                  \
@@ -211,23 +211,20 @@ int main() {
 
     for (size_t i = 0; i < 10; ++i) {
         struct object *object = objects + i;
-        log_info("object %zu: " vec3_format,
-                i,
-                vec3_args(object->position));
+        log_info("object %zu: " vec3_format, i, vec3_args(object->position));
     }
 
     quad_tree_destroy(&tree);
 
     struct uniform uniforms[3] = {
             {.name = "u_model", .type = UNIFORM_MAT4},
-            {.name = "u_view", .type = UNIFORM_MAT4},
-            {.name = "u_projection", .type = UNIFORM_MAT4},
+            {.name = "u_view_proj", .type = UNIFORM_MAT4},
     };
 
     struct shader program = {
             .handle = 0,
             .uniforms = uniforms,
-            .num_uniforms = 3,
+            .num_uniforms = 2,
     };
 
     size_t size = shader_arguments_size(&program);

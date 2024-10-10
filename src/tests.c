@@ -9,6 +9,7 @@
 #include <cmocka.h>
 // clang-format on
 
+#include "sunset/base64.h"
 #include "sunset/camera.h"
 #include "sunset/color.h"
 #include "sunset/ring_buffer.h"
@@ -85,11 +86,54 @@ void test_camera_movement(void **state) {
     assert_float_equal(camera.position[2], 100.0f, EPSILON);
 }
 
+void test_base64_encode(void **state) {
+    unused(state);
+
+    vector(char) encoded;
+    vector_create(encoded, char);
+
+    int err = base64_encode("Hello, World!", 13, &encoded);
+    assert_int_equal(err, 0);
+
+    assert_string_equal(encoded, "SGVsbG8sIFdvcmxkIQ==");
+
+    vector_free(encoded);
+}
+
+void test_base64_decode(void **state) {
+    unused(state);
+
+    vector(char) decoded;
+    vector_create(decoded, char);
+
+    int err = base64_decode("SGVsbG8sIFdvcmxkIQ==", 20, &decoded);
+    assert_int_equal(err, 0);
+
+    assert_string_equal(decoded, "Hello, World!");
+
+    vector_free(decoded);
+}
+
+void test_base64_invalid_input(void **state) {
+    unused(state);
+
+    vector(char) decoded;
+    vector_create(decoded, char);
+
+    int err = base64_decode("SGVsbG8sIFdvcmxkIQ=", 19, &decoded);
+    assert_int_equal(err, -1);
+
+    vector_free(decoded);
+}
+
 int main(void) {
     const struct CMUnitTest general_tests[] = {
             cmocka_unit_test(test_ring_buffer),
             cmocka_unit_test(test_color_from_hex),
             cmocka_unit_test(test_camera_movement),
+            cmocka_unit_test(test_base64_encode),
+            cmocka_unit_test(test_base64_decode),
+            cmocka_unit_test(test_base64_invalid_input),
     };
 
     return cmocka_run_group_tests(general_tests, NULL, NULL);

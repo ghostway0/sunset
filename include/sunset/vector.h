@@ -28,6 +28,19 @@ struct vector_metadata {
 
 #define vector_capacity(v) (vector_metadata(v)->capacity)
 
+#define vector_reserve(v, new_capacity)                                        \
+    do {                                                                       \
+        struct vector_metadata *meta = vector_metadata(v);                     \
+        if (meta->capacity < new_capacity) {                                   \
+            meta = (struct vector_metadata *)realloc(meta,                     \
+                    sizeof(struct vector_metadata)                             \
+                            + sizeof(*(v)) * new_capacity);                    \
+            assert(meta);                                                      \
+            meta->capacity = new_capacity;                                     \
+            v = (void *)(meta + 1);                                            \
+        }                                                                      \
+    } while (0)
+
 #define vector_append(v, value)                                                \
     do {                                                                       \
         struct vector_metadata *meta = vector_metadata(v);                     \

@@ -40,7 +40,7 @@ struct rect rect_from_center(struct point center, struct point size) {
 
 struct point rect_center(struct rect rect) {
     return (struct point){
-            .x = rect.x + rect.width/ 2,
+            .x = rect.x + rect.width / 2,
             .y = rect.y + rect.height / 2,
     };
 }
