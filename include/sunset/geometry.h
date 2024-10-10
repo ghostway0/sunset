@@ -132,12 +132,6 @@ struct animation {
     size_t num_keyframes;
 };
 
-struct active_animation {
-    float start_time;
-    struct animation *animation;
-    size_t curr_keyframe;
-};
-
 struct material {
     struct texture *textures;
     size_t num_textures;

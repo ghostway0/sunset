@@ -57,7 +57,7 @@ void test_camera_movement(void **state) {
     unused(state);
 
     struct camera camera;
-    camera_init(&camera,
+    camera_init(
             (struct camera_state){
                     {0.0f, 0.0f, 0.0f},
                     {0.0f, 1.0f, 0.0f},
@@ -70,7 +70,8 @@ void test_camera_movement(void **state) {
                     100.0f,
                     45.0f,
                     0.75f,
-            });
+            },
+            &camera);
 
     camera_rotate_absolute(&camera, GLM_PI / 2, 0.0f);
 

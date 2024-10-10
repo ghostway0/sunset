@@ -4,6 +4,7 @@
 #include <log.h>
 
 #include "sunset/commands.h"
+#include "sunset/shader.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/quadtree.h"
@@ -216,6 +217,25 @@ int main() {
     }
 
     quad_tree_destroy(&tree);
+
+    struct uniform uniforms[3] = {
+            {.name = "u_model", .type = UNIFORM_MAT4},
+            {.name = "u_view", .type = UNIFORM_MAT4},
+            {.name = "u_projection", .type = UNIFORM_MAT4},
+    };
+
+    struct shader program = {
+            .handle = 0,
+            .uniforms = uniforms,
+            .num_uniforms = 3,
+    };
+
+    size_t size = shader_arguments_size(&program);
+
+    log_info("size: %zu", size);
+
+    shader_print_signature(&program, stdout);
+    printf("\n");
 
     return retval;
 }

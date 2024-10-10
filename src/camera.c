@@ -17,17 +17,17 @@ static void calculate_view_matrix(struct camera *camera, mat4 dest) {
 
 // camera->clip transformation matrix
 static void calculate_projection_matrix(
-        struct camera *camera, float aspect, mat4 dest) {
+        const struct camera *camera, float aspect, mat4 dest) {
     glm_perspective(camera->fov, aspect, 0.1f, 100.0f, dest);
 }
 
-void camera_init(struct camera *camera,
-        struct camera_state state,
-        struct camera_options options) {
-    memcpy(&camera->position, &state.position, sizeof(vec3));
-    memcpy(&camera->up, &state.up, sizeof(vec3));
-    camera->yaw = state.yaw;
-    camera->pitch = state.pitch;
+void camera_init(struct camera_state state,
+        struct camera_options options,
+        struct camera *camera_out) {
+    memcpy(&camera_out->position, &state.position, sizeof(vec3));
+    memcpy(&camera_out->up, &state.up, sizeof(vec3));
+    camera_out->yaw = state.yaw;
+    camera_out->pitch = state.pitch;
 
     glm_vec3_normalize_to(
             (vec3){
@@ -35,19 +35,20 @@ void camera_init(struct camera *camera,
                     sinf(state.pitch),
                     sinf(state.yaw) * cosf(state.pitch),
             },
-            camera->direction);
+            camera_out->direction);
 
-    glm_vec3_cross(camera->up, camera->direction, camera->right);
-    glm_vec3_cross(camera->direction, camera->right, camera->up);
+    glm_vec3_cross(camera_out->up, camera_out->direction, camera_out->right);
+    glm_vec3_cross(camera_out->direction, camera_out->right, camera_out->up);
 
-    camera->fov = options.fov;
-    camera->sensitivity = options.sensitivity;
-    camera->speed = options.speed;
-    camera->aspect_ratio = options.aspect_ratio;
+    camera_out->fov = options.fov;
+    camera_out->sensitivity = options.sensitivity;
+    camera_out->speed = options.speed;
+    camera_out->aspect_ratio = options.aspect_ratio;
 
-    calculate_view_matrix(camera, camera->view_matrix);
-    calculate_projection_matrix(
-            camera, camera->aspect_ratio, camera->projection_matrix);
+    calculate_view_matrix(camera_out, camera_out->view_matrix);
+    calculate_projection_matrix(camera_out,
+            camera_out->aspect_ratio,
+            camera_out->projection_matrix);
 }
 
 void camera_rotate_absolute(

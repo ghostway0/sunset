@@ -1,18 +1,23 @@
 #pragma once
 
-#include "sunset/texture.h"
-#include "sunset/vector.h"
+#include <stddef.h>
 
-enum uniform_type {
-    UNIFORM_INT,
-    UNIFORM_FLOAT,
-    UNIFORM_VEC2,
-    UNIFORM_VEC3,
-    UNIFORM_VEC4,
-    UNIFORM_MAT4,
+#include "camera.h"
+#include "scene.h"
+#include "vector.h"
+
+struct active_animation {
+    float start_time;
+    struct animation *animation;
+    size_t curr_keyframe;
 };
 
 struct render_context {
     vector(struct texture) textures;
     vector(struct uniform) uniforms;
+    vector(struct active_animation) active_animations;
 };
+
+int render(struct render_context *ctx,
+        struct object *scene,
+        struct camera *camera);

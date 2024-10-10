@@ -9,13 +9,6 @@
 
 #include "sunset/camera.h"
 #include "sunset/geometry.h"
-#include "sunset/vector.h"
-
-struct uniform {
-    char const *name;
-    size_t size;
-    void *data;
-};
 
 struct effect {
     void *program;
@@ -64,14 +57,13 @@ struct chunk {
 };
 
 struct scene {
-    // (at least partially) sorted by distance to camera
+    // TODO: use the quadtree
     struct chunk *chunks;
     size_t num_chunks;
     struct camera *camera;
     struct mesh skybox;
     struct effect *effects;
     size_t num_effects;
-    vector(struct active_animation) active_animations;
 };
 
 bool position_within_box(vec3 position, struct box box);
