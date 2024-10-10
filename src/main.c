@@ -5,11 +5,10 @@
 
 #include "sunset/commands.h"
 #include "sunset/fonts.h"
-#include "sunset/gfx.h"
+#include "sunset/geometry.h"
 #include "sunset/quadtree.h"
 #include "sunset/scene.h"
 #include "sunset/utils.h"
-#include "sunset/vector.h"
 
 #define container_of(p, T, a)                                                  \
     ((T *)((uintptr_t)(p) - (uintptr_t)(&((T *)(0))->a)))
@@ -211,11 +210,9 @@ int main() {
 
     for (size_t i = 0; i < 10; ++i) {
         struct object *object = objects + i;
-        struct chunk *chunk = quad_tree_query(&tree, object->position);
-
-        log_info("object %zu: " vec3_format " in chunk " rect_format,
+        log_info("object %zu: " vec3_format,
                 i,
-                vec3_args(object->position), rect_args(chunk->bounds));
+                vec3_args(object->position));
     }
 
     quad_tree_destroy(&tree);

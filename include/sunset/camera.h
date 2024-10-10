@@ -13,6 +13,7 @@ struct camera_options {
     float fov;
     float speed;
     float sensitivity;
+    float aspect_ratio;
 };
 
 struct camera {
@@ -26,6 +27,9 @@ struct camera {
     float fov;
     float speed;
     float sensitivity;
+    float aspect_ratio;
+    mat4 view_matrix;
+    mat4 projection_matrix;
 };
 
 void camera_init(struct camera *camera,
@@ -41,9 +45,6 @@ void camera_move(struct camera *camera, vec3 direction);
 
 void camera_recalculate_vectors(struct camera *camera);
 
-void camera_get_view_matrix(struct camera *camera, mat4 dest);
-
 void camera_vec_to_world(struct camera *camera, vec3 direction);
 
-void camera_get_projection_matrix(
-        struct camera *camera, float aspect, mat4 dest);
+bool camera_point_in_frustum(struct camera *camera, vec3 point);

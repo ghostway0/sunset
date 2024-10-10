@@ -204,6 +204,32 @@ void test_json_parse_empty_object(void **state) {
     assert_int_equal(vector_size(value.data.object), 0);
 }
 
+void test_json_value_print(void **state) {
+    unused(state);
+
+    char const *json = "{\"key\": {\"key2\": \"value2\"}}";
+    char test_buffer[strlen(json) + 1] = {};
+
+    struct json_value value;
+    int err = json_parse(json, strlen(json), &value);
+    assert_int_equal(err, 0);
+
+    FILE *temp_file = tmpfile();
+
+    json_value_print(&value, temp_file, -1);
+
+    fseek(temp_file, 0, SEEK_END);
+    size_t file_size = ftell(temp_file);
+    assert_int_equal(file_size, strlen(json));
+
+    fseek(temp_file, 0, SEEK_SET);
+    fread(test_buffer, strlen(json), 1, temp_file);
+    assert_string_equal(test_buffer, "{\"key\": {\"key2\": \"value2\"}}");
+
+    fclose(temp_file);
+    json_value_free(&value);
+}
+
 int main(void) {
     const struct CMUnitTest json_tests[] = {
             cmocka_unit_test(test_json_parse_simple_object),
@@ -219,6 +245,7 @@ int main(void) {
             cmocka_unit_test(test_json_parse_invalid_number_format),
             cmocka_unit_test(test_json_parse_weird_number),
             cmocka_unit_test(test_json_parse_empty_object),
+            cmocka_unit_test(test_json_value_print),
     };
 
     return cmocka_run_group_tests(json_tests, NULL, NULL);

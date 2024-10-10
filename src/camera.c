@@ -7,6 +7,20 @@
 #include "sunset/camera.h"
 #include "sunset/math.h"
 
+// world->camera transformation matrix
+static void calculate_view_matrix(struct camera *camera, mat4 dest) {
+    vec3 center;
+
+    glm_vec3_add(camera->position, camera->direction, center);
+    glm_lookat(camera->position, center, camera->up, dest);
+}
+
+// camera->clip transformation matrix
+static void calculate_projection_matrix(
+        struct camera *camera, float aspect, mat4 dest) {
+    glm_perspective(camera->fov, aspect, 0.1f, 100.0f, dest);
+}
+
 void camera_init(struct camera *camera,
         struct camera_state state,
         struct camera_options options) {
@@ -29,6 +43,11 @@ void camera_init(struct camera *camera,
     camera->fov = options.fov;
     camera->sensitivity = options.sensitivity;
     camera->speed = options.speed;
+    camera->aspect_ratio = options.aspect_ratio;
+
+    calculate_view_matrix(camera, camera->view_matrix);
+    calculate_projection_matrix(
+            camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
 void camera_rotate_absolute(
@@ -51,6 +70,10 @@ void camera_rotate_absolute(
 
     glm_vec3_normalize(camera->right);
     glm_vec3_normalize(camera->up);
+
+    calculate_view_matrix(camera, camera->view_matrix);
+    calculate_projection_matrix(
+            camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
 void camera_rotate_scaled(struct camera *camera, float x_angle, float y_angle) {
@@ -68,6 +91,10 @@ void camera_vec_to_world(struct camera *camera, vec3 direction) {
 void camera_move(struct camera *camera, vec3 direction) {
     glm_vec3_scale(direction, camera->speed, direction);
     glm_vec3_add(camera->position, direction, camera->position);
+
+    calculate_view_matrix(camera, camera->view_matrix);
+    calculate_projection_matrix(
+            camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
 void camera_recalculate_vectors(struct camera *camera) {
@@ -76,18 +103,24 @@ void camera_recalculate_vectors(struct camera *camera) {
     glm_vec3_normalize(camera->up);
     glm_vec3_cross(camera->up, camera->direction, camera->right);
     glm_vec3_normalize(camera->right);
+    calculate_view_matrix(camera, camera->view_matrix);
+    calculate_projection_matrix(
+            camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
-// world->camera transformation matrix
-void camera_get_view_matrix(struct camera *camera, mat4 dest) {
-    vec3 center;
+bool camera_point_in_frustum(struct camera *camera, vec3 point) {
+    vec4 clip = {point[0], point[1], point[2], 1.0f};
 
-    glm_vec3_add(camera->position, camera->direction, center);
-    glm_lookat(camera->position, center, camera->up, dest);
-}
+    mat4 view_projection;
+    glm_mat4_mul(
+            camera->projection_matrix, camera->view_matrix, view_projection);
 
-// camera->clip transformation matrix
-void camera_get_projection_matrix(
-        struct camera *camera, float aspect, mat4 dest) {
-    glm_perspective(camera->fov, aspect, 0.1f, 100.0f, dest);
+    glm_mat4_mulv(view_projection, clip, clip);
+
+    clip[0] /= clip[3];
+    clip[1] /= clip[3];
+    clip[2] /= clip[3];
+
+    return clip[0] >= -1.0f && clip[0] <= 1.0f && clip[1] >= -1.0f
+            && clip[1] <= 1.0f && clip[2] >= -1.0f && clip[2] <= 1.0f;
 }

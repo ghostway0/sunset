@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "gfx.h"
+#include "sunset/geometry.h"
 
 struct quad_node {
     size_t depth;

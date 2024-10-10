@@ -6,7 +6,7 @@
 
 #include "sunset/color.h"
 #include "sunset/errors.h"
-#include "sunset/gfx.h"
+#include "sunset/geometry.h"
 
 #include "sunset/fonts.h"
 

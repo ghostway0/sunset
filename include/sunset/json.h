@@ -1,9 +1,18 @@
 #pragma once
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stddef.h>
 
 #include "vector.h"
+
+#define json_assert_type(value, T)                                             \
+    do {                                                                       \
+        if ((value)->type != (T)) {                                            \
+            return -ERROR_PARSE;                                               \
+        }                                                                      \
+    } while (0)
+
 
 enum json_type {
     JSON_OBJECT,
@@ -37,9 +46,5 @@ int json_parse(
 
 void json_value_free(struct json_value *json);
 
-#define json_assert_type(value, T)                                             \
-    do {                                                                       \
-        if ((value)->type != (T)) {                                            \
-            return -ERROR_PARSE;                                               \
-        }                                                                      \
-    } while (0)
+// -1 for not pretty
+void json_value_print(struct json_value *json, FILE *file, size_t indent);

@@ -125,15 +125,6 @@ struct keyframe {
     } data;
 };
 
-struct texture {
-    uint32_t id;
-    size_t width;
-    size_t height;
-    size_t channels;
-    uint8_t *data;
-    size_t data_size;
-};
-
 struct animation {
     char const *name;
     float duration;

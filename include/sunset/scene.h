@@ -7,9 +7,9 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
-#include "camera.h"
-#include "gfx.h"
-#include "vector.h"
+#include "sunset/camera.h"
+#include "sunset/geometry.h"
+#include "sunset/vector.h"
 
 struct uniform {
     char const *name;
@@ -41,6 +41,8 @@ struct object {
     size_t num_children;
 };
 
+bool object_within_frustum(struct object const *object, struct camera *camera);
+
 enum light_type {
     LIGHT_DIRECTIONAL,
     LIGHT_SPOTLIGHT,
@@ -58,6 +60,7 @@ struct chunk {
     size_t num_objects;
     struct light *lights;
     size_t num_lights;
+    size_t id;
 };
 
 struct scene {

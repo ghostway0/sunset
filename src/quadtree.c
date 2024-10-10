@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sunset/gfx.h"
+#include "sunset/geometry.h"
 #include "sunset/quadtree.h"
 
 // split node into 4 quadrants recursively

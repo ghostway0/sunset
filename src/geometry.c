@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "sunset/color.h"
-#include "sunset/gfx.h"
+#include "sunset/geometry.h"
 
 void show_image_grayscale(struct image const *image) {
     for (size_t y = 0; y < image->h; y++) {

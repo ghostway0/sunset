@@ -123,7 +123,6 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
 
         struct json_value key;
 
-
         if ((retval = parse_string(p, &key))) {
             return retval;
         }
@@ -285,5 +284,78 @@ void json_value_free(struct json_value *json) {
 
     if (json->type == JSON_STRING) {
         free(json->data.string);
+    }
+}
+
+static void print_indent(FILE *file, size_t indent) {
+    if (indent != (size_t)-1) {
+        for (size_t i = 0; i < indent; i++) {
+            fputc(' ', file);
+        }
+    }
+}
+
+void json_value_print(struct json_value *json, FILE *file, size_t indent) {
+    switch (json->type) {
+        case JSON_STRING:
+            fprintf(file, "\"%s\"", json->data.string);
+            break;
+        case JSON_WHOLE_NUMBER:
+            fprintf(file, "%zu", json->data.whole_number);
+            break;
+        case JSON_NUMBER:
+            fprintf(file, "%f", json->data.number);
+            break;
+        case JSON_BOOLEAN:
+            fprintf(file, json->data.boolean ? "true" : "false");
+            break;
+        case JSON_NULL:
+            fprintf(file, "null");
+            break;
+        case JSON_OBJECT: {
+            fprintf(file, "{");
+            for (size_t i = 0; i < vector_size(json->data.object); i++) {
+                if (indent != (size_t)-1) {
+                    fprintf(file, "\n");
+                    print_indent(file, indent + 2);
+                }
+                fprintf(file, "\"%s\": ", json->data.object[i].key);
+                json_value_print(&json->data.object[i].value,
+                        file,
+                        indent != (size_t)-1 ? indent + 2 : indent);
+                if (i != vector_size(json->data.object) - 1) {
+                    fprintf(file, indent != (size_t)-1 ? "," : ", ");
+                }
+            }
+            if (indent != (size_t)-1) {
+                fprintf(file, "\n");
+                print_indent(file, indent);
+            }
+            fprintf(file, "}");
+            break;
+        }
+        case JSON_ARRAY: {
+            fprintf(file, "[");
+            for (size_t i = 0; i < vector_size(json->data.array); i++) {
+                if (indent != (size_t)-1) {
+                    fprintf(file, "\n");
+                    print_indent(file, indent + 2);
+                }
+                json_value_print(&json->data.array[i],
+                        file,
+                        indent != (size_t)-1 ? indent + 2 : indent);
+                if (i != vector_size(json->data.array) - 1) {
+                    fprintf(file, indent != (size_t)-1 ? "," : ", ");
+                }
+            }
+            if (indent != (size_t)-1) {
+                fprintf(file, "\n");
+                print_indent(file, indent);
+            }
+            fprintf(file, "]");
+            break;
+        }
+        default:
+            unreachable();
     }
 }

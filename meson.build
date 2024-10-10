@@ -36,7 +36,7 @@ sunset_files = [
   'src/errors.c',
   'src/fonts.c',
   'src/ring_buffer.c',
-  'src/gfx.c',
+  'src/geometry.c',
   'src/camera.c',
   'src/input.c',
   'src/scene.c',

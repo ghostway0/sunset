@@ -69,6 +69,7 @@ void test_camera_movement(void **state) {
                     0.1f,
                     100.0f,
                     45.0f,
+                    0.75f,
             });
 
     camera_rotate_absolute(&camera, GLM_PI / 2, 0.0f);

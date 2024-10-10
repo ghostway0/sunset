@@ -32,7 +32,9 @@ struct chunk *get_chunk_for(struct scene const *scene, vec3 position) {
 }
 
 static float rect_distance_to_camera(float *camera_position, struct rect rect) {
-    vec3 center = {rect.x + (float)rect.width / 2, rect.y + (float)rect.height / 2, 0.0f};
+    vec3 center = {rect.x + (float)rect.width / 2,
+            rect.y + (float)rect.height / 2,
+            0.0f};
     return glm_vec3_distance(camera_position, center);
 }
 
@@ -80,4 +82,26 @@ void scene_move_camera(struct scene *scene, vec3 direction) {
             sizeof(struct chunk),
             scene->camera->position,
             compare_chunks);
+}
+
+bool object_within_frustum(const struct object *object, struct camera *camera) {
+    struct box box = object->bounding_box;
+    vec3 corners[8] = {
+            {box.min[0], box.min[1], box.min[2]},
+            {box.min[0], box.min[1], box.max[2]},
+            {box.min[0], box.max[1], box.min[2]},
+            {box.min[0], box.max[1], box.max[2]},
+            {box.max[0], box.min[1], box.min[2]},
+            {box.max[0], box.min[1], box.max[2]},
+            {box.max[0], box.max[1], box.min[2]},
+            {box.max[0], box.max[1], box.max[2]},
+    };
+
+    for (size_t i = 0; i < 8; ++i) {
+        if (camera_point_in_frustum(camera, corners[i])) {
+            return true;
+        }
+    }
+
+    return false;
 }
