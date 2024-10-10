@@ -216,9 +216,9 @@ int main() {
 
     quad_tree_destroy(&tree);
 
-    struct uniform uniforms[3] = {
-            {.name = "u_model", .type = UNIFORM_MAT4},
-            {.name = "u_view_proj", .type = UNIFORM_MAT4},
+    struct uniform uniforms[2] = {
+            {.name = "u_model", .lane_type = UNIFORM_F32, .lanes = 16},
+            {.name = "u_view", .lane_type = UNIFORM_F32, .lanes = 16},
     };
 
     struct shader program = {

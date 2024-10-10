@@ -4,12 +4,10 @@
 #include "sunset/shader.h"
 
 size_t const uniform_sizes[NUM_UNIFORM_TYPES] = {
-        [UNIFORM_INT] = 4,
-        [UNIFORM_FLOAT] = 4,
-        [UNIFORM_VEC2] = 8,
-        [UNIFORM_VEC3] = 12,
-        [UNIFORM_VEC4] = 16,
-        [UNIFORM_MAT4] = 64,
+        [UNIFORM_I32] = sizeof(int),
+        [UNIFORM_F32] = sizeof(float),
+        [UNIFORM_F64] = sizeof(double),
+        [UNIFORM_BYTE] = sizeof(char),
 };
 
 size_t shader_arguments_size(struct shader const *shader) {
@@ -18,12 +16,7 @@ size_t shader_arguments_size(struct shader const *shader) {
     for (size_t i = 0; i < shader->num_uniforms; i++) {
         struct uniform const *uniform = &shader->uniforms[i];
 
-        if (uniform->type == UNIFORM_ARBT) {
-            sum += uniform->size;
-            continue;
-        }
-
-        sum += uniform_sizes[uniform->type];
+        sum += uniform_sizes[uniform->lane_type] * uniform->lanes;
     }
 
     return sum;
@@ -41,26 +34,27 @@ int shader_launch(struct shader *shader, struct byte_stream *arguments) {
 }
 
 static char const *uniform_type_names[NUM_UNIFORM_TYPES] = {
-        [UNIFORM_INT] = "int",
-        [UNIFORM_FLOAT] = "float",
-        [UNIFORM_VEC2] = "vec2",
-        [UNIFORM_VEC3] = "vec3",
-        [UNIFORM_VEC4] = "vec4",
-        [UNIFORM_MAT4] = "mat4",
-        [UNIFORM_ARBT] = "arbt",
+        [UNIFORM_I32] = "i32",
+        [UNIFORM_F32] = "f32",
+        [UNIFORM_F64] = "f64",
+        [UNIFORM_BYTE] = "byte",
 };
 
 void shader_print_signature(struct shader const *shader, FILE *stream) {
     for (size_t i = 0; i < shader->num_uniforms; i++) {
         struct uniform const *uniform = &shader->uniforms[i];
 
-        if (uniform->type == UNIFORM_ARBT) {
-            fprintf(stream, "%s: arbt(%zu)", uniform->name, uniform->size);
+        if (uniform->lanes > 1) {
+            fprintf(stream,
+                    "%s: %s[%zu]",
+                    uniform->name,
+                    uniform_type_names[uniform->lane_type],
+                    uniform->lanes);
         } else {
             fprintf(stream,
                     "%s: %s",
                     uniform->name,
-                    uniform_type_names[uniform->type]);
+                    uniform_type_names[uniform->lane_type]);
         }
 
         if (i < shader->num_uniforms - 1) {

@@ -8,13 +8,10 @@
 #include "byte_stream.h"
 
 enum uniform_type {
-    UNIFORM_INT = 0,
-    UNIFORM_FLOAT,
-    UNIFORM_VEC2,
-    UNIFORM_VEC3,
-    UNIFORM_VEC4,
-    UNIFORM_MAT4,
-    UNIFORM_ARBT,
+    UNIFORM_I32 = 0,
+    UNIFORM_F32,
+    UNIFORM_F64,
+    UNIFORM_BYTE,
 
     // keep this last
     NUM_UNIFORM_TYPES,
@@ -24,8 +21,8 @@ extern size_t const uniform_sizes[NUM_UNIFORM_TYPES];
 
 struct uniform {
     char const *name;
-    enum uniform_type type;
-    size_t size; // used when type is UNIFORM_ARBT
+    enum uniform_type lane_type;
+    size_t lanes;
 };
 
 struct shader {
