@@ -45,6 +45,7 @@ sunset_files = [
   'src/quadtree.c',
   'src/byte_stream.c',
   'src/shader.c',
+  'src/base64.c',
 ]
 
 sunset_lib = static_library(

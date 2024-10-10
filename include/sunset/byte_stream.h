@@ -4,7 +4,7 @@
 
 struct byte_stream {
     size_t size;
-    char const *data;
+    char *data;
     size_t cursor;
 };
 

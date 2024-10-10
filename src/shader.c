@@ -55,12 +55,12 @@ void shader_print_signature(struct shader const *shader, FILE *stream) {
         struct uniform const *uniform = &shader->uniforms[i];
 
         if (uniform->type == UNIFORM_ARBT) {
-            fprintf(stream, "arbt(%zu) %s", uniform->size, uniform->name);
+            fprintf(stream, "%s: arbt(%zu)", uniform->name, uniform->size);
         } else {
             fprintf(stream,
-                    "%s %s",
-                    uniform_type_names[uniform->type],
-                    uniform->name);
+                    "%s: %s",
+                    uniform->name,
+                    uniform_type_names[uniform->type]);
         }
 
         if (i < shader->num_uniforms - 1) {
