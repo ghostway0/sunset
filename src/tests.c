@@ -9,10 +9,13 @@
 #include <cmocka.h>
 // clang-format on
 
+#include "external/log.c/src/log.h"
 #include "sunset/base64.h"
 #include "sunset/camera.h"
 #include "sunset/color.h"
+#include "sunset/quadtree.h"
 #include "sunset/ring_buffer.h"
+#include "sunset/scene.h"
 #include "sunset/utils.h"
 
 #define EPSILON 0.001
@@ -124,6 +127,98 @@ void test_base64_invalid_input(void **state) {
     assert_int_equal(err, -1);
 
     vector_free(decoded);
+}
+
+bool should_split(struct quad_tree *tree, struct quad_node *node) {
+    unused(tree);
+
+    struct chunk *chunk = node->data;
+
+    return chunk->num_objects > 5;
+}
+
+void *split(struct quad_tree *tree, void *data, struct rect new_bounds) {
+    unused(tree);
+
+    struct chunk *chunk = data;
+
+    struct chunk *new_chunk = malloc(sizeof(struct chunk));
+    *new_chunk = *chunk;
+    new_chunk->bounds = new_bounds;
+
+    size_t in_new_bounds = 0;
+
+    for (size_t i = 0; i < chunk->num_objects; ++i) {
+        struct object *object = chunk->objects + i;
+
+        if (position_within_rect(object->position, new_bounds)) {
+            in_new_bounds++;
+            log_trace("object %zu: " vec3_format " in chunk " rect_format,
+                    i,
+                    vec3_args(object->position),
+                    rect_args(new_bounds));
+        }
+    }
+
+    log_trace("in_new_bounds: %zu", in_new_bounds);
+
+    new_chunk->num_objects = in_new_bounds;
+    new_chunk->objects = malloc(in_new_bounds * sizeof(struct object));
+
+    for (size_t i = 0, j = 0; i < chunk->num_objects; ++i) {
+        struct object *object = chunk->objects + i;
+
+        if (position_within_rect(object->position, new_bounds)) {
+            new_chunk->objects[j++] = *object;
+        }
+    }
+
+    chunk->num_objects -= in_new_bounds;
+
+    return new_chunk;
+}
+
+void test_quad_tree(void **state) {
+    unused(state);
+
+    struct quad_tree tree;
+
+    struct rect root_bounds = {0, 0, 200, 200};
+    struct object *objects = calloc(10, sizeof(struct object));
+
+    struct object pobjects[10] = {
+            {.position = {10, 10, 0}},
+            {.position = {20, 20, 0}},
+            {.position = {30, 30, 0}},
+            {.position = {40, 40, 0}},
+            {.position = {50, 50, 0}},
+            {.position = {110, 10, 0}},
+            {.position = {120, 20, 0}},
+            {.position = {130, 30, 0}},
+            {.position = {140, 40, 0}},
+            {.position = {150, 50, 0}},
+    };
+
+    memcpy(objects, pobjects, sizeof(pobjects));
+
+    struct chunk root_chunk = {
+            .bounds = root_bounds,
+            .objects = objects,
+            .num_objects = 10,
+            .lights = NULL,
+            .num_lights = 0,
+    };
+
+    quad_tree_create(
+            3, 5, should_split, split, NULL, &root_chunk, root_bounds, &tree);
+
+    for (size_t i = 0; i < 10; ++i) {
+        struct object *object = objects + i;
+        log_info("object %zu: " vec3_format, i, vec3_args(object->position));
+    }
+
+    quad_tree_destroy(&tree);
+
 }
 
 int main(void) {

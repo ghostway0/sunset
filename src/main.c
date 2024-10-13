@@ -1,15 +1,22 @@
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include <stddef.h>
 #include <string.h>
 
 #include <log.h>
+#include <unistd.h>
 
+#include "sunset/backend.h"
 #include "sunset/commands.h"
+#include "sunset/config.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/quadtree.h"
 #include "sunset/scene.h"
-#include "sunset/shader.h"
 #include "sunset/utils.h"
+
+#include "daboor.h"
 
 #define container_of(p, T, a)                                                  \
     ((T *)((uintptr_t)(p) - (uintptr_t)(&((T *)(0))->a)))
@@ -125,114 +132,132 @@ int stub_render_command(
     return 0;
 }
 
-bool should_split(struct quad_tree *tree, struct quad_node *node) {
-    unused(tree);
-
-    struct chunk *chunk = node->data;
-
-    return chunk->num_objects > 5;
-}
-
-void *split(struct quad_tree *tree, void *data, struct rect new_bounds) {
-    unused(tree);
-
-    struct chunk *chunk = data;
-
-    struct chunk *new_chunk = malloc(sizeof(struct chunk));
-    *new_chunk = *chunk;
-    new_chunk->bounds = new_bounds;
-
-    size_t in_new_bounds = 0;
-
-    for (size_t i = 0; i < chunk->num_objects; ++i) {
-        struct object *object = chunk->objects + i;
-
-        if (position_within_rect(object->position, new_bounds)) {
-            in_new_bounds++;
-            log_trace("object %zu: " vec3_format " in chunk " rect_format,
-                    i,
-                    vec3_args(object->position),
-                    rect_args(new_bounds));
-        }
-    }
-
-    log_trace("in_new_bounds: %zu", in_new_bounds);
-
-    new_chunk->num_objects = in_new_bounds;
-    new_chunk->objects = malloc(in_new_bounds * sizeof(struct object));
-
-    for (size_t i = 0, j = 0; i < chunk->num_objects; ++i) {
-        struct object *object = chunk->objects + i;
-
-        if (position_within_rect(object->position, new_bounds)) {
-            new_chunk->objects[j++] = *object;
-        }
-    }
-
-    chunk->num_objects -= in_new_bounds;
-
-    return new_chunk;
-}
-
 int main() {
     int retval = 0;
 
-    struct quad_tree tree;
+    struct render_context render_context;
 
-    struct rect root_bounds = {0, 0, 200, 200};
+    backend_setup(&render_context, (struct render_config){800, 600});
 
-    struct object *objects = calloc(10, sizeof(struct object));
-
-    struct object pobjects[10] = {
-            {.position = {10, 10, 0}},
-            {.position = {20, 20, 0}},
-            {.position = {30, 30, 0}},
-            {.position = {40, 40, 0}},
-            {.position = {50, 50, 0}},
-            {.position = {110, 10, 0}},
-            {.position = {120, 20, 0}},
-            {.position = {130, 30, 0}},
-            {.position = {140, 40, 0}},
-            {.position = {150, 50, 0}},
+    struct shader_signature signature = {
+            .uniforms = NULL,
+            .num_uniforms = 0,
+            .ssbos = NULL,
+            .num_ssbos = 0,
     };
 
-    memcpy(objects, pobjects, sizeof(pobjects));
-
-    struct chunk root_chunk = {
-            .bounds = root_bounds,
-            .objects = objects,
-            .num_objects = 10,
-            .lights = NULL,
-            .num_lights = 0,
-    };
-
-    quad_tree_create(
-            3, 5, should_split, split, NULL, &root_chunk, root_bounds, &tree);
-
-    for (size_t i = 0; i < 10; ++i) {
-        struct object *object = objects + i;
-        log_info("object %zu: " vec3_format, i, vec3_args(object->position));
+    FILE *file = fopen("shader.vert", "r");
+    if (!file) {
+        log_error("fopen failed");
+        retval = 1;
+        goto cleanup;
     }
 
-    quad_tree_destroy(&tree);
+    char source[1024];
+    size_t num_read = fread(source, 1, sizeof(source), file);
+    source[num_read] = '\0';
 
-    struct uniform uniforms[2] = {
-            {.name = "u_model", .lane_type = UNIFORM_F32, .lanes = 16},
-            {.name = "u_view", .lane_type = UNIFORM_F32, .lanes = 16},
+    struct shader vertex, fragment;
+
+    if (backend_create_shader(source, SHADER_VERTEX, signature, &vertex)) {
+        log_error("backend_create_shader failed");
+        retval = 1;
+        goto cleanup;
+    }
+
+    file = fopen("shader.frag", "r");
+    if (!file) {
+        log_error("fopen failed");
+        retval = 1;
+        goto cleanup;
+    }
+
+    num_read = fread(source, 1, sizeof(source), file);
+    source[num_read] = '\0';
+
+    if (backend_create_shader(source, SHADER_FRAGMENT, signature, &fragment)) {
+        log_error("backend_create_shader failed");
+        retval = 1;
+        goto cleanup;
+    }
+
+    struct uniform_argument uniform_arguments[] = {};
+
+    struct shader_arguments arguments = {
+            .uniforms = uniform_arguments,
+            .num_uniforms =
+                    sizeof(uniform_arguments) / sizeof(struct uniform_argument),
+            .ssbos = NULL,
+            .num_ssbos = 0,
     };
 
-    struct shader program = {
-            .handle = 0,
-            .uniforms = uniforms,
-            .num_uniforms = 2,
+    // TODO: should be with a `render_context`
+    if (backend_setup_shader(&vertex, &arguments)) {
+        log_error("backend_setup_shader failed");
+        retval = 1;
+        goto cleanup;
+    }
+
+    struct byte_stream texture1;
+    int texture1_data[] = {0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000};
+    byte_stream_from((uint8_t *)texture1_data, 4, &texture1);
+    
+    struct uniform_argument uniform_arguments2[] = {
     };
 
-    size_t size = shader_arguments_size(&program);
+    struct shader_arguments arguments2 = {
+            .uniforms = uniform_arguments2,
+            .num_uniforms = sizeof(uniform_arguments2)
+                    / sizeof(struct uniform_argument),
+            .ssbos = NULL,
+            .num_ssbos = 0,
+    };
 
-    log_info("size: %zu", size);
+    if (backend_setup_shader(&fragment, &arguments2)) {
+        log_error("backend_setup_shader failed");
+        retval = 1;
+        goto cleanup;
+    }
 
-    shader_print_signature(&program, stdout);
-    printf("\n");
+    float vertices[] = {
+            -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f};
 
+    unsigned int indices[] = {0, 1, 2};
+
+    unsigned int VAO, VBO, EBO;
+
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(
+            GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
+
+    while (!glfwWindowShouldClose((GLFWwindow *)render_context.window.handle)) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // glUseProgram(vertex.handle);
+        // glUseProgram(fragment.handle);
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        glfwSwapBuffers((GLFWwindow *)render_context.window.handle);
+        glfwPollEvents();
+    }
+
+cleanup:
     return retval;
 }

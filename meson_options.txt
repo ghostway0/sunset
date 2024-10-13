@@ -1,0 +1,7 @@
+option(
+  'render_backend',
+  type: 'combo',
+  choices: ['opengl'],
+  value: 'opengl',
+  description: 'select backend to use',
+)

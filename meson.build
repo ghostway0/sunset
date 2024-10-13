@@ -11,10 +11,19 @@ add_project_arguments(
     '-Wno-empty-translation-unit',
     '-Wno-gnu-statement-expression-from-macro-expansion',
     '-Wno-gnu-zero-variadic-macro-arguments',
+    '-Wno-gnu-alignof-expression',
     '-D_GNU_SOURCE',
   ],
   language: 'c',
 )
+
+render_backend = get_option('render_backend')
+
+if render_backend == 'opengl'
+  add_project_arguments('-DSUNSET_BACKEND_OPENGL', language: 'c')
+else
+  error('unknown backend: ' + render_backend)
+endif
 
 is_debug = get_option('debug')
 is_release = not is_debug
@@ -46,6 +55,7 @@ sunset_files = [
   'src/byte_stream.c',
   'src/shader.c',
   'src/base64.c',
+  'src/backend.c',
 ]
 
 sunset_lib = static_library(

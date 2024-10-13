@@ -7,34 +7,35 @@
 
 #include "byte_stream.h"
 
-enum uniform_type {
-    UNIFORM_I32 = 0,
-    UNIFORM_F32,
-    UNIFORM_F64,
-    UNIFORM_BYTE,
-
-    // keep this last
-    NUM_UNIFORM_TYPES,
+enum argument_type {
+    ARGUMENT_UNIFORM_INT,
+    ARGUMENT_UNIFORM_FLOAT,
+    ARGUMENT_UNIFORM_VEC3,
+    ARGUMENT_UNIFORM_MAT4,
+    ARGUMENT_UNIFORM_BUFFEr,
+    ARGUMENT_DYNAMIC,
 };
 
-extern size_t const uniform_sizes[NUM_UNIFORM_TYPES];
-
-struct uniform {
+struct shader_argument {
+    enum argument_type type;
     char const *name;
-    enum uniform_type lane_type;
-    size_t lanes;
+    size_t size;
 };
 
-struct shader {
+struct active_argument {
+    char const *name;
+    struct byte_stream data;
+};
+
+struct program {
+    struct shader_argument *arguments;
+    size_t num_arguments;
+    uint64_t handle;
+};
+
+struct shader_signature {
     struct uniform *uniforms;
     size_t num_uniforms;
-    void *handle;
+    struct ssbo *ssbos;
+    size_t num_ssbos;
 };
-
-void shader_print_signature(struct shader const *shader, FILE *stream);
-
-size_t shader_arguments_size(struct shader const *shader);
-
-int backend_launch_shader(void *handle, struct byte_stream *arguments);
-
-int shader_launch(struct shader *shader, struct byte_stream *arguments);

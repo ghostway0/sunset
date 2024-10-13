@@ -22,11 +22,17 @@ struct vector_metadata {
         v = (void *)(meta + 1);                                                \
     })
 
-#define vector_free(v) free(vector_metadata(v))
+#define vector_free(v)                                                         \
+    do {                                                                       \
+        free(vector_metadata(v));                                              \
+        v = NULL;                                                              \
+    } while (0)
 
 #define vector_size(v) (vector_metadata(v)->size)
 
 #define vector_capacity(v) (vector_metadata(v)->capacity)
+
+#define vector_clear(v) vector_metadata(v)->size = 0
 
 #define vector_reserve(v, new_capacity)                                        \
     do {                                                                       \
@@ -53,4 +59,19 @@ struct vector_metadata {
             v = (void *)(meta + 1);                                            \
         }                                                                      \
         (v)[meta->size++] = value;                                             \
+    } while (0)
+
+#define vector_append_multiple(v, data, size)                                  \
+    do {                                                                       \
+        struct vector_metadata *meta = vector_metadata(v);                     \
+        if (meta->size + size > meta->capacity) {                              \
+            meta->capacity = meta->size + size;                                \
+            meta = (struct vector_metadata *)realloc(meta,                     \
+                    sizeof(struct vector_metadata)                             \
+                            + sizeof(*(v)) * meta->capacity);                  \
+            assert(meta);                                                      \
+            v = (void *)(meta + 1);                                            \
+        }                                                                      \
+        memcpy((v) + meta->size, data, size);                                  \
+        meta->size += size;                                                    \
     } while (0)
