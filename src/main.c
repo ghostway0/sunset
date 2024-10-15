@@ -134,22 +134,23 @@ int main() {
 
     {
         struct position position = {1.0f, 2.0f};
+        struct velocity velocity = {0.1f, 0.2f};
         struct entity_builder builder;
 
         entity_builder_init(&builder, &ecs);
         entity_builder_add_component(&builder, &position, 0);
+        entity_builder_add_component(&builder, &velocity, 1);
         entity_builder_finish(&builder);
     }
 
-
-    struct ecs_iterator iterator = ecs_iterator_create(&ecs, ECS_COMPONENT(0));
+    struct ecs_iterator iterator =
+            ecs_iterator_create(&ecs, ECS_COMPONENT(0) | ECS_COMPONENT(1));
 
     while (ecs_iterator_is_valid(&iterator)) {
         struct position *position =
                 ecs_iterator_get_component_raw(&iterator, 0);
 
         log_info("position: %f %f", position->x, position->y);
-
         ecs_iterator_advance(&iterator);
     }
 

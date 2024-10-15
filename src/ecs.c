@@ -34,24 +34,40 @@ struct archtype *ecs_get_archtype(struct ecs *ecs, uint64_t mask) {
 // position));
 
 struct ecs_iterator ecs_iterator_create(struct ecs *ecs, uint64_t mask) {
-    return (struct ecs_iterator){
+    struct ecs_iterator iterator = {
             .ecs = ecs,
             .mask = mask,
             .current_archtype = 0,
             .current_element = 0,
     };
+
+    struct archtype *archtype =
+            &iterator.ecs->archtypes[iterator.current_archtype];
+
+    while (iterator.current_archtype < vector_size(iterator.ecs->archtypes)
+            && (archtype->mask & iterator.mask) != iterator.mask) {
+        iterator.current_archtype++;
+        archtype = &iterator.ecs->archtypes[iterator.current_archtype];
+    }
+
+    return iterator;
 }
 
 void ecs_iterator_advance(struct ecs_iterator *iterator) {
     struct archtype *archtype =
             &iterator->ecs->archtypes[iterator->current_archtype];
 
-    iterator->current_element++;
-
-    if (iterator->current_element >= archtype->num_elements) {
-        iterator->current_element = 0;
+    while (iterator->current_archtype < vector_size(iterator->ecs->archtypes)
+            && (archtype->mask & iterator->mask) != iterator->mask) {
         iterator->current_archtype++;
+        archtype = &iterator->ecs->archtypes[iterator->current_archtype];
     }
+
+    if (iterator->current_archtype >= vector_size(iterator->ecs->archtypes)) {
+        return;
+    }
+
+    iterator->current_element++;
 }
 
 void entity_builder_init(struct entity_builder *builder, struct ecs *ecs) {
