@@ -61,19 +61,14 @@ struct vector_metadata {
         (v)[meta->size++] = value;                                             \
     } while (0)
 
-#define vector_append_multiple(v, data, size)                                  \
+#define vector_append_multiple(v, data, size2)                                 \
     do {                                                                       \
         struct vector_metadata *meta = vector_metadata(v);                     \
-        if (meta->size + size > meta->capacity) {                              \
-            meta->capacity = meta->size + size;                                \
-            meta = (struct vector_metadata *)realloc(meta,                     \
-                    sizeof(struct vector_metadata)                             \
-                            + sizeof(*(v)) * meta->capacity);                  \
-            assert(meta);                                                      \
-            v = (void *)(meta + 1);                                            \
+        size_t size = meta->size;                                              \
+        vector_resize(v, size + size2);                                        \
+        for (size_t i = 0; i < size2; i++) {                                   \
+            v[size + i] = data[i];                                             \
         }                                                                      \
-        memcpy((v) + meta->size, data, size);                                  \
-        meta->size += size;                                                    \
     } while (0)
 
 #define vector_pop(v)                                                          \
@@ -82,3 +77,17 @@ struct vector_metadata {
         assert(_meta->size > 0);                                               \
         v[--_meta->size];                                                      \
     })
+
+#define vector_resize(v, new_size)                                             \
+    do {                                                                       \
+        struct vector_metadata *meta = vector_metadata(v);                     \
+        if (meta->capacity < new_size) {                                       \
+            meta->capacity = new_size;                                         \
+            meta = (struct vector_metadata *)realloc(meta,                     \
+                    sizeof(struct vector_metadata)                             \
+                            + sizeof(*(v)) * meta->capacity);                  \
+            assert(meta);                                                      \
+            v = (void *)(meta + 1);                                            \
+        }                                                                      \
+        meta->size = new_size;                                                 \
+    } while (0)

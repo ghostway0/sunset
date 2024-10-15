@@ -57,7 +57,8 @@ sunset_files = [
   'src/base64.c',
   'src/backend.c',
   'src/octree.c',
-  'src/commands.c'
+  'src/commands.c',
+  'src/ecs.c',
 ]
 
 sunset_lib = static_library(
