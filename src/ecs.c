@@ -1,3 +1,5 @@
+#include "sunset/ecs.h"
+#include "log.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
@@ -5,28 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ECS_COMPONENT(i) (1 << i)
-
-struct column {
-    uint64_t mask;
-    size_t element_size;
-    vector(uint8_t) data;
-};
-
-struct archtype {
-    uint64_t mask;
-    size_t num_elements;
-    struct column *columns;
+size_t components_size[] = {
+        sizeof(struct position),
+        sizeof(struct velocity),
 };
 
 size_t archtype_num_columns(struct archtype const *archtype) {
     return __builtin_popcountll(archtype->mask);
 }
-
-struct ecs {
-    vector(void *) systems;
-    vector(struct archtype) archtypes;
-};
 
 struct archtype *ecs_get_archtype(struct ecs *ecs, uint64_t mask) {
     size_t archtypes = vector_size(ecs->archtypes);
@@ -42,30 +30,8 @@ struct archtype *ecs_get_archtype(struct ecs *ecs, uint64_t mask) {
     return NULL;
 }
 
-// void ecs_register_archtype(
-//         struct ecs *ecs, uint64_t mask, size_t element_size) {
-//     struct archtype *archtype = ecs_get_archtype(ecs, mask);
-//
-//     if (archtype == NULL) {
-//         vector_append(ecs->archtypes,
-//                 ((struct archtype){
-//                         .mask = mask,
-//                         .element_size = element_size,
-//                 }));
-//
-//         vector_create(archtype->elements, uint8_t);
-//     }
-// }
-
 // ecs_register_system(ecs, ECS_COMPONENT(0) | ECS_COMPONENT(1), sizeof(struct
 // position));
-
-struct ecs_iterator {
-    struct ecs *ecs;
-    uint64_t mask;
-    size_t current_archtype;
-    size_t current_element;
-};
 
 struct ecs_iterator ecs_iterator_create(struct ecs *ecs, uint64_t mask) {
     return (struct ecs_iterator){
@@ -75,9 +41,6 @@ struct ecs_iterator ecs_iterator_create(struct ecs *ecs, uint64_t mask) {
             .current_element = 0,
     };
 }
-
-#define ecs_iterator_get_component(iterator, type, id)                         \
-    ((type *)ecs_iterator_get_component_raw(iterator, id))
 
 void ecs_iterator_advance(struct ecs_iterator *iterator) {
     struct archtype *archtype =
@@ -91,7 +54,72 @@ void ecs_iterator_advance(struct ecs_iterator *iterator) {
     }
 }
 
-int ecs_insert_one(struct ecs *ecs,
+void entity_builder_init(struct entity_builder *builder, struct ecs *ecs) {
+    builder->ecs = ecs;
+    builder->mask = 0;
+
+    vector_create(builder->components, void *);
+    vector_create(builder->component_ids, size_t);
+}
+
+void entity_builder_add_component(
+        struct entity_builder *builder, void *component, size_t id) {
+    vector_append(builder->components, component);
+    builder->mask |= ECS_COMPONENT(id);
+    vector_append(builder->component_ids, id);
+}
+
+void ecs_add_entity(struct ecs *ecs, uint64_t mask) {
+    struct archtype *archtype = ecs_get_archtype(ecs, mask);
+
+    if (archtype != NULL) {
+        archtype->num_elements++;
+        return;
+    }
+
+    vector_append(ecs->archtypes,
+            ((struct archtype){
+                    .mask = mask,
+                    .num_elements = 0,
+            }));
+
+    archtype = &ecs->archtypes[vector_size(ecs->archtypes) - 1];
+
+    vector_create(archtype->columns, struct column);
+
+    while (mask) {
+        vector_append(archtype->columns,
+                ((struct column){
+                        .element_size = 0,
+                        .data = NULL,
+                }));
+
+        struct column *column =
+                &archtype->columns[vector_size(archtype->columns) - 1];
+
+        column->mask = mask & -mask;
+        column->element_size = components_size[__builtin_ctzll(column->mask)];
+
+        vector_create(column->data, uint8_t);
+
+        mask &= mask - 1;
+    }
+
+    archtype->num_elements++;
+}
+
+void entity_builder_finish(struct entity_builder *builder) {
+    size_t num_components = vector_size(builder->components);
+
+    ecs_add_entity(builder->ecs, builder->mask);
+
+    for (size_t i = 0; i < num_components; ++i) {
+        ecs_add_component(
+                builder->ecs, builder->mask, builder->components[i], i);
+    }
+}
+
+int ecs_add_component(struct ecs *ecs,
         uint64_t mask,
         void *component,
         size_t component_index) {
@@ -102,20 +130,21 @@ int ecs_insert_one(struct ecs *ecs,
     }
 
     struct column *column = &archtype->columns[component_index];
+
     vector_resize(column->data, vector_size(column->data) + 1);
 
-    memcpy(&column->data[vector_size(column->data) - 1],
+    memcpy(&column->data[(vector_size(column->data) - 1)
+                   * column->element_size],
             component,
             column->element_size);
 
     return 0;
 }
 
-#define ecs_insert(ecs, mask, component, component_index)                      \
-    ecs_insert_one(ecs, mask, component, component_index)
-
 bool ecs_iterator_is_valid(struct ecs_iterator *iterator) {
-    return iterator->current_archtype < vector_size(iterator->ecs->archtypes);
+    return iterator->current_archtype < vector_size(iterator->ecs->archtypes)
+            && iterator->current_element
+            < iterator->ecs->archtypes[iterator->current_archtype].num_elements;
 }
 
 void *ecs_iterator_get_component_raw(
@@ -130,21 +159,6 @@ void *ecs_iterator_get_component_raw(
 
 #define ecs_iterator_get_component(iterator, type, id)                         \
     ((type *)ecs_iterator_get_component_raw(iterator, id))
-
-struct position {
-    float x, y;
-};
-
-struct velocity {
-    float x, y;
-};
-
-struct static_mesh_renderer {
-    vector(struct position *) positions;
-    vector(struct mesh *) meshes;
-
-    // instancing cache
-};
 
 void static_mesh_renderer_init(struct static_mesh_renderer *renderer) {
     vector_create(renderer->positions, struct position *);
@@ -162,11 +176,6 @@ void static_mesh_renderer_update(struct static_mesh_renderer *renderer) {
         unused(mesh);
     }
 }
-
-struct physics_system {
-    vector(struct position *) positions;
-    vector(struct velocity *) velocities;
-};
 
 void physics_system_init(struct physics_system *system) {
     vector_create(system->positions, struct position *);
@@ -186,5 +195,6 @@ void physics_system_update(struct physics_system *system) {
 }
 
 void ecs_init(struct ecs *ecs) {
-    unused(ecs);
+    vector_create(ecs->systems, void *);
+    vector_create(ecs->archtypes, struct archtype);
 }

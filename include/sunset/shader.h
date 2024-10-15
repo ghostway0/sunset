@@ -6,7 +6,7 @@
 #include <cglm/vec3.h>
 
 #include "byte_stream.h"
-#include "sunset/config.h"
+// #include "sunset/config.h"
 
 enum argument_type {
     ARGUMENT_UNIFORM_INT,

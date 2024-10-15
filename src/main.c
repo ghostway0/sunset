@@ -9,7 +9,8 @@
 
 #include "sunset/backend.h"
 #include "sunset/commands.h"
-#include "sunset/config.h"
+// #include "sunset/config.h"
+#include "sunset/ecs.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/quadtree.h"
@@ -118,101 +119,147 @@ int stub_render_command(
 
 int main() {
     int retval = 0;
+    //
+    // struct render_context render_context;
+    //
+    // backend_setup(&render_context, (struct render_config){800, 600});
+    //
+    // struct program program;
+    //
+    // if (backend_create_program(&program)) {
+    //     log_error("backend_create_program failed");
+    //     retval = 1;
+    //     goto cleanup;
+    // }
+    //
+    // FILE *file = fopen("shader.vert", "r");
+    // if (!file) {
+    //     log_error("fopen failed");
+    //     retval = 1;
+    //     goto cleanup;
+    // }
+    //
+    // char source[1024];
+    // size_t num_read = fread(source, 1, sizeof(source), file);
+    // source[num_read] = '\0';
+    //
+    // if (backend_program_add_shader(
+    //             &program, source, GL_VERTEX_SHADER, NULL, 0)) {
+    //     log_error("backend_program_add_shader failed");
+    //     retval = 1;
+    //     goto cleanup;
+    // }
+    //
+    // file = fopen("shader.frag", "r");
+    // if (!file) {
+    //     log_error("fopen failed");
+    //     retval = 1;
+    //     goto cleanup;
+    // }
+    //
+    // num_read = fread(source, 1, sizeof(source), file);
+    // source[num_read] = '\0';
+    //
+    // struct byte_stream texture1;
+    // int texture1_data[] = {0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000};
+    // byte_stream_from((uint8_t *)texture1_data, 4, &texture1);
+    //
+    // if (backend_program_add_shader(
+    //             &program, source, GL_FRAGMENT_SHADER, NULL, 0)) {
+    //     log_error("backend_program_add_shader failed");
+    //     retval = 1;
+    //     goto cleanup;
+    // }
+    //
+    // if (backend_link_program(&program)) {
+    //     log_error("backend_link_program failed");
+    //     retval = 1;
+    //     goto cleanup;
+    // }
+    //
+    // float vertices[] = {
+    //         -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f};
+    //
+    // unsigned int indices[] = {0, 1, 2};
+    //
+    // unsigned int VAO, VBO, EBO;
+    //
+    // glGenVertexArrays(1, &VAO);
+    // glBindVertexArray(VAO);
+    //
+    // glGenBuffers(1, &VBO);
+    // glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+    // GL_STATIC_DRAW);
+    //
+    // glGenBuffers(1, &EBO);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    // glBufferData(
+    //         GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+    //         GL_STATIC_DRAW);
+    //
+    // glVertexAttribPointer(
+    //         0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    // glEnableVertexAttribArray(0);
+    //
+    // while (!glfwWindowShouldClose(render_context.window)) {
+    //     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    //     glClear(GL_COLOR_BUFFER_BIT);
+    //
+    //     glUseProgram((GLuint)program.handle);
+    //
+    //     glBindVertexArray(VAO);
+    //     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    //     glBindVertexArray(0);
+    //
+    //     glfwSwapBuffers(render_context.window);
+    //     glfwPollEvents();
+    // }
 
-    struct render_context render_context;
+    struct ecs ecs;
+    ecs_init(&ecs);
 
-    backend_setup(&render_context, (struct render_config){800, 600});
+    // ecs.archtypes[0].num_elements = 2;
+    // vector_create(ecs.archtypes[0].columns, struct column);
+    //
+    // vector_append(ecs.archtypes[0].columns,
+    //         ((struct column){
+    //                 .mask = ECS_COMPONENT(0),
+    //                 .element_size = sizeof(struct position),
+    //         }));
+    //
+    // vector_create(ecs.archtypes[0].columns[0].data, uint8_t);
 
-    struct program program;
+    {
+        struct position position = {3.0f, 4.0f};
+        struct entity_builder builder;
 
-    if (backend_create_program(&program)) {
-        log_error("backend_create_program failed");
-        retval = 1;
-        goto cleanup;
+        entity_builder_init(&builder, &ecs);
+        entity_builder_add_component(&builder, &position, 0);
+        entity_builder_finish(&builder);
     }
 
-    FILE *file = fopen("shader.vert", "r");
-    if (!file) {
-        log_error("fopen failed");
-        retval = 1;
-        goto cleanup;
+    {
+        struct position position = {1.0f, 2.0f};
+        struct entity_builder builder;
+
+        entity_builder_init(&builder, &ecs);
+        entity_builder_add_component(&builder, &position, 0);
+        entity_builder_finish(&builder);
     }
 
-    char source[1024];
-    size_t num_read = fread(source, 1, sizeof(source), file);
-    source[num_read] = '\0';
 
-    if (backend_program_add_shader(
-                &program, source, GL_VERTEX_SHADER, NULL, 0)) {
-        log_error("backend_program_add_shader failed");
-        retval = 1;
-        goto cleanup;
+    struct ecs_iterator iterator = ecs_iterator_create(&ecs, ECS_COMPONENT(0));
+
+    while (ecs_iterator_is_valid(&iterator)) {
+        struct position *position =
+                ecs_iterator_get_component_raw(&iterator, 0);
+
+        log_info("position: %f %f", position->x, position->y);
+
+        ecs_iterator_advance(&iterator);
     }
 
-    file = fopen("shader.frag", "r");
-    if (!file) {
-        log_error("fopen failed");
-        retval = 1;
-        goto cleanup;
-    }
-
-    num_read = fread(source, 1, sizeof(source), file);
-    source[num_read] = '\0';
-
-    struct byte_stream texture1;
-    int texture1_data[] = {0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000};
-    byte_stream_from((uint8_t *)texture1_data, 4, &texture1);
-
-    if (backend_program_add_shader(
-                &program, source, GL_FRAGMENT_SHADER, NULL, 0)) {
-        log_error("backend_program_add_shader failed");
-        retval = 1;
-        goto cleanup;
-    }
-
-    if (backend_link_program(&program)) {
-        log_error("backend_link_program failed");
-        retval = 1;
-        goto cleanup;
-    }
-
-    float vertices[] = {
-            -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f};
-
-    unsigned int indices[] = {0, 1, 2};
-
-    unsigned int VAO, VBO, EBO;
-
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(
-            GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
-    while (!glfwWindowShouldClose(render_context.window)) {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glUseProgram((GLuint)program.handle);
-
-        glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        glfwSwapBuffers(render_context.window);
-        glfwPollEvents();
-    }
-
-cleanup:
+    // cleanup:
     return retval;
 }
