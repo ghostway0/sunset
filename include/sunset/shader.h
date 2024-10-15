@@ -6,13 +6,14 @@
 #include <cglm/vec3.h>
 
 #include "byte_stream.h"
+#include "sunset/config.h"
 
 enum argument_type {
     ARGUMENT_UNIFORM_INT,
     ARGUMENT_UNIFORM_FLOAT,
     ARGUMENT_UNIFORM_VEC3,
     ARGUMENT_UNIFORM_MAT4,
-    ARGUMENT_UNIFORM_BUFFEr,
+    ARGUMENT_UNIFORM_BUFFER,
     ARGUMENT_DYNAMIC,
 };
 
@@ -24,6 +25,7 @@ struct shader_argument {
 
 struct active_argument {
     char const *name;
+    enum argument_type type;
     struct byte_stream data;
 };
 

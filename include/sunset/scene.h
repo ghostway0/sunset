@@ -10,27 +10,12 @@
 #include "sunset/camera.h"
 #include "sunset/geometry.h"
 
-struct effect {
-    void *program;
-    struct texture *textures;
-    size_t num_textures;
-    struct uniform *uniforms;
-    size_t num_uniforms;
-};
-
 struct object {
     struct box bounding_box;
-    // TODO: can there be multiple meshes?
-    struct mesh *meshes;
-    size_t num_meshes;
-    vec3 position;
-    vec3 rotation;
-    float scale;
-    struct effect *effects;
-    size_t num_effects;
+    struct mesh mesh;
 
     struct object *parent;
-    struct object **children;
+    struct object *children;
     size_t num_children;
 };
 

@@ -4,6 +4,7 @@
 
 #include "camera.h"
 #include "scene.h"
+#include "sunset/commands.h"
 #include "vector.h"
 
 struct active_animation {
@@ -23,14 +24,18 @@ struct render_config {
     size_t width, height;
 };
 
-struct render_context {
-    vector(struct texture) textures;
-    vector(struct uniform) uniforms;
-    vector(struct active_animation) active_animations;
-    uint64_t handle;
-    struct window window;
-};
+typedef void (*custom_command)(
+        void *render_context, struct command const *command);
 
-int render(struct render_context *ctx,
-        struct object *scene,
-        struct camera *camera);
+struct context {
+    struct command_buffer command_buffer;
+    struct font *fonts;
+    size_t num_fonts;
+    void *render_context;
+    custom_command custom_commands[MAX_NUM_CUSTOM_COMMANDS];
+};
+//
+//
+// int render(struct render_context *ctx,
+//         struct object *scene,
+//         struct camera *camera);

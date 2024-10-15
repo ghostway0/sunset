@@ -151,3 +151,7 @@ struct mesh {
 void show_image_grayscale(struct image const *image);
 
 void show_image_grayscale_at(struct image const *image, struct point pos);
+
+struct box box_subdivide_i(struct box box, size_t i, size_t n);
+
+bool box_contains_point(struct box box, vec3 point);

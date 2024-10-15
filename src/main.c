@@ -16,19 +16,6 @@
 #include "sunset/scene.h"
 #include "sunset/utils.h"
 
-#include "daboor.h"
-
-typedef void (*custom_command)(
-        void *render_context, struct command const *command);
-
-struct context {
-    struct command_buffer command_buffer;
-    struct font *fonts;
-    size_t num_fonts;
-    void *render_context;
-    custom_command custom_commands[MAX_NUM_CUSTOM_COMMANDS];
-};
-
 void context_init(struct context *context,
         struct command_buffer_options command_buffer_options,
         struct font *fonts,
@@ -136,12 +123,13 @@ int main() {
 
     backend_setup(&render_context, (struct render_config){800, 600});
 
-    struct shader_signature signature = {
-            .uniforms = NULL,
-            .num_uniforms = 0,
-            .ssbos = NULL,
-            .num_ssbos = 0,
-    };
+    struct program program;
+
+    if (backend_create_program(&program)) {
+        log_error("backend_create_program failed");
+        retval = 1;
+        goto cleanup;
+    }
 
     FILE *file = fopen("shader.vert", "r");
     if (!file) {
@@ -154,10 +142,9 @@ int main() {
     size_t num_read = fread(source, 1, sizeof(source), file);
     source[num_read] = '\0';
 
-    struct shader vertex, fragment;
-
-    if (backend_create_shader(source, SHADER_VERTEX, signature, &vertex)) {
-        log_error("backend_create_shader failed");
+    if (backend_program_add_shader(
+                &program, source, GL_VERTEX_SHADER, NULL, 0)) {
+        log_error("backend_program_add_shader failed");
         retval = 1;
         goto cleanup;
     }
@@ -172,46 +159,19 @@ int main() {
     num_read = fread(source, 1, sizeof(source), file);
     source[num_read] = '\0';
 
-    if (backend_create_shader(source, SHADER_FRAGMENT, signature, &fragment)) {
-        log_error("backend_create_shader failed");
-        retval = 1;
-        goto cleanup;
-    }
-
-    struct uniform_argument uniform_arguments[] = {};
-
-    struct shader_arguments arguments = {
-            .uniforms = uniform_arguments,
-            .num_uniforms =
-                    sizeof(uniform_arguments) / sizeof(struct uniform_argument),
-            .ssbos = NULL,
-            .num_ssbos = 0,
-    };
-
-    // TODO: should be with a `render_context`
-    if (backend_setup_shader(&vertex, &arguments)) {
-        log_error("backend_setup_shader failed");
-        retval = 1;
-        goto cleanup;
-    }
-
     struct byte_stream texture1;
     int texture1_data[] = {0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000};
     byte_stream_from((uint8_t *)texture1_data, 4, &texture1);
-    
-    struct uniform_argument uniform_arguments2[] = {
-    };
 
-    struct shader_arguments arguments2 = {
-            .uniforms = uniform_arguments2,
-            .num_uniforms = sizeof(uniform_arguments2)
-                    / sizeof(struct uniform_argument),
-            .ssbos = NULL,
-            .num_ssbos = 0,
-    };
+    if (backend_program_add_shader(
+                &program, source, GL_FRAGMENT_SHADER, NULL, 0)) {
+        log_error("backend_program_add_shader failed");
+        retval = 1;
+        goto cleanup;
+    }
 
-    if (backend_setup_shader(&fragment, &arguments2)) {
-        log_error("backend_setup_shader failed");
+    if (backend_link_program(&program)) {
+        log_error("backend_link_program failed");
         retval = 1;
         goto cleanup;
     }
@@ -239,19 +199,17 @@ int main() {
             0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    glBindVertexArray(0);
-
-    while (!glfwWindowShouldClose((GLFWwindow *)render_context.window.handle)) {
+    while (!glfwWindowShouldClose(render_context.window)) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // glUseProgram(vertex.handle);
-        // glUseProgram(fragment.handle);
+        glUseProgram((GLuint)program.handle);
+
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        glfwSwapBuffers((GLFWwindow *)render_context.window.handle);
+        glfwSwapBuffers(render_context.window);
         glfwPollEvents();
     }
 

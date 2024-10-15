@@ -63,3 +63,28 @@ struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n) {
             .height = h,
     };
 }
+
+struct box box_subdivide_i(struct box box, size_t i, size_t n) {
+    assert(i < n);
+    assert(n > 0);
+
+    struct box result = box;
+
+    for (size_t j = 0; j < 3; j++) {
+        float w = (box.max[j] - box.min[j]) / n;
+        result.min[j] = box.min[j] + (i % n) * w;
+        result.max[j] = box.min[j] + (i % n + 1) * w;
+    }
+
+    return result;
+}
+
+bool box_contains_point(struct box box, vec3 point) {
+    for (size_t i = 0; i < 3; i++) {
+        if (point[i] < box.min[i] || point[i] > box.max[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}

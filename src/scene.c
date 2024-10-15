@@ -86,6 +86,7 @@ void scene_move_camera(struct scene *scene, vec3 direction) {
 
 bool object_within_frustum(const struct object *object, struct camera *camera) {
     struct box box = object->bounding_box;
+
     vec3 corners[8] = {
             {box.min[0], box.min[1], box.min[2]},
             {box.min[0], box.min[1], box.max[2]},
