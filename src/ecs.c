@@ -108,15 +108,24 @@ void ecs_add_entity(struct ecs *ecs, uint64_t mask) {
     archtype->num_elements++;
 }
 
-void entity_builder_finish(struct entity_builder *builder) {
+int entity_builder_finish(struct entity_builder *builder) {
     size_t num_components = vector_size(builder->components);
 
     ecs_add_entity(builder->ecs, builder->mask);
 
     for (size_t i = 0; i < num_components; ++i) {
-        ecs_add_component(
-                builder->ecs, builder->mask, builder->components[i], i);
+        if (ecs_add_component(builder->ecs,
+                    builder->mask,
+                    builder->components[i],
+                    builder->component_ids[i])) {
+            return -1;
+        }
     }
+
+    vector_free(builder->components);
+    vector_free(builder->component_ids);
+
+    return 0;
 }
 
 int ecs_add_component(struct ecs *ecs,

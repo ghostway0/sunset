@@ -1,9 +1,9 @@
 #ifndef ECS_H
 #define ECS_H
 
+#include "vector.h"
 #include <stddef.h>
 #include <stdint.h>
-#include "vector.h"
 
 #define ECS_COMPONENT(i) (1 << i)
 
@@ -53,15 +53,18 @@ struct physics_system {
 size_t archtype_num_columns(struct archtype const *archtype);
 struct archtype *ecs_get_archtype(struct ecs *ecs, uint64_t mask);
 void ecs_iterator_advance(struct ecs_iterator *iterator);
-int ecs_insert_one(struct ecs *ecs, uint64_t mask, void *component, size_t component_index);
+int ecs_insert_one(struct ecs *ecs,
+        uint64_t mask,
+        void *component,
+        size_t component_index);
 bool ecs_iterator_is_valid(struct ecs_iterator *iterator);
-void *ecs_iterator_get_component_raw(struct ecs_iterator *iterator, size_t component_index);
+void *ecs_iterator_get_component_raw(
+        struct ecs_iterator *iterator, size_t component_index);
 struct ecs_iterator ecs_iterator_create(struct ecs *ecs, uint64_t mask);
 int ecs_add_component(struct ecs *ecs,
         uint64_t mask,
         void *component,
         size_t component_index);
-
 
 struct entity_builder {
     struct ecs *ecs;
@@ -77,13 +80,13 @@ void entity_builder_add_component(
 
 void ecs_add_entity(struct ecs *ecs, uint64_t mask);
 
-void entity_builder_finish(struct entity_builder *builder);
-
 void static_mesh_renderer_init(struct static_mesh_renderer *renderer);
 void static_mesh_renderer_update(struct static_mesh_renderer *renderer);
 
 void physics_system_init(struct physics_system *system);
 void physics_system_update(struct physics_system *system);
+
+int entity_builder_finish(struct entity_builder *builder);
 
 void ecs_init(struct ecs *ecs);
 
