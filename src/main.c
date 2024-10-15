@@ -18,9 +18,6 @@
 
 #include "daboor.h"
 
-#define container_of(p, T, a)                                                  \
-    ((T *)((uintptr_t)(p) - (uintptr_t)(&((T *)(0))->a)))
-
 typedef void (*custom_command)(
         void *render_context, struct command const *command);
 

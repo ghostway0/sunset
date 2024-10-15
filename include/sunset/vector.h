@@ -75,3 +75,10 @@ struct vector_metadata {
         memcpy((v) + meta->size, data, size);                                  \
         meta->size += size;                                                    \
     } while (0)
+
+#define vector_pop(v)                                                          \
+    ({                                                                         \
+        struct vector_metadata *_meta = vector_metadata(v);                    \
+        assert(_meta->size > 0);                                               \
+        v[--_meta->size];                                                      \
+    })
