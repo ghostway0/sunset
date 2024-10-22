@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sunset/geometry.h"
 #include <cglm/vec3.h>
 
 struct camera_state {
@@ -48,3 +49,5 @@ void camera_recalculate_vectors(struct camera *camera);
 void camera_vec_to_world(struct camera *camera, vec3 direction);
 
 bool camera_point_in_frustum(struct camera *camera, vec3 point);
+
+bool camera_box_within_frustum(struct camera *camera, struct box box);

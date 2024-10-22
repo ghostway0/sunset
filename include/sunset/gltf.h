@@ -7,7 +7,7 @@
 #include <cglm/cglm.h>
 #include <cglm/types.h>
 
-#include "sunset/geometry.h"
+#include "sunset/animation.h"
 #include "vector.h"
 
 #define GLB_MAGIC "0x46546C67"

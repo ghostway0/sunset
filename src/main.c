@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "sunset/backend.h"
+#include "sunset/camera.h"
 #include "sunset/commands.h"
 // #include "sunset/config.h"
 #include "sunset/ecs.h"
@@ -15,6 +16,7 @@
 #include "sunset/geometry.h"
 #include "sunset/quadtree.h"
 #include "sunset/scene.h"
+#include "sunset/tga.h"
 #include "sunset/utils.h"
 
 void context_init(struct context *context,
@@ -120,39 +122,80 @@ int stub_render_command(
 int main() {
     int retval = 0;
 
-    struct ecs ecs;
-    ecs_init(&ecs);
+    struct scene scene;
+    struct camera camera;
 
-    {
-        struct position position = {3.0f, 4.0f};
-        struct entity_builder builder;
+    camera_init(
+            (struct camera_state){
+                    {0.0f, 0.0f, 0.0f},
+                    {0.0f, 1.0f, 0.0f},
+                    0.0f,
+                    0.0f,
 
-        entity_builder_init(&builder, &ecs);
-        entity_builder_add_component(&builder, &position, 0);
-        entity_builder_finish(&builder);
+            },
+            (struct camera_options){
+                    0.1f,
+                    100.0f,
+                    45.0f,
+                    0.75f,
+            },
+            &camera);
+
+    FILE *file = fopen("skybox.tga", "rb");
+    if (file == NULL) {
+        log_error("Failed to open file");
+        return 1;
     }
 
-    {
-        struct position position = {1.0f, 2.0f};
-        struct velocity velocity = {0.1f, 0.2f};
-        struct entity_builder builder;
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
 
-        entity_builder_init(&builder, &ecs);
-        entity_builder_add_component(&builder, &position, 0);
-        entity_builder_add_component(&builder, &velocity, 1);
-        entity_builder_finish(&builder);
+    uint8_t *data = malloc(size);
+
+    if (data == NULL) {
+        log_error("Failed to allocate memory");
+        return 1;
     }
 
-    struct ecs_iterator iterator =
-            ecs_iterator_create(&ecs, ECS_COMPONENT(0)); //  | ECS_COMPONENT(1)
+    fseek(file, 0, SEEK_SET);
 
-    while (ecs_iterator_is_valid(&iterator)) {
-        struct position *position =
-                ecs_iterator_get_component_raw(&iterator, 0);
 
-        log_info("position: %f %f", position->x, position->y);
-        ecs_iterator_advance(&iterator);
+    struct image skybox;
+    if (load_tga_image(data, &skybox)) {
+        log_error("Failed to load image");
+        return 1;
     }
+
+    fclose(file);
+
+
+    /*
+     *
+void scene_init(struct camera camera,
+        struct image skybox,
+        struct effect *effects,
+        size_t num_effects,
+        struct box bounds,
+        struct chunk *root_chunk,
+        struct scene *scene_out) {
+     * */
+
+    struct chunk root_chunk = {
+        .bounds = {0},
+        .objects = NULL,
+        .num_objects = 0,
+        .lights = NULL,
+        .num_lights = 0,
+        .id = 0,
+    };
+
+    scene_init(camera, skybox, NULL, 0, root_chunk.bounds, &root_chunk, &scene);
+
+    struct chunk *thing = oct_tree_query(&scene.oct_tree, (vec3){0.0f, 0.0f, 0.0f});
+
+    log_debug("thing: " vec3_format " %zu", vec3_args(thing->bounds.min), thing->id);
+
+
 
     // cleanup:
     return retval;

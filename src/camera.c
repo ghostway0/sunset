@@ -125,3 +125,24 @@ bool camera_point_in_frustum(struct camera *camera, vec3 point) {
     return clip[0] >= -1.0f && clip[0] <= 1.0f && clip[1] >= -1.0f
             && clip[1] <= 1.0f && clip[2] >= -1.0f && clip[2] <= 1.0f;
 }
+
+bool camera_box_within_frustum(struct camera *camera, struct box box) {
+    vec3 points[8] = {
+            {box.min[0], box.min[1], box.min[2]},
+            {box.min[0], box.min[1], box.max[2]},
+            {box.min[0], box.max[1], box.min[2]},
+            {box.min[0], box.max[1], box.max[2]},
+            {box.max[0], box.min[1], box.min[2]},
+            {box.max[0], box.min[1], box.max[2]},
+            {box.max[0], box.max[1], box.min[2]},
+            {box.max[0], box.max[1], box.max[2]},
+    };
+
+    for (size_t i = 0; i < 8; i++) {
+        if (camera_point_in_frustum(camera, points[i])) {
+            return true;
+        }
+    }
+
+    return false;
+}

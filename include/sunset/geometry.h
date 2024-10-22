@@ -46,90 +46,10 @@ struct box {
     vec3 max;
 };
 
-enum interpolation_type {
-    INTERPOLATION_LINEAR,
-    INTERPOLATION_CUBICSPLINE,
-    INTERPOLATION_STEP,
-};
-
-enum keyframe_type {
-    KEYFRAME_TRANSFORM,
-    KEYFRAME_MORPH,
-    KEYFRAME_WEIGHTS,
-    KEYFRAME_VISIBILITY,
-    KEYFRAME_COLOR,
-    KEYFRAME_INTENSITY,
-    KEYFRAME_TEXTURE,
-    KEYFRAME_MATERIAL,
-};
-
-struct keyframe_transform {
-    vec3 position;
-    vec3 rotation;
-    float scale;
-    enum interpolation_type position_interpolation;
-    enum interpolation_type rotation_interpolation;
-    enum interpolation_type scale_interpolation;
-};
-
-struct keyframe_morph {
-    size_t target;
-    float weight;
-    enum interpolation_type weight_interpolation;
-};
-
-struct keyframe_weights {
-    size_t target;
-    float weight;
-    enum interpolation_type weight_interpolation;
-};
-
-struct keyframe_visibility {
-    bool visible;
-    enum interpolation_type interpolation;
-};
-
-struct keyframe_color {
-    vec4 color;
-    enum interpolation_type interpolation;
-};
-
-struct keyframe_intensity {
-    float intensity;
-    enum interpolation_type interpolation;
-};
-
-struct keyframe_texture {
-    size_t target;
-    struct texture *texture;
-    enum interpolation_type interpolation;
-};
-
-struct keyframe_material {
-    size_t target;
-    struct material *material;
-    enum interpolation_type interpolation;
-};
-
-struct keyframe {
-    enum keyframe_type type;
-    union {
-        struct keyframe_transform transform;
-        struct keyframe_morph morph;
-        struct keyframe_weights weights;
-        struct keyframe_visibility visibility;
-        struct keyframe_color color;
-        struct keyframe_intensity intensity;
-        struct keyframe_texture texture;
-        struct keyframe_material material;
-    } data;
-};
-
-struct animation {
-    char const *name;
-    float duration;
-    struct keyframe *keyframes;
-    size_t num_keyframes;
+struct texture {
+    struct image image;
+    vec2 *coords;
+    size_t num_coords;
 };
 
 struct material {
@@ -155,3 +75,11 @@ void show_image_grayscale_at(struct image const *image, struct point pos);
 struct box box_subdivide_i(struct box box, size_t i, size_t n);
 
 bool box_contains_point(struct box box, vec3 point);
+
+struct box from_rect(struct rect rect);
+
+bool position_within_rect(vec3 position, struct rect rect);
+
+bool position_within_box(vec3 position, struct box box);
+
+float rect_distance_to_camera(vec3 camera_position, struct rect rect);

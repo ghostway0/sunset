@@ -182,9 +182,6 @@ void *ecs_iterator_get_component_raw(
     return &column->data[iterator->current_element * column->element_size];
 }
 
-#define ecs_iterator_get_component(iterator, type, id)                         \
-    ((type *)ecs_iterator_get_component_raw(iterator, id))
-
 void static_mesh_renderer_init(struct static_mesh_renderer *renderer) {
     vector_create(renderer->positions, struct position *);
     vector_create(renderer->meshes, struct mesh *);

@@ -33,7 +33,6 @@ static void split_node(struct oct_tree *tree, struct oct_node *node) {
 }
 
 void oct_tree_create(size_t max_depth,
-        size_t max_objects,
         bool (*should_split)(struct oct_tree *, struct oct_node *),
         void *(*split)(struct oct_tree *, void *, struct box bounds),
         void (*destroy_data)(void *),
@@ -45,7 +44,6 @@ void oct_tree_create(size_t max_depth,
     assert(tree_out != NULL);
 
     tree_out->max_depth = max_depth;
-    tree_out->max_objects = max_objects;
     tree_out->should_split = should_split;
     tree_out->split_i = split;
     tree_out->destroy_data = destroy_data;
@@ -85,7 +83,7 @@ static void destroy_node(struct oct_node *node, void (*destroy_data)(void *)) {
     free(node);
 }
 
-void *oct_tree_query(struct oct_tree *tree, vec3 position) {
+void *oct_tree_query(struct oct_tree const *tree, vec3 position) {
     assert(tree != NULL);
 
     struct oct_node *current = tree->root;

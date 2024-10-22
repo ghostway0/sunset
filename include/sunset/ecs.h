@@ -90,9 +90,19 @@ int entity_builder_finish(struct entity_builder *builder);
 
 void ecs_init(struct ecs *ecs);
 
-// Macros
-#define ecs_iterator_get_component(iterator, type, id)                         \
-    ((type *)ecs_iterator_get_component_raw(iterator, id))
+#define ecs_iterator_get_component(iterator, type)                             \
+    ({                                                                         \
+        void *component = NULL;                                                \
+        struct archtype *arch =                                                \
+                &((iterator)->ecs->archtypes[(iterator)->current_archtype]);   \
+        size_t component_index = arch->component_indices[COMPONENT_##type];    \
+        if (component_index != SIZE_MAX) {                                     \
+            struct column *col = &arch->columns[component_index];              \
+            component = col->data[(iterator)->current_element                  \
+                    * col->element_size];                                      \
+        }                                                                      \
+        (type *)component;                                                     \
+    })
 
 #define ecs_insert(ecs, mask, component, component_index)                      \
     ecs_insert_one(ecs, mask, component, component_index)
