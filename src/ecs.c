@@ -33,6 +33,18 @@ struct archtype *ecs_get_archtype(struct ecs *ecs, uint64_t mask) {
 // ecs_register_system(ecs, ECS_COMPONENT(0) | ECS_COMPONENT(1), sizeof(struct
 // position));
 
+static void ecs_iterator_advance_internal(struct ecs_iterator *iterator) {
+    struct archtype *archtype =
+            &iterator->ecs->archtypes[iterator->current_archtype];
+    while (iterator->current_archtype < vector_size(iterator->ecs->archtypes)
+            && (archtype->mask & iterator->mask) != iterator->mask) {
+        iterator->current_archtype++;
+        archtype = &iterator->ecs->archtypes[iterator->current_archtype];
+    }
+
+    iterator->current_element = 0;
+}
+
 struct ecs_iterator ecs_iterator_create(struct ecs *ecs, uint64_t mask) {
     struct ecs_iterator iterator = {
             .ecs = ecs,
@@ -41,33 +53,21 @@ struct ecs_iterator ecs_iterator_create(struct ecs *ecs, uint64_t mask) {
             .current_element = 0,
     };
 
-    struct archtype *archtype =
-            &iterator.ecs->archtypes[iterator.current_archtype];
-
-    while (iterator.current_archtype < vector_size(iterator.ecs->archtypes)
-            && (archtype->mask & iterator.mask) != iterator.mask) {
-        iterator.current_archtype++;
-        archtype = &iterator.ecs->archtypes[iterator.current_archtype];
-    }
+    ecs_iterator_advance_internal(&iterator);
 
     return iterator;
 }
 
 void ecs_iterator_advance(struct ecs_iterator *iterator) {
-    struct archtype *archtype =
-            &iterator->ecs->archtypes[iterator->current_archtype];
-
-    while (iterator->current_archtype < vector_size(iterator->ecs->archtypes)
-            && (archtype->mask & iterator->mask) != iterator->mask) {
-        iterator->current_archtype++;
-        archtype = &iterator->ecs->archtypes[iterator->current_archtype];
-    }
-
-    if (iterator->current_archtype >= vector_size(iterator->ecs->archtypes)) {
+    if (iterator->current_element
+            < iterator->ecs->archtypes[iterator->current_archtype]
+                    .num_elements - 1) {
+        iterator->current_element++;
         return;
     }
 
-    iterator->current_element++;
+    iterator->current_archtype++;
+    ecs_iterator_advance_internal(iterator);
 }
 
 void entity_builder_init(struct entity_builder *builder, struct ecs *ecs) {

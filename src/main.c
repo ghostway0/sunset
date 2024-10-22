@@ -144,7 +144,7 @@ int main() {
     }
 
     struct ecs_iterator iterator =
-            ecs_iterator_create(&ecs, ECS_COMPONENT(0) | ECS_COMPONENT(1));
+            ecs_iterator_create(&ecs, ECS_COMPONENT(0)); //  | ECS_COMPONENT(1)
 
     while (ecs_iterator_is_valid(&iterator)) {
         struct position *position =
