@@ -17,7 +17,15 @@ struct transform {
     float scale;
 };
 
+struct physics_object {
+    vec3 velocity;
+    vec3 acceleration;
+    float mass;
+    float drag;
+};
+
 struct object {
+    struct physics_object physics;
     struct box bounding_box;
     struct transform transform;
     struct mesh *meshes;

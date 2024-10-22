@@ -74,8 +74,8 @@ void entity_builder_init(struct entity_builder *builder, struct ecs *ecs) {
     builder->ecs = ecs;
     builder->mask = 0;
 
-    vector_create(builder->components, void *);
-    vector_create(builder->component_ids, size_t);
+    vector_init(builder->components, void *);
+    vector_init(builder->component_ids, size_t);
 }
 
 void entity_builder_add_component(
@@ -101,7 +101,7 @@ void ecs_add_entity(struct ecs *ecs, uint64_t mask) {
 
     archtype = &ecs->archtypes[vector_size(ecs->archtypes) - 1];
 
-    vector_create(archtype->columns, struct column);
+    vector_init(archtype->columns, struct column);
 
     while (mask) {
         vector_append(archtype->columns,
@@ -116,7 +116,7 @@ void ecs_add_entity(struct ecs *ecs, uint64_t mask) {
         column->mask = mask & -mask;
         column->element_size = components_size[__builtin_ctzll(column->mask)];
 
-        vector_create(column->data, uint8_t);
+        vector_init(column->data, uint8_t);
 
         mask &= mask - 1;
     }
@@ -183,8 +183,8 @@ void *ecs_iterator_get_component_raw(
 }
 
 void static_mesh_renderer_init(struct static_mesh_renderer *renderer) {
-    vector_create(renderer->positions, struct position *);
-    vector_create(renderer->meshes, struct mesh *);
+    vector_init(renderer->positions, struct position *);
+    vector_init(renderer->meshes, struct mesh *);
 }
 
 void static_mesh_renderer_update(struct static_mesh_renderer *renderer) {
@@ -200,8 +200,8 @@ void static_mesh_renderer_update(struct static_mesh_renderer *renderer) {
 }
 
 void physics_system_init(struct physics_system *system) {
-    vector_create(system->positions, struct position *);
-    vector_create(system->velocities, struct velocity *);
+    vector_init(system->positions, struct position *);
+    vector_init(system->velocities, struct velocity *);
 }
 
 void physics_system_update(struct physics_system *system) {
@@ -217,6 +217,6 @@ void physics_system_update(struct physics_system *system) {
 }
 
 void ecs_init(struct ecs *ecs) {
-    vector_create(ecs->systems, void *);
-    vector_create(ecs->archtypes, struct archtype);
+    vector_init(ecs->systems, void *);
+    vector_init(ecs->archtypes, struct archtype);
 }

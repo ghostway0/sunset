@@ -12,7 +12,7 @@ struct vector_metadata {
 
 #define vector_metadata(v) ((struct vector_metadata *)(v) - 1)
 
-#define vector_create(v, T)                                                    \
+#define vector_init(v, T)                                                      \
     ({                                                                         \
         struct vector_metadata *meta = (struct vector_metadata *)malloc(       \
                 sizeof(struct vector_metadata) + sizeof(T) * 16);              \
@@ -52,10 +52,12 @@ struct vector_metadata {
         struct vector_metadata *meta = vector_metadata(v);                     \
         if (meta->size == meta->capacity) {                                    \
             meta->capacity *= 2;                                               \
+            _Pragma("GCC diagnostic push");                                    \
+            _Pragma("GCC diagnostic ignored \"-Wsizeof-pointer-memaccess\"");  \
             meta = (struct vector_metadata *)realloc(meta,                     \
                     sizeof(struct vector_metadata)                             \
                             + sizeof(*(v)) * meta->capacity);                  \
-            assert(meta);                                                      \
+            _Pragma("GCC diagnostic pop") assert(meta);                        \
             v = (void *)(meta + 1);                                            \
         }                                                                      \
         (v)[meta->size++] = value;                                             \

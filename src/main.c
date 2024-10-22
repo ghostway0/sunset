@@ -195,8 +195,6 @@ void scene_init(struct camera camera,
 
     log_debug("thing: " vec3_format " %zu", vec3_args(thing->bounds.min), thing->id);
 
-
-
     // cleanup:
     return retval;
 }
