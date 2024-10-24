@@ -20,7 +20,7 @@ static void split_node(struct oct_tree *tree, struct oct_node *node) {
 
         void *data = tree->split_i(tree, node->data, bounds);
 
-        oct_node_init(node->children[i], node->depth + 1, data, bounds);
+        oct_node_init(node->children[i], node->depth + 1, data, node, bounds);
 
         if (tree->should_split(tree, node->children[i])) {
             split_node(tree, node->children[i]);
@@ -30,6 +30,8 @@ static void split_node(struct oct_tree *tree, struct oct_node *node) {
     if (node->data != NULL && tree->destroy_data != NULL) {
         tree->destroy_data(node->data);
     }
+
+    node->data = NULL;
 }
 
 void oct_tree_create(size_t max_depth,
@@ -49,18 +51,22 @@ void oct_tree_create(size_t max_depth,
     tree_out->destroy_data = destroy_data;
 
     tree_out->root = malloc(sizeof(struct oct_node));
-    oct_node_init(tree_out->root, 0, node_data, root_bounds);
+    oct_node_init(tree_out->root, 0, node_data, NULL, root_bounds);
 
     if (tree_out->should_split(tree_out, tree_out->root)) {
         split_node(tree_out, tree_out->root);
     }
 }
 
-void oct_node_init(
-        struct oct_node *node, size_t depth, void *data, struct box bounds) {
+void oct_node_init(struct oct_node *node,
+        size_t depth,
+        void *data,
+        struct oct_node *parent,
+        struct box bounds) {
     assert(node != NULL);
 
     node->depth = depth;
+    node->parent = parent;
     node->data = data;
     node->bounds = bounds;
 
@@ -110,8 +116,81 @@ void *oct_tree_query(struct oct_tree const *tree, vec3 position) {
     return NULL;
 }
 
+void octree_const_iterator_init(struct oct_tree const *tree,
+        struct const_octree_iterator *iterator_out) {
+    assert(tree != NULL);
+    assert(iterator_out != NULL);
+
+    iterator_out->tree = tree;
+    iterator_out->current = tree->root;
+    iterator_out->index = 0;
+}
+
+static void goto_first_leaf(struct octree_iterator *iterator) {
+    while (iterator->current != NULL
+            && iterator->current->children[0] != NULL) {
+        iterator->current = iterator->current->children[0];
+    }
+}
+
+void octree_iterator_init(
+        struct oct_tree *tree, struct octree_iterator *iterator_out) {
+    assert(tree != NULL);
+    assert(iterator_out != NULL);
+
+    iterator_out->tree = tree;
+    iterator_out->current = tree->root;
+    iterator_out->index = 0;
+
+    goto_first_leaf(iterator_out);
+}
+
+void octree_iterator_destroy(struct octree_iterator *iterator) {
+    free(iterator);
+}
+
+// iterate over all leafs
+void *octree_iterator_next(struct octree_iterator *iterator) {
+    assert(iterator != NULL);
+
+    while (iterator->current != NULL) {
+        if (iterator->index < 8) {
+            struct oct_node *child =
+                    iterator->current->children[iterator->index];
+
+            if (child != NULL) {
+                iterator->current = child;
+                iterator->index = 0;
+            } else {
+                iterator->index++;
+            }
+        } else {
+            void *data = iterator->current->data;
+
+            while (iterator->current != NULL && iterator->index >= 8) {
+                iterator->current = iterator->current->parent;
+                iterator->index++;
+            }
+
+            return data;
+        }
+    }
+
+    return NULL;
+}
+
 void oct_tree_destroy(struct oct_tree *tree) {
     assert(tree != NULL);
 
     destroy_node(tree->root, tree->destroy_data);
+}
+
+void octree_const_iterator_destroy(struct const_octree_iterator *iterator) {
+    free(iterator);
+}
+
+void *octree_const_iterator_next(struct const_octree_iterator *iterator) {
+    struct octree_iterator *mutable_iterator =
+            (struct octree_iterator *)iterator;
+    return octree_iterator_next(mutable_iterator);
 }

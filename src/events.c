@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "log.h"
 #include "sunset/vector.h"
 
 typedef void (*event_handler)(void *data);
@@ -39,8 +40,8 @@ void event_queue_add_handler(
     vector_append(queue->handlers[type_id], handler);
 }
 
-void event_queue_push(struct event_queue *queue, struct event event) {
-    vector_append(queue->events, event);
+void event_queue_push(struct event_queue *queue, struct event const *event) {
+    vector_append(queue->events, *event);
 }
 
 void event_queue_process(struct event_queue *queue) {
@@ -49,6 +50,8 @@ void event_queue_process(struct event_queue *queue) {
 
         for (size_t j = 0; j < vector_size(queue->handlers[event.type_id]);
                 j++) {
+            assert(queue->handlers[event.type_id][j] != NULL);
+
             queue->handlers[event.type_id][j](event.data);
         }
     }

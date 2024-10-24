@@ -24,6 +24,36 @@ struct physics_object {
     float drag;
 };
 
+struct object;
+
+typedef void (*handler)(struct object *object);
+
+enum keyboard_key {
+    KEY_A,
+    KEY_B,
+    NUM_KEYBOARD_KEYS,
+};
+
+struct player_controller {
+    handler handlers[NUM_KEYBOARD_KEYS];
+};
+
+struct ai_controller {};
+
+enum controller_type {
+    CONTROLLER_NONE,
+    CONTROLLER_PLAYER,
+    CONTROLLER_AI,
+};
+
+struct controller {
+    enum controller_type type;
+    union {
+        struct player_controller player;
+        struct ai_controller ai;
+    };
+};
+
 struct object {
     struct physics_object physics;
     struct box bounding_box;
@@ -34,11 +64,14 @@ struct object {
     size_t num_textures;
     struct material *materials;
     size_t num_materials;
+    struct controller controller;
 
     struct object *parent;
     struct object *children;
     size_t num_children;
 };
+
+void object_move(struct object *object, vec3 direction);
 
 enum light_type {
     LIGHT_DIRECTIONAL,
@@ -55,7 +88,7 @@ struct light {
 
 struct chunk {
     struct box bounds;
-    struct object *objects;
+    struct object **objects;
     size_t num_objects;
     struct light *lights;
     size_t num_lights;
@@ -88,3 +121,5 @@ void scene_load_chunks(
 void scene_move_camera(struct scene *scene, vec3 direction);
 
 void scene_destroy(struct scene *scene);
+
+struct chunk *scene_get_chunk_for(struct scene const *scene, vec3 position);

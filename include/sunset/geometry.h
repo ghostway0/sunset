@@ -46,7 +46,7 @@ struct box {
     vec3 max;
 };
 
-bool bounding_box_collide(struct box *a, struct box *b);
+bool box_collide(struct box const *a, struct box const *b);
 
 struct texture {
     struct image image;

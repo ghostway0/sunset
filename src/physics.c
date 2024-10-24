@@ -4,30 +4,13 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "log.h"
 #include "sunset/events.h"
+#include "sunset/geometry.h"
+#include "sunset/octree.h"
 #include "sunset/physics.h"
 #include "sunset/scene.h"
 #include "sunset/vector.h"
-
-enum system_event {
-    SYSTEM_EVENT_COLLISION,
-};
-
-struct constraint {
-    struct object *a;
-    struct object *b;
-    float distance;
-};
-
-struct collision_event {
-    struct object *a;
-    struct object *b;
-};
-
-struct physics {
-    vector(struct object *) objects;
-    vector(struct constraint) constraints;
-};
 
 void physics_init(struct physics *physics) {
     vector_init(physics->objects, struct object *);
@@ -111,10 +94,50 @@ static void apply_constraint_forces(struct physics const *physics, float dt) {
     }
 }
 
+static void update_collisions(struct physics const *physics,
+        struct scene const *scene,
+        struct event_queue *event_queue) {
+    struct const_octree_iterator iterator;
+    octree_const_iterator_init(&scene->oct_tree, &iterator);
+
+    while (iterator.current != NULL) {
+        struct chunk *chunk = iterator.current->data;
+
+        for (size_t i = 0; i < chunk->num_objects; i++) {
+            struct object *object = chunk->objects[i];
+
+            for (size_t j = i + 1; j < vector_size(physics->objects); j++) {
+                struct object *other = physics->objects[j];
+
+                if (object == other) {
+                    continue;
+                }
+
+                if (box_collide(&object->bounding_box, &other->bounding_box)) {
+                    struct collision_event collision_event = {.a = object, .b = other};
+
+                    struct event event;
+                    event.type_id = SYSTEM_EVENT_COLLISION;
+                    memcpy(event.data,
+                            &collision_event,
+                            sizeof(collision_event));
+
+                    event_queue_push(event_queue, &event);
+                }
+            }
+        }
+
+        octree_const_iterator_next(&iterator);
+    }
+}
+
 void physics_step(struct physics const *physics,
+        struct scene const *scene,
         struct event_queue *event_queue,
         float dt) {
     apply_constraint_forces(physics, dt);
+
+    update_collisions(physics, scene, event_queue);
 
     for (size_t i = 0; i < vector_size(physics->objects); i++) {
         struct object *object = physics->objects[i];
@@ -123,31 +146,6 @@ void physics_step(struct physics const *physics,
                 (vec3){0.0f, -9.81f, 0.0f},
                 object->physics.acceleration);
     }
-
-    // FIXME: should really do this only per chunk
-    for (size_t i = 0; i < vector_size(physics->objects); i++) {
-        struct object *a = physics->objects[i];
-
-        for (size_t j = i + 1; j < vector_size(physics->objects); j++) {
-            struct object *b = physics->objects[j];
-
-            if (bounding_box_collide(&a->bounding_box, &b->bounding_box)) {
-                struct collision_event collision_event = {a, b};
-                struct event event;
-
-                memcpy(event.data, &collision_event, sizeof(collision_event));
-                event.type_id = SYSTEM_EVENT_COLLISION;
-
-                event_queue_push(event_queue, event);
-            }
-        }
-    }
-}
-
-void physics_update(struct physics const *physics,
-        struct event_queue *event_queue,
-        float dt) {
-    physics_step(physics, event_queue, dt);
 
     for (size_t i = 0; i < vector_size(physics->objects); i++) {
         struct object *object = physics->objects[i];

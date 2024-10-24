@@ -113,7 +113,7 @@ float rect_distance_to_camera(vec3 camera_position, struct rect rect) {
     return glm_vec3_distance(camera_position, center);
 }
 
-bool bounding_box_collide(struct box *a, struct box *b) {
+bool box_collide(struct box const *a, struct box const *b) {
     for (size_t i = 0; i < 3; i++) {
         if (a->max[i] < b->min[i] || a->min[i] > b->max[i]) {
             return false;
