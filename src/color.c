@@ -25,3 +25,7 @@ bool colors_equal(struct color a, struct color b) {
 uint8_t color_to_grayscale(struct color color) {
     return 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
 }
+
+struct color color_from_grayscale(uint8_t value) {
+    return (struct color){value, value, value, 255};
+}
