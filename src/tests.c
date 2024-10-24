@@ -218,7 +218,6 @@ void test_quad_tree(void **state) {
     }
 
     quad_tree_destroy(&tree);
-
 }
 
 int main(void) {

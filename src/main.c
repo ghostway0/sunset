@@ -209,6 +209,8 @@ int main() {
 
     struct object **objects = malloc(sizeof(struct object *) * 2);
 
+    // should be owned by the scene. but for now, we'll just leak it, cuz ...
+    // lazyness
     objects[0] = &object;
     objects[1] = &object2;
 
@@ -244,7 +246,7 @@ int main() {
     struct event_queue event_queue;
     event_queue_init(&event_queue);
 
-    physics_step(&physics, &scene, &event_queue, 1/60.0f);
+    physics_step(&physics, &scene, &event_queue, 1 / 60.0f);
 
     for (size_t i = 0; i < vector_size(event_queue.events); i++) {
         struct event event = event_queue.events[i];

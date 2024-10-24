@@ -7,8 +7,8 @@
 #include "sunset/color.h"
 #include "sunset/errors.h"
 #include "sunset/geometry.h"
-#include "sunset/utils.h"
 #include "sunset/tga.h"
+#include "sunset/utils.h"
 
 #define TGA_HEADER_SIZE 18
 #define TGA_MAGIC "\x00\x00\x02\x00"
@@ -21,7 +21,6 @@ enum color_type {
     TGA_TYPE_RLE_RGB = 10,
     TGA_TYPE_RLE_GREY = 11,
 };
-
 
 // run-length encoding decompression
 static int decompress(uint8_t *data,
@@ -37,8 +36,6 @@ static int decompress(uint8_t *data,
     unused(pixel_size_bytes);
 
     // note that pixels can also be stored in the color map, and be less than
-
-
 
     return 0;
 }

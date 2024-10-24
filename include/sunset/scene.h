@@ -67,7 +67,7 @@ struct object {
     struct controller controller;
 
     struct object *parent;
-    struct object *children;
+    struct object **children;
     size_t num_children;
 };
 
@@ -96,6 +96,8 @@ struct chunk {
 };
 
 struct scene {
+    struct object *live_objects;
+    size_t num_objects;
     struct oct_tree oct_tree;
     struct camera camera;
     struct image skybox;

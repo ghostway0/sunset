@@ -60,8 +60,8 @@ struct ecs_iterator ecs_iterator_create(struct ecs *ecs, uint64_t mask) {
 
 void ecs_iterator_advance(struct ecs_iterator *iterator) {
     if (iterator->current_element
-            < iterator->ecs->archtypes[iterator->current_archtype]
-                    .num_elements - 1) {
+            < iterator->ecs->archtypes[iterator->current_archtype].num_elements
+                    - 1) {
         iterator->current_element++;
         return;
     }

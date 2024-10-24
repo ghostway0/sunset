@@ -114,7 +114,8 @@ static void update_collisions(struct physics const *physics,
                 }
 
                 if (box_collide(&object->bounding_box, &other->bounding_box)) {
-                    struct collision_event collision_event = {.a = object, .b = other};
+                    struct collision_event collision_event = {
+                            .a = object, .b = other};
 
                     struct event event;
                     event.type_id = SYSTEM_EVENT_COLLISION;

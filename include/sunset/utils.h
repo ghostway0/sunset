@@ -20,4 +20,3 @@
 
 #define container_of(p, T, a)                                                  \
     ((T *)((uintptr_t)(p) - (uintptr_t)(&((T *)(0))->a)))
-

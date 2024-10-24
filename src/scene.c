@@ -85,6 +85,6 @@ void object_move(struct object *object, vec3 direction) {
     }
 
     for (size_t i = 0; i < object->num_children; ++i) {
-        object_move(object->children + i, direction);
+        object_move(object->children[i], direction);
     }
 }

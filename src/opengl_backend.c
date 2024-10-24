@@ -136,8 +136,8 @@ int backend_setup(struct render_context *context, struct render_config config) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    context->window = glfwCreateWindow(
-            config.width, config.height, "Sunset", NULL, NULL);
+    context->window =
+            glfwCreateWindow(config.width, config.height, "Sunset", NULL, NULL);
 
     glfwMakeContextCurrent(context->window);
 

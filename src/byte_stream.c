@@ -15,8 +15,8 @@ int byte_stream_read_raw(struct byte_stream *stream, void *out, size_t size) {
     return 0;
 }
 
-
-int byte_stream_from(const uint8_t *data, size_t size, struct byte_stream *stream_out) {
+int byte_stream_from(
+        uint8_t const *data, size_t size, struct byte_stream *stream_out) {
     stream_out->data = (uint8_t *)data;
     stream_out->size = size;
     stream_out->cursor = 0;

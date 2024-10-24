@@ -21,8 +21,8 @@ void event_queue_init(struct event_queue *queue);
 
 void event_queue_free(struct event_queue *queue);
 
-void event_queue_add_handler(struct event_queue *queue, uint32_t type_id,
-        event_handler handler);
+void event_queue_add_handler(
+        struct event_queue *queue, uint32_t type_id, event_handler handler);
 
 void event_queue_push(struct event_queue *queue, struct event const *event);
 
