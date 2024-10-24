@@ -21,7 +21,7 @@ struct physics_object {
     vec3 velocity;
     vec3 acceleration;
     float mass;
-    float drag;
+    float damping;
 };
 
 struct object;

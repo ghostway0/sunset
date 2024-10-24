@@ -229,13 +229,6 @@ int main() {
 
     scene_init(camera, skybox, NULL, 0, root_chunk->bounds, root_chunk, &scene);
 
-    struct chunk *thing =
-            oct_tree_query(&scene.oct_tree, (vec3){0.0f, 0.0f, 0.0f});
-
-    log_debug("thing: " vec3_format " %zu",
-            vec3_args(thing->bounds.min),
-            thing->id);
-
     struct physics physics;
     physics_init(&physics);
 

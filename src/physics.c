@@ -155,8 +155,9 @@ void physics_step(struct physics const *physics,
                 object->physics.acceleration,
                 object->physics.velocity);
 
-        glm_vec3_scale(
-                object->physics.velocity, 0.99f, object->physics.velocity);
+        glm_vec3_scale(object->physics.velocity,
+                object->physics.damping,
+                object->physics.velocity);
 
         glm_vec3_add(object->transform.position,
                 object->physics.velocity,
