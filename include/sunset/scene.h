@@ -77,6 +77,7 @@ enum light_type {
     LIGHT_DIRECTIONAL,
     LIGHT_SPOTLIGHT,
     LIGHT_POINT,
+    LIGHT_AMBIENT,
 };
 
 struct light {

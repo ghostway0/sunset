@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sunset/shader.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -57,7 +58,7 @@ struct texture {
 struct material {
     struct texture *textures;
     size_t num_textures;
-    struct effect *effects;
+    struct program *effects;
     size_t num_effects;
 };
 
@@ -66,8 +67,12 @@ struct mesh {
     size_t num_vertices;
     uint32_t *indices;
     size_t num_indices;
-    struct effect *effects;
-    size_t num_effects;
+};
+
+struct mesh_instance {
+    struct mesh *mesh;
+    mat4 transform;
+    struct material material;
 };
 
 void show_image_grayscale(struct image const *image);

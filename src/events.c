@@ -1,6 +1,5 @@
 #include <stdint.h>
 
-#include "log.h"
 #include "sunset/vector.h"
 
 typedef void (*event_handler)(void *data);

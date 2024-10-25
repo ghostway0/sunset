@@ -57,7 +57,8 @@ struct vector_metadata {
             meta = (struct vector_metadata *)realloc(meta,                     \
                     sizeof(struct vector_metadata)                             \
                             + sizeof(*(v)) * meta->capacity);                  \
-            _Pragma("GCC diagnostic pop") assert(meta);                        \
+            _Pragma("GCC diagnostic pop");                                     \
+            assert(meta);                                                      \
             v = (void *)(meta + 1);                                            \
         }                                                                      \
         (v)[meta->size++] = value;                                             \

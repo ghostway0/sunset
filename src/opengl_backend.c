@@ -1,3 +1,4 @@
+#include "opengl_backend.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -26,107 +27,7 @@ static int compile_shader_into(GLuint shader, char const *source) {
 
     return 0;
 }
-//
-// static int set_uniform_arguments(struct shader *shader,
-//         struct uniform_argument *arguments,
-//         size_t num_arguments) {
-//     for (size_t i = 0; i < num_arguments; i++) {
-//         struct uniform_argument *uniform = &arguments[i];
-//
-//         if (uniform->type == UNIFORM_UBO) {
-//             GLuint buffer;
-//
-//             glGenBuffers(1, &buffer);
-//             glBindBuffer(GL_UNIFORM_BUFFER, buffer);
-//             glBufferData(GL_UNIFORM_BUFFER,
-//                     uniform->data.size,
-//                     uniform->data.data,
-//                     GL_STATIC_DRAW);
-//
-//             GLuint block_index = glGetUniformBlockIndex(
-//                     (GLuint)shader->handle, uniform->name);
-//             if (block_index == GL_INVALID_INDEX) {
-//                 return -ERROR_UNIFORM_NOT_FOUND;
-//             }
-//
-//             glUniformBlockBinding((GLuint)shader->handle, block_index, i);
-//
-//             GLint location = glGetUniformBlockIndex(
-//                     (GLuint)shader->handle, uniform->name);
-//
-//             glBindBufferRange(GL_UNIFORM_BUFFER,
-//                     location,
-//                     buffer,
-//                     0,
-//                     uniform->data.size);
-//
-//             continue;
-//         }
-//
-//         GLint location =
-//                 glGetUniformLocation((GLuint)shader->handle, uniform->name);
-//
-//         if (location == -1) {
-//             return -ERROR_UNIFORM_NOT_FOUND;
-//         }
-//
-//         switch (uniform->type) {
-//             case UNIFORM_INT: {
-//                 int value;
-//                 byte_stream_read(&uniform->data, mat4, &value);
-//                 glUniform1i(location, value);
-//                 break;
-//             }
-//             case UNIFORM_FLOAT: {
-//                 float value;
-//                 byte_stream_read(&uniform->data, mat4, &value);
-//                 glUniform1f(location, value);
-//                 break;
-//             }
-//             case UNIFORM_MAT4: {
-//                 mat4 value;
-//                 byte_stream_read(&uniform->data, mat4, &value);
-//                 glUniformMatrix4fv(location, 1, GL_FALSE, (float *)value);
-//                 break;
-//             }
-//             default:
-//                 return -ERROR_INVALID_ARGUMENTS;
-//         }
-//     }
-//
-//     return 0;
-// }
-//
-// static int set_ssbo_arguments(struct shader *shader,
-//         struct ssbo_argument *arguments,
-//         size_t num_arguments) {
-//     GLuint buffer;
-//
-//     for (size_t i = 0; i < num_arguments; i++) {
-//         struct ssbo_argument *ssbo = &arguments[i];
-//
-//         GLuint block_index = glGetProgramResourceIndex(
-//                 (GLuint)shader->handle, GL_SHADER_STORAGE_BLOCK, ssbo->name);
-//
-//         if (block_index == GL_INVALID_INDEX) {
-//             return -ERROR_UNIFORM_NOT_FOUND;
-//         }
-//
-//         glGenBuffers(1, &buffer);
-//         glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
-//         glBufferData(GL_SHADER_STORAGE_BUFFER,
-//                 ssbo->data->size,
-//                 ssbo->data->data,
-//                 GL_STATIC_DRAW);
-//
-//         glShaderStorageBlockBinding((GLuint)shader->handle, block_index, i);
-//         glBindBufferRange(
-//                 GL_SHADER_STORAGE_BUFFER, i, buffer, 0, ssbo->data->size);
-//     }
-//
-//     return 0;
-// }
-//
+
 int backend_setup(struct render_context *context, struct render_config config) {
     if (!glfwInit()) {
         return -ERROR_IO;
@@ -155,71 +56,11 @@ int backend_setup(struct render_context *context, struct render_config config) {
 
     return 0;
 }
-//
-// int backend_create_shader(char const *source,
-//         enum shader_type shader_type,
-//         struct shader_signature signature,
-//         struct shader *shader_out) {
-//     GLuint program = glCreateProgram();
-//     int err = 0;
-//
-//     GLuint shader = glCreateShader(shader_type);
-//
-//     if ((err = compile_shader_into(shader, source))) {
-//         goto cleanup;
-//     }
-//
-//     glAttachShader(program, shader);
-//     glLinkProgram(program);
-//
-//     GLint success;
-//     glGetProgramiv(program, GL_LINK_STATUS, &success);
-//
-//     if (!success) {
-//         err = -ERROR_SHADER_COMPILATION_FAILED;
-//         goto cleanup;
-//     }
-//
-//     shader_out->handle = program;
-//
-//     shader_out->uniforms = signature.uniforms;
-//     shader_out->num_uniforms = signature.num_uniforms;
-//
-//     shader_out->ssbos = signature.ssbos;
-//     shader_out->num_ssbos = signature.num_ssbos;
-//
-// cleanup:
-//     if (err != 0) {
-//         glDeleteShader(shader);
-//         glDeleteProgram(program);
-//     }
-//
-//     return err;
-// }
-//
-// int backend_setup_shader(
-//         struct shader *shader, struct shader_arguments *arguments) {
-//     int err = 0;
-//
-//     if ((err = set_uniform_arguments(
-//                  shader, arguments->uniforms, arguments->num_uniforms))) {
-//         return err;
-//     }
-//
-//     if ((err = set_ssbo_arguments(
-//                  shader, arguments->ssbos, arguments->num_ssbos))) {
-//         return err;
-//     }
-//
-//     // glUseProgram(shader->handle);
-//
-//     return 0;
-// }
 
 int backend_create_program(struct program *program_out) {
     GLuint program = glCreateProgram();
     if (!program) {
-        return -ERROR_OUT_OF_MEMORY;
+        return -ERROR_SHADER_COMPILATION_FAILED;
     }
 
     program_out->handle = program;
@@ -229,7 +70,7 @@ int backend_create_program(struct program *program_out) {
 int backend_program_add_shader(struct program *program,
         char const *source,
         enum shader_type shader_type,
-        struct shader_argument *arguments,
+        struct shader_argument const *arguments,
         size_t num_arguments) {
     unused(arguments);
     unused(num_arguments);
@@ -336,4 +177,248 @@ int backend_setup_shader(struct program *program,
     }
 
     return 0;
+}
+
+int compile_mesh(struct mesh const *mesh, struct compiled_mesh *mesh_out) {
+    glGenVertexArrays(1, &mesh_out->vao);
+    glGenBuffers(1, &mesh_out->vbo);
+    glGenBuffers(1, &mesh_out->ebo);
+
+    glBindVertexArray(mesh_out->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh_out->vbo);
+    glBufferData(GL_ARRAY_BUFFER,
+            mesh->num_vertices * sizeof(vec3),
+            mesh->vertices,
+            GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_out->ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+            mesh->num_indices * sizeof(uint32_t),
+            mesh->indices,
+            GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    mesh_out->num_indices = mesh->num_indices;
+
+    return 0;
+}
+
+void backend_draw_mesh(struct compiled_mesh *mesh) {
+    glBindVertexArray(mesh->vao);
+    glDrawElements(GL_TRIANGLES, mesh->num_indices, GL_UNSIGNED_INT, 0);
+}
+
+void backend_draw(struct render_context *context) {
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glfwSwapBuffers(context->window);
+    glfwPollEvents();
+}
+
+void backend_free(struct render_context *context) {
+    glfwDestroyWindow(context->window);
+    glfwTerminate();
+}
+
+void backend_free_program(struct program *program) {
+    glDeleteProgram((GLuint)program->handle);
+}
+
+void compiled_mesh_destroy(struct compiled_mesh *mesh) {
+    glDeleteVertexArrays(1, &mesh->vao);
+    glDeleteBuffers(1, &mesh->vbo);
+    glDeleteBuffers(1, &mesh->ebo);
+}
+
+int backend_compile_texture(struct texture const *texture,
+        struct compiled_texture *compiled_texture) {
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
+    glTexImage2D(GL_TEXTURE_2D,
+            0,
+            GL_RGB,
+            texture->image.w,
+            texture->image.h,
+            0,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            texture->image.pixels);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    compiled_texture->tex = tex;
+
+    return 0;
+}
+
+char const *point_light_fragment_shader =
+        "#version 450 core\n"
+        "out vec4 FragColor;\n"
+        "uniform vec3 light_position;\n"
+        "uniform vec3 light_color;\n"
+        "uniform float light_intensity;\n"
+        "uniform vec3 object_color;\n"
+        "void main() {\n"
+        "}\n";
+
+const struct shader_argument point_light_arguments[] = {
+        {.name = "light_position", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "light_color", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "light_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
+        {.name = "object_color", .type = ARGUMENT_UNIFORM_VEC3},
+};
+
+char const *directional_light_fragment_shader =
+        "#version 450 core\n"
+        "out vec4 FragColor;\n"
+        "uniform vec3 light_direction;\n"
+        "uniform vec3 light_color;\n"
+        "uniform float light_intensity;\n"
+        "uniform vec3 object_color;\n"
+        "void main() {\n"
+        "}\n";
+
+const struct shader_argument directional_light_arguments[] = {
+        {.name = "light_direction", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "light_color", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "light_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
+        {.name = "object_color", .type = ARGUMENT_UNIFORM_VEC3},
+};
+
+char const *ambient_light_fragment_shader =
+        "#version 450 core\n"
+        "out vec4 FragColor;\n"
+        "uniform vec3 light_color;\n"
+        "uniform float light_intensity;\n"
+        "uniform vec3 object_color;\n"
+        "void main() {\n"
+        "}\n";
+
+const struct shader_argument ambient_light_arguments[] = {
+        {.name = "light_color", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "light_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
+        {.name = "object_color", .type = ARGUMENT_UNIFORM_VEC3},
+};
+
+char const *spotlight_light_fragment_shader = 
+    "#version 450 core"
+
+    "out vec4 FragColor;"
+
+    "uniform vec3 light_position;"
+    "uniform vec3 light_direction;"
+    "uniform float light_angle;"
+    "uniform vec3 light_color;"
+    "uniform float light_intensity;"
+    "uniform vec3 object_color;"
+
+    "in vec3 Normal;"
+    "in vec3 FragPos;"
+
+    "void main() {"
+    "}";
+
+const struct shader_argument spotlight_light_arguments[] = {
+        {.name = "light_position", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "light_direction", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "light_angle", .type = ARGUMENT_UNIFORM_FLOAT},
+        {.name = "light_color", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "light_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
+        {.name = "object_color", .type = ARGUMENT_UNIFORM_VEC3},
+};
+
+// this is pretty horrible code
+int backend_compile_light_shader(
+        struct light const *light, struct program *program) {
+    int retval = 0;
+
+    char const *vertex_shader =
+            "#version 450 core\n"
+            "layout (location = 0) in vec3 position;\n"
+            "uniform mat4 mvp;\n"
+            "void main() {\n"
+            "    gl_Position = mvp * vec4(position, 1.0);\n"
+            "}\n";
+
+    struct shader_argument vertex_arguments[] = {
+            {.name = "mvp", .type = ARGUMENT_UNIFORM_MAT4},
+    };
+
+    if (backend_create_program(program)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
+    GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+
+    if (compile_shader_into(vertex, vertex_shader)) {
+        retval = -ERROR_SHADER_COMPILATION_FAILED;
+        goto failure;
+    }
+
+    char const *fragment_source = NULL;
+    struct shader_argument const *fragment_arguments = NULL;
+
+    switch (light->type) {
+        case LIGHT_POINT:
+            fragment_source = point_light_fragment_shader;
+            fragment_arguments = point_light_arguments;
+            break;
+        case LIGHT_DIRECTIONAL:
+            fragment_source = directional_light_fragment_shader;
+            fragment_arguments = directional_light_arguments;
+            break;
+        case LIGHT_AMBIENT:
+            fragment_source = ambient_light_fragment_shader;
+            fragment_arguments = ambient_light_arguments;
+            break;
+        case LIGHT_SPOTLIGHT:
+            fragment_source = spotlight_light_fragment_shader;
+            fragment_arguments = spotlight_light_arguments;
+            break;
+        default:
+            unreachable();
+    }
+
+    if (compile_shader_into(fragment, fragment_source)) {
+        retval = -ERROR_SHADER_COMPILATION_FAILED;
+        goto failure;
+    }
+
+    if (backend_program_add_shader(program,
+                vertex_shader,
+                GL_VERTEX_SHADER,
+                vertex_arguments,
+                sizeof(vertex_arguments) / sizeof(vertex_arguments[0]))) {
+        retval = -ERROR_SHADER_COMPILATION_FAILED;
+        goto failure;
+    }
+
+    if (backend_program_add_shader(program,
+                fragment_source,
+                GL_FRAGMENT_SHADER,
+                fragment_arguments,
+                sizeof(point_light_arguments)
+                        / sizeof(point_light_arguments[0]))) {
+        retval = -ERROR_SHADER_COMPILATION_FAILED;
+        goto failure;
+    }
+
+    if (backend_link_program(program)) {
+        retval = -ERROR_SHADER_COMPILATION_FAILED;
+        goto failure;
+    }
+
+    return 0;
+
+failure:
+    glDeleteProgram(program->handle);
+    return retval;
 }
