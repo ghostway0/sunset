@@ -12,6 +12,7 @@ add_project_arguments(
     '-Wno-gnu-statement-expression-from-macro-expansion',
     '-Wno-gnu-zero-variadic-macro-arguments',
     '-Wno-gnu-alignof-expression',
+    '-Wno-zero-length-array',
     '-D_GNU_SOURCE',
   ],
   language: 'c',

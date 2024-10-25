@@ -1,4 +1,5 @@
 #include "sunset/geometry.h"
+#include "sunset/shader.h"
 #include <GLFW/glfw3.h>
 
 // backend-specific data

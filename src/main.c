@@ -14,6 +14,7 @@
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/physics.h"
+#include "sunset/render.h"
 #include "sunset/scene.h"
 #include "sunset/utils.h"
 
@@ -115,6 +116,35 @@ int stub_render_command(
     }
 
     return 0;
+}
+
+struct mesh create_test_mesh() {
+    struct mesh test_mesh;
+
+    // Allocate memory for 3 vertices
+    test_mesh.num_vertices = 3;
+    test_mesh.vertices = (vec3 *)malloc(test_mesh.num_vertices * sizeof(vec3));
+
+    // Initialize vertices for a triangle
+    test_mesh.vertices[0][0] = 0.0f;
+    test_mesh.vertices[0][1] = 0.5f;
+    test_mesh.vertices[0][2] = 0.0f;
+    test_mesh.vertices[1][0] = -0.5f;
+    test_mesh.vertices[1][1] = -0.5f;
+    test_mesh.vertices[1][2] = 0.0f;
+    test_mesh.vertices[2][0] = 0.5f;
+    test_mesh.vertices[2][1] = -0.5f;
+    test_mesh.vertices[2][2] = 0.0f;
+
+    // Allocate and initialize indices for the triangle
+    test_mesh.num_indices = 3;
+    test_mesh.indices =
+            (uint32_t *)malloc(test_mesh.num_indices * sizeof(uint32_t));
+    test_mesh.indices[0] = 0;
+    test_mesh.indices[1] = 1;
+    test_mesh.indices[2] = 2;
+
+    return test_mesh;
 }
 
 int main() {
@@ -256,6 +286,30 @@ int main() {
             default:
                 log_debug("event %u", event.type_id);
         }
+    }
+
+    struct render_context render_context = {};
+
+    if (backend_setup(&render_context,
+                (struct render_config){.width = 800, .height = 600})) {
+        log_debug("wtf");
+        return -1;
+    }
+
+    struct mesh test_mesh = create_test_mesh();
+
+    struct compiled_mesh compiled;
+
+    compile_mesh(&test_mesh, &compiled);
+
+    while (!glfwWindowShouldClose(render_context.window)) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        backend_draw_mesh(&compiled);
+
+        glfwSwapBuffers(render_context.window);
+        glfwPollEvents();
     }
 
     event_queue_free(&event_queue);

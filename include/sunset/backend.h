@@ -33,9 +33,7 @@ int backend_create_program(struct program *program_out);
 
 int backend_program_add_shader(struct program *program,
         char const *source,
-        enum shader_type shader_type,
-        struct shader_argument const *arguments,
-        size_t num_arguments);
+        enum shader_type shader_type);
 
 int backend_link_program(struct program *program);
 

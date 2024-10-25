@@ -4,9 +4,12 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <time.h>
 
+#include "log.h"
 #include "sunset/backend.h"
 #include "sunset/byte_stream.h"
+#include "sunset/config.h"
 #include "sunset/errors.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
@@ -28,31 +31,67 @@ static int compile_shader_into(GLuint shader, char const *source) {
     return 0;
 }
 
+static int setup_default_shaders(struct program *program_out) {
+    char const *vertex =
+            "#version 330 core\n"
+            "layout (location = 0) in vec3 aPos;\n"
+            "void main() {\n"
+            "    gl_Position = vec4(aPos, 1.0);\n"
+            "}\n";
+
+    const char *fragment =
+            "#version 330 core\n"
+            "out vec4 FragColor;\n"
+            "void main() {\n"
+            "    FragColor = vec4(1.0, 0.5, 0.2, 1.0);\n"
+            "}\n";
+
+
+    backend_create_program(program_out);
+
+    backend_program_add_shader(program_out, vertex, SHADER_VERTEX);
+    backend_program_add_shader(program_out, fragment, SHADER_FRAGMENT);
+
+    backend_link_program(program_out);
+
+    return 0;
+}
+
+void backend_use_program(struct program const *program) {
+    glUseProgram(program->handle);
+}
+
 int backend_setup(struct render_context *context, struct render_config config) {
     if (!glfwInit()) {
         return -ERROR_IO;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     context->window =
             glfwCreateWindow(config.width, config.height, "Sunset", NULL, NULL);
-
-    glfwMakeContextCurrent(context->window);
 
     if (!context->window) {
         return -ERROR_IO;
     }
 
+    glfwMakeContextCurrent(context->window);
+
     if (glewInit() != GLEW_OK) {
         return -ERROR_IO;
     }
 
+    glEnable(GL_DEPTH_TEST);
+
     glVertexAttribPointer(
             0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
+
+    struct program default_program;
+    setup_default_shaders(&default_program);
+    backend_use_program(&default_program);
 
     return 0;
 }
@@ -69,12 +108,7 @@ int backend_create_program(struct program *program_out) {
 
 int backend_program_add_shader(struct program *program,
         char const *source,
-        enum shader_type shader_type,
-        struct shader_argument const *arguments,
-        size_t num_arguments) {
-    unused(arguments);
-    unused(num_arguments);
-
+        enum shader_type shader_type) {
     GLuint shader = glCreateShader(shader_type);
     if (!shader) {
         return -ERROR_OUT_OF_MEMORY;
@@ -209,7 +243,8 @@ int compile_mesh(struct mesh const *mesh, struct compiled_mesh *mesh_out) {
 
 void backend_draw_mesh(struct compiled_mesh *mesh) {
     glBindVertexArray(mesh->vao);
-    glDrawElements(GL_TRIANGLES, mesh->num_indices, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, mesh->num_indices, GL_UNSIGNED_INT, NULL);
+    glBindVertexArray(0);
 }
 
 void backend_draw(struct render_context *context) {
@@ -258,39 +293,15 @@ int backend_compile_texture(struct texture const *texture,
     return 0;
 }
 
-char const *point_light_fragment_shader =
-        "#version 450 core\n"
-        "out vec4 FragColor;\n"
-        "uniform vec3 light_position;\n"
-        "uniform vec3 light_color;\n"
-        "uniform float light_intensity;\n"
-        "uniform vec3 object_color;\n"
-        "void main() {\n"
-        "}\n";
+char const *point_light_fragment_shader = "";
 
-const struct shader_argument point_light_arguments[] = {
-        {.name = "light_position", .type = ARGUMENT_UNIFORM_VEC3},
-        {.name = "light_color", .type = ARGUMENT_UNIFORM_VEC3},
-        {.name = "light_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
-        {.name = "object_color", .type = ARGUMENT_UNIFORM_VEC3},
-};
+const struct shader_argument point_light_arguments[] = {};
 
-char const *directional_light_fragment_shader =
-        "#version 450 core\n"
-        "out vec4 FragColor;\n"
-        "uniform vec3 light_direction;\n"
-        "uniform vec3 light_color;\n"
-        "uniform float light_intensity;\n"
-        "uniform vec3 object_color;\n"
-        "void main() {\n"
-        "}\n";
+char const *directional_light_vertex_shader = "";
 
-const struct shader_argument directional_light_arguments[] = {
-        {.name = "light_direction", .type = ARGUMENT_UNIFORM_VEC3},
-        {.name = "light_color", .type = ARGUMENT_UNIFORM_VEC3},
-        {.name = "light_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
-        {.name = "object_color", .type = ARGUMENT_UNIFORM_VEC3},
-};
+char const *directional_light_fragment_shader = "";
+
+const struct shader_argument directional_light_arguments[] = {};
 
 char const *ambient_light_fragment_shader =
         "#version 450 core\n"
@@ -298,41 +309,22 @@ char const *ambient_light_fragment_shader =
         "uniform vec3 light_color;\n"
         "uniform float light_intensity;\n"
         "uniform vec3 object_color;\n"
+        "uniform float ambient_intensity;\n"
         "void main() {\n"
+        "    FragColor = vec4(light_color * light_intensity * object_color * "
+        "ambient_intensity, 1.0);\n"
         "}\n";
 
 const struct shader_argument ambient_light_arguments[] = {
         {.name = "light_color", .type = ARGUMENT_UNIFORM_VEC3},
         {.name = "light_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
         {.name = "object_color", .type = ARGUMENT_UNIFORM_VEC3},
+        {.name = "ambient_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
 };
 
-char const *spotlight_light_fragment_shader = 
-    "#version 450 core"
+char const *spotlight_light_fragment_shader = "";
 
-    "out vec4 FragColor;"
-
-    "uniform vec3 light_position;"
-    "uniform vec3 light_direction;"
-    "uniform float light_angle;"
-    "uniform vec3 light_color;"
-    "uniform float light_intensity;"
-    "uniform vec3 object_color;"
-
-    "in vec3 Normal;"
-    "in vec3 FragPos;"
-
-    "void main() {"
-    "}";
-
-const struct shader_argument spotlight_light_arguments[] = {
-        {.name = "light_position", .type = ARGUMENT_UNIFORM_VEC3},
-        {.name = "light_direction", .type = ARGUMENT_UNIFORM_VEC3},
-        {.name = "light_angle", .type = ARGUMENT_UNIFORM_FLOAT},
-        {.name = "light_color", .type = ARGUMENT_UNIFORM_VEC3},
-        {.name = "light_intensity", .type = ARGUMENT_UNIFORM_FLOAT},
-        {.name = "object_color", .type = ARGUMENT_UNIFORM_VEC3},
-};
+const struct shader_argument spotlight_light_arguments[] = {};
 
 // this is pretty horrible code
 int backend_compile_light_shader(
@@ -350,6 +342,7 @@ int backend_compile_light_shader(
     struct shader_argument vertex_arguments[] = {
             {.name = "mvp", .type = ARGUMENT_UNIFORM_MAT4},
     };
+    unused(vertex_arguments);
 
     if (backend_create_program(program)) {
         return -ERROR_SHADER_COMPILATION_FAILED;
@@ -365,6 +358,7 @@ int backend_compile_light_shader(
 
     char const *fragment_source = NULL;
     struct shader_argument const *fragment_arguments = NULL;
+    unused(fragment_arguments);
 
     switch (light->type) {
         case LIGHT_POINT:
@@ -376,6 +370,7 @@ int backend_compile_light_shader(
             fragment_arguments = directional_light_arguments;
             break;
         case LIGHT_AMBIENT:
+            // the only actually supported light currently
             fragment_source = ambient_light_fragment_shader;
             fragment_arguments = ambient_light_arguments;
             break;
@@ -392,21 +387,13 @@ int backend_compile_light_shader(
         goto failure;
     }
 
-    if (backend_program_add_shader(program,
-                vertex_shader,
-                GL_VERTEX_SHADER,
-                vertex_arguments,
-                sizeof(vertex_arguments) / sizeof(vertex_arguments[0]))) {
+    if (backend_program_add_shader(program, vertex_shader, GL_VERTEX_SHADER)) {
         retval = -ERROR_SHADER_COMPILATION_FAILED;
         goto failure;
     }
 
-    if (backend_program_add_shader(program,
-                fragment_source,
-                GL_FRAGMENT_SHADER,
-                fragment_arguments,
-                sizeof(point_light_arguments)
-                        / sizeof(point_light_arguments[0]))) {
+    if (backend_program_add_shader(
+                program, fragment_source, GL_FRAGMENT_SHADER)) {
         retval = -ERROR_SHADER_COMPILATION_FAILED;
         goto failure;
     }
