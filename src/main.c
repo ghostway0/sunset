@@ -35,6 +35,8 @@ void context_free(struct context *context) {
     command_buffer_free(&context->command_buffer);
 }
 
+int test_run_mesh_command(struct render_context *context, struct mesh mesh);
+
 int stub_render_command(
         struct context *context, struct command const *command) {
     unused(context);
@@ -289,7 +291,8 @@ int main() {
     struct render_context render_context = {};
 
     if (backend_setup(&render_context,
-                (struct render_config){.window_width = 800, .window_height = 600})) {
+                (struct render_config){
+                        .window_width = 800, .window_height = 600})) {
         log_debug("wtf");
         return -1;
     }
@@ -297,6 +300,30 @@ int main() {
     event_queue_free(&event_queue);
     scene_destroy(&scene);
     physics_free(&physics);
+
+    backend_register_mesh(&render_context, create_test_mesh());
+
+    struct command_buffer command_buffer;
+    command_buffer_init(&command_buffer, COMMAND_BUFFER_DEFAULT);
+
+    while (!glfwWindowShouldClose(render_context.window)) {
+        mat4 transform1 = {
+            {1.0f, 0.0f, 0.0f, 0.5f},
+            {0.0f, 1.0f, 0.0f, 0.0f},
+            {0.0f, 0.0f, 1.0f, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f},
+        };
+
+        command_buffer_add_mesh(&command_buffer, true, 0, 0, transform1);
+        command_buffer_add_mesh(&command_buffer, true, 0, 0, GLM_MAT4_IDENTITY);
+
+        backend_draw(&render_context,
+                &command_buffer,
+                camera.view_matrix,
+                camera.projection_matrix);
+
+        glfwPollEvents();
+    }
 
     // cleanup:
     return retval;

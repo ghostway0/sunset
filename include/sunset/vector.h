@@ -64,6 +64,7 @@ struct vector_metadata {
         (v)[meta->size++] = value;                                             \
     } while (0)
 
+// use memcpy for types that are not trivially copyable
 #define vector_append_copy(v, value)                                           \
     do {                                                                       \
         struct vector_metadata *meta = vector_metadata(v);                     \
@@ -78,7 +79,7 @@ struct vector_metadata {
             assert(meta);                                                      \
             v = (void *)(meta + 1);                                            \
         }                                                                      \
-        memcpy(v + meta->size++, &value, sizeof(value));                       \
+        memcpy(&(v)[meta->size++], &(value), sizeof(value));                   \
     } while (0)
 
 #define vector_append_multiple(v, data, size2)                                 \

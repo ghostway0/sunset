@@ -5,8 +5,8 @@
 #include "sunset/ring_buffer.h"
 
 int ring_buffer_append(struct ring_buffer *ring_buffer, void const *data) {
-    if (((ring_buffer->head + 1) & (ring_buffer->buffer_size))
-            > ring_buffer->tail) {
+    if (((ring_buffer->head + 1) & (ring_buffer->buffer_size - 1))
+            == ring_buffer->tail) {
         return -ERROR_RINGBUFFER_PTR_OVERRUN;
     }
 
@@ -22,8 +22,7 @@ int ring_buffer_append(struct ring_buffer *ring_buffer, void const *data) {
 }
 
 int ring_buffer_pop(struct ring_buffer *ring_buffer, void *data_out) {
-    if (((ring_buffer->tail + 1) & (ring_buffer->buffer_size - 1))
-            > ring_buffer->head) {
+    if (ring_buffer->head == ring_buffer->tail) {
         return -ERROR_RINGBUFFER_PTR_OVERRUN;
     }
 
@@ -64,7 +63,7 @@ void ring_buffer_clear(struct ring_buffer *ring_buffer) {
 
 void ring_buffer_pop_wait(
         struct ring_buffer *ring_buffer, size_t n, void *data_out) {
-    while (((ring_buffer->head + n) & (ring_buffer->buffer_size))
+    while (((ring_buffer->head + n) & (ring_buffer->buffer_size - 1))
             > ring_buffer->tail) {
     }
 

@@ -1,8 +1,9 @@
+#include "sunset/commands.h"
 #include "sunset/geometry.h"
+#include "sunset/map.h"
 #include "sunset/shader.h"
 #include "sunset/vector.h"
 #include <GLFW/glfw3.h>
-#include "sunset/map.h"
 
 struct compiled_mesh {
     uint32_t id;
@@ -20,10 +21,7 @@ struct instanced_mesh {
 };
 
 struct frame_cache {
-    // GLuint framebuffer;
-    // GLuint texture;
-    // GLuint depthbuffer;
-    map(struct instanced_mesh) instanced_meshes;
+    map(struct instancing_buffer) instancing_buffers;
     struct instancing_buffer *current_instancing_buffer;
 };
 
@@ -38,8 +36,6 @@ struct instancing_buffer {
     uint32_t mesh_id;
     vector(mat4) transforms;
     vector(uint32_t) required_textures;
-    GLuint textures_buffer;
-    GLuint transforms_buffer;
 };
 
 // backend-specific data
@@ -54,15 +50,18 @@ struct render_context {
     vector(struct compiled_texture) textures;
 };
 
-uint32_t backend_register_mesh(struct render_context *context, struct mesh mesh);
+uint32_t backend_register_mesh(
+        struct render_context *context, struct mesh mesh);
 
 void backend_draw_mesh(struct compiled_mesh *mesh);
 
-void backend_draw(struct render_context *context, mat4 view, mat4 projection);
+void backend_draw(struct render_context *context,
+        struct command_buffer *command_buffer,
+        mat4 view,
+        mat4 projection);
 
 void backend_free(struct render_context *context);
 
 void backend_free_program(struct program *program);
 
 void compiled_mesh_destroy(struct compiled_mesh *mesh);
-
