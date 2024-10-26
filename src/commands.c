@@ -156,3 +156,25 @@ void command_buffer_add_custom_command(struct command_buffer *command_buffer,
     memcpy(&command.data, data, sizeof(command.data));
     command_buffer_append(command_buffer, &command);
 }
+
+// TODO: add arguments
+void command_custom_init(struct command *command, struct program *program) {
+    command->type = COMMAND_CUSTOM;
+    command->data.custom.program = program;
+}
+
+void command_mesh_init(struct command *command,
+        uint32_t mesh_id,
+        uint32_t texture_id,
+        mat4 transform) {
+    command->type = COMMAND_MESH;
+    command->data.mesh = (struct command_mesh){mesh_id, texture_id, transform};
+}
+
+void command_buffer_add_mesh(struct command_buffer *command_buffer,
+        uint32_t mesh_id,
+        uint32_t texture_id, mat4 transform) {
+    struct command command;
+    command_mesh_init(&command, mesh_id, texture_id);
+    command_buffer_append(command_buffer, &command);
+}

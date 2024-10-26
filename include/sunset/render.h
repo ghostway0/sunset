@@ -21,18 +21,15 @@ struct window {
 };
 
 struct render_config {
-    size_t width, height;
+    size_t window_width, window_height;
+    const char *window_title;
 };
-
-typedef void (*custom_command)(
-        void *render_context, struct command const *command);
 
 struct context {
     struct command_buffer command_buffer;
     struct font *fonts;
     size_t num_fonts;
     void *render_context;
-    custom_command custom_commands[MAX_NUM_CUSTOM_COMMANDS];
 };
 //
 //

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "cglm/types.h"
 #include "sunset/color.h"
 #include "sunset/geometry.h"
 #include "sunset/ring_buffer.h"
@@ -16,10 +17,10 @@ enum command_type : uint8_t {
     COMMAND_FILLED_ARC,
     COMMAND_TEXT,
     COMMAND_IMAGE,
+    COMMAND_MESH,
+    COMMAND_CUSTOM,
     NUM_COMMANDS,
 };
-
-#define MAX_NUM_CUSTOM_COMMANDS (256 - NUM_COMMANDS)
 
 struct command_nop {};
 
@@ -63,6 +64,16 @@ struct command_image {
     struct image image;
 };
 
+struct command_mesh {
+    uint32_t mesh_id;
+    uint32_t texture_id;
+    mat4 transform;
+};
+
+struct command_custom {
+    struct program *program;
+};
+
 struct command {
     enum command_type type;
     uint8_t seq_num;
@@ -76,6 +87,8 @@ struct command {
         struct command_filled_arc filled_arc;
         struct command_text text;
         struct command_image image;
+        struct command_mesh mesh;
+        struct command_custom custom;
     } data;
 };
 
@@ -109,6 +122,13 @@ void command_text_init(struct command *command,
 
 void command_image_init(
         struct command *command, struct point pos, struct image const *image);
+
+void command_custom_init(struct command *command, struct program *program);
+
+void command_mesh_init(struct command *command,
+        uint32_t mesh_id,
+        uint32_t texture_id,
+        mat4 transform);
 
 struct command_buffer_options {
     size_t buffer_size;
@@ -171,7 +191,6 @@ void command_buffer_add_image(struct command_buffer *command_buffer,
         struct point pos,
         struct image const *image);
 
-void command_buffer_add_custom_command(struct command_buffer *command_buffer,
-        uint8_t command_type,
-        uint8_t seq_num,
-        void *data);
+void command_buffer_add_mesh(struct command_buffer *command_buffer,
+        uint32_t mesh_id,
+        uint32_t texture_id, mat4 transform);

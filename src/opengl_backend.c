@@ -14,6 +14,7 @@
 #include "sunset/render.h"
 #include "sunset/shader.h"
 #include "sunset/utils.h"
+#include "sunset/vector.h"
 
 static int compile_shader_into(GLuint shader, char const *source) {
     glShaderSource(shader, 1, &source, NULL);
@@ -39,13 +40,12 @@ static int setup_default_shaders(struct program *program_out) {
             "    gl_Position = vec4(aPos, 1.0);\n"
             "}\n";
 
-    const char *fragment =
+    char const *fragment =
             "#version 330 core\n"
             "out vec4 FragColor;\n"
             "void main() {\n"
             "    FragColor = vec4(1.0, 0.5, 0.2, 1.0);\n"
             "}\n";
-
 
     backend_create_program(program_out);
 
@@ -92,6 +92,8 @@ int backend_setup(struct render_context *context, struct render_config config) {
     struct program default_program;
     setup_default_shaders(&default_program);
     backend_use_program(&default_program);
+
+    vector_init(context->instanced_meshes, struct instanced_mesh);
 
     return 0;
 }
@@ -246,10 +248,81 @@ void backend_draw_mesh(struct compiled_mesh *mesh) {
     glDrawElements(GL_TRIANGLES, mesh->num_indices, GL_UNSIGNED_INT, NULL);
     glBindVertexArray(0);
 }
+/*
+    vector_resize(context->instanced_meshes,
+            vector_size(context->instanced_meshes) + 1);
+    struct instanced_mesh *instanced_mesh =
+            &context->instanced_meshes[vector_size(context->instanced_meshes)
+                    - 1];
 
-void backend_draw(struct render_context *context) {
+    instanced_mesh->mesh = *compiled_mesh;
+    vector_init(instanced_mesh->transforms, mat4);
+
+    glGenBuffers(1, &instanced_mesh->transform_buffer);
+
+
+        glBufferData(GL_ARRAY_BUFFER,
+                vector_size(instanced_mesh->transforms) * sizeof(mat4),
+                instanced_mesh->transforms,
+                GL_STATIC_DRAW);
+
+    return instanced_mesh;
+ * */
+
+void backend_setup_instanced_mesh(
+        struct instanced_mesh *mesh, mat4 *transforms, size_t num_transforms) {
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->transform_buffer);
+    glBufferData(GL_ARRAY_BUFFER,
+            num_transforms * sizeof(mat4),
+            transforms,
+            GL_STATIC_DRAW);
+
+    glBindVertexArray(mesh->mesh.vao);
+    glDrawElementsInstanced(GL_TRIANGLES,
+            mesh->mesh.num_indices,
+            GL_UNSIGNED_INT,
+            NULL,
+            num_transforms);
+
+    glBindVertexArray(0);
+}
+
+/*
+ * Render Pipeline Plan:
+ *  - Create a render context (backend_setup): create a window and set up OpenGL
+ *
+ *  To create shaders, I'll have a struct program which is a collection of shaders.
+ *  `backend_create_program` and `backend_program_add_shader` will be used to create
+ *  a program and add shaders to it. `backend_link_program` will link the program.
+ *
+ *  To set shader arguments, I'll have a struct active_argument which is a collection
+ *  of arguments. `backend_set_program_arguments` will be used to set the arguments.
+ *
+ *  I think shaders should have standard arguments, like mvp, and then custom arguments
+ *  can be set by the user.
+ *
+ *
+ *  How can I prompt a shader once? like for a particle system (although particles may span
+ *  multiple frames. how does that work?)
+ *
+ *  Seperation:
+ *    struct object is the scene node. should I every frame go over the active objects and put out commands?
+ *    That sounds like the most separated structure I could have. Then a frame builder would hold instanced 
+ *    stuff for example. we should have the frame cache within render context (like instanced meshes ids).
+ *
+ *    meshes in objects should be in ids: they should be registered with the backend and that returns an id
+ *    this would enable easy instancing.
+ * */
+
+void backend_draw(struct render_context *context, mat4 view, mat4 projection) {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // TODO: this is a bit of a hack
+
+    for (size_t i = 0; i < vector_size(context->meshes); i++) {
+        backend_draw_mesh(&context->meshes[i]);
+    }
 
     glfwSwapBuffers(context->window);
     glfwPollEvents();
@@ -270,8 +343,7 @@ void compiled_mesh_destroy(struct compiled_mesh *mesh) {
     glDeleteBuffers(1, &mesh->ebo);
 }
 
-int backend_compile_texture(struct texture const *texture,
-        struct compiled_texture *compiled_texture) {
+static GLuint compile_texture(struct texture const *texture) {
     GLuint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -288,9 +360,13 @@ int backend_compile_texture(struct texture const *texture,
 
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    compiled_texture->tex = tex;
+    // if (texture->wrap_s == TEXTURE_REPEAT) {
+    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    // } else {
+    //     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    // }
 
-    return 0;
+    return tex;
 }
 
 char const *point_light_fragment_shader = "";

@@ -44,3 +44,8 @@ int backend_set_program_arguments(struct program *program,
 int backend_setup_shader(struct program *program,
         struct active_argument *arguments,
         size_t num_arguments);
+
+
+struct instanced_mesh *backend_create_instanced_mesh(struct render_context *context,
+        struct compiled_mesh const *compiled_mesh);
+

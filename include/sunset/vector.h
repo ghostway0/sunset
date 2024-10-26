@@ -64,6 +64,23 @@ struct vector_metadata {
         (v)[meta->size++] = value;                                             \
     } while (0)
 
+#define vector_append_copy(v, value)                                           \
+    do {                                                                       \
+        struct vector_metadata *meta = vector_metadata(v);                     \
+        if (meta->size == meta->capacity) {                                    \
+            meta->capacity *= 2;                                               \
+            _Pragma("GCC diagnostic push");                                    \
+            _Pragma("GCC diagnostic ignored \"-Wsizeof-pointer-memaccess\"");  \
+            meta = (struct vector_metadata *)realloc(meta,                     \
+                    sizeof(struct vector_metadata)                             \
+                            + sizeof(*(v)) * meta->capacity);                  \
+            _Pragma("GCC diagnostic pop");                                     \
+            assert(meta);                                                      \
+            v = (void *)(meta + 1);                                            \
+        }                                                                      \
+        memcpy(v + meta->size++, &value, sizeof(value));                       \
+    } while (0)
+
 #define vector_append_multiple(v, data, size2)                                 \
     do {                                                                       \
         struct vector_metadata *meta = vector_metadata(v);                     \
