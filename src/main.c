@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "cglm/cam.h"
 #include "cglm/mat4.h"
 #include "sunset/backend.h"
 #include "sunset/camera.h"
@@ -308,14 +309,29 @@ int main() {
 
     while (!glfwWindowShouldClose(render_context.window)) {
         mat4 transform1 = {
-            {1.0f, 0.0f, 0.0f, 0.5f},
-            {0.0f, 1.0f, 0.0f, 0.0f},
-            {0.0f, 0.0f, 1.0f, 0.0f},
-            {0.0f, 0.0f, 0.0f, 1.0f},
+                {1.0f, 0.0f, 0.0f, 1.5f},
+                {0.0f, 1.0f, 0.0f, 0.5f},
+                {0.0f, 0.0f, 1.0f, 0.0f},
+                {0.0f, 0.0f, 0.0f, 1.0f},
         };
 
         command_buffer_add_mesh(&command_buffer, true, 0, 0, transform1);
         command_buffer_add_mesh(&command_buffer, true, 0, 0, GLM_MAT4_IDENTITY);
+
+        mat4 model_matrix = GLM_MAT4_IDENTITY_INIT;
+        mat4 view_matrix = GLM_MAT4_IDENTITY_INIT;
+        mat4 projection_matrix = GLM_MAT4_IDENTITY_INIT;
+
+        glm_perspective(glm_rad(45.0f),
+                800.0f / 600.0f,
+                0.1f,
+                100.0f,
+                projection_matrix);
+        glm_lookat((vec3){0.0f, 0.0f, 3.0f},
+                (vec3){0.0f, 0.0f, 0.0f},
+                (vec3){0.0f, 1.0f, 0.0f},
+                view_matrix);
+        glm_mat4_identity(model_matrix);
 
         backend_draw(&render_context,
                 &command_buffer,

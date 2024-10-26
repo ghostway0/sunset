@@ -27,15 +27,23 @@ char const *default_fragment_shader_source =
         "#version 330 core\n"
         "out vec4 FragColor;\n"
         "void main() {\n"
-        "    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "    FragColor = vec4(gl_FragCoord.x / 500.0, gl_FragCoord.y / 800.0, "
+        "0.0, 1.0);\n"
         "}\n";
 
 char const *instanced_vertex_shader_source =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "uniform mat4 transforms[128];\n"
+        "uniform int num_transforms;\n"
+        "uniform mat4 model;\n"
+        "uniform mat4 view;\n"
+        "uniform mat4 projection;\n"
         "void main() {\n"
-        "    gl_Position = transforms[gl_InstanceID] * vec4(aPos, 1.0);\n"
+        "    if (gl_InstanceID < num_transforms) {\n"
+        "        mat4 transform = transforms[gl_InstanceID];\n"
+        "        gl_Position = model * view * projection * transform * vec4(aPos, 1.0);\n"
+        "    }\n"
         "}\n";
 
 static int compile_shader_into(GLuint shader, char const *source) {
@@ -348,6 +356,18 @@ static int program_set_uniform_mat4(struct program program,
     return 0;
 }
 
+static int program_set_uniform_int(
+        struct program program, char const *name, int value) {
+    GLint loc = glGetUniformLocation((GLuint)program.handle, name);
+    if (loc == -1) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    glUniform1i(loc, value);
+
+    return 0;
+}
+
 static void draw_instanced_mesh(struct render_context *context,
         uint32_t mesh_id,
         mat4 const *transforms,
@@ -361,18 +381,26 @@ static void draw_instanced_mesh(struct render_context *context,
 
     glBindVertexArray(mesh->vao);
 
-    use_program(context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH]);
-
     // (?) bind textures
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
 
+    struct program program =
+            context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH];
+
+    program_set_uniform_mat4(program, "transforms", transforms, num_transforms);
+
     program_set_uniform_mat4(
-            context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH],
-            "transforms",
-            transforms,
-            num_transforms);
+            program, "model", &context->frame_cache.model_matrix, 1);
+    program_set_uniform_mat4(
+            program, "view", &context->frame_cache.view_matrix, 1);
+    program_set_uniform_mat4(
+            program, "projection", &context->frame_cache.projection_matrix, 1);
+
+    program_set_uniform_int(program, "num_transforms", num_transforms);
+
+    use_program(program);
 
     glDrawElementsInstanced(GL_TRIANGLES,
             mesh->num_indices,
