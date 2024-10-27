@@ -42,7 +42,8 @@ char const *instanced_vertex_shader_source =
         "void main() {\n"
         "    if (gl_InstanceID < num_transforms) {\n"
         "        mat4 transform = transforms[gl_InstanceID];\n"
-        "        gl_Position = model * view * projection * transform * vec4(aPos, 1.0);\n"
+        "        gl_Position = model * view * projection * transform * "
+        "vec4(aPos, 1.0);\n"
         "    }\n"
         "}\n";
 
@@ -368,6 +369,60 @@ static int program_set_uniform_int(
     return 0;
 }
 
+[[maybe_unused]]
+static int program_set_uniform_float(
+        struct program program, char const *name, float value) {
+    GLint loc = glGetUniformLocation((GLuint)program.handle, name);
+    if (loc == -1) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    glUniform1f(loc, value);
+
+    return 0;
+}
+
+[[maybe_unused]]
+static int program_set_uniform_vec3(
+        struct program program, char const *name, vec3 const *value) {
+    GLint loc = glGetUniformLocation((GLuint)program.handle, name);
+    if (loc == -1) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    glUniform3fv(loc, 1, (GLfloat *)value);
+
+    return 0;
+}
+
+static void upload_default_uniforms(
+        struct render_context *context, struct program program) {
+    program_set_uniform_mat4(
+            program, "model", &context->frame_cache.model_matrix, 1);
+    program_set_uniform_mat4(
+            program, "view", &context->frame_cache.view_matrix, 1);
+    program_set_uniform_mat4(
+            program, "projection", &context->frame_cache.projection_matrix, 1);
+
+    // (?) bind textures
+}
+
+static int upload_instancing_buffer(
+        struct instancing_buffer *buffer, struct program *program) {
+    if (program_set_uniform_mat4(*program,
+                "transforms",
+                buffer->transforms,
+                vector_size(buffer->transforms))) {
+        return -ERROR_SHADER_LOADING_FAILED;
+    }
+
+    if (program_set_uniform_int(*program, "num_transforms", 1)) {
+        return -ERROR_SHADER_LOADING_FAILED;
+    }
+
+    return 0;
+}
+
 static void draw_instanced_mesh(struct render_context *context,
         uint32_t mesh_id,
         mat4 const *transforms,
@@ -390,15 +445,9 @@ static void draw_instanced_mesh(struct render_context *context,
             context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH];
 
     program_set_uniform_mat4(program, "transforms", transforms, num_transforms);
-
-    program_set_uniform_mat4(
-            program, "model", &context->frame_cache.model_matrix, 1);
-    program_set_uniform_mat4(
-            program, "view", &context->frame_cache.view_matrix, 1);
-    program_set_uniform_mat4(
-            program, "projection", &context->frame_cache.projection_matrix, 1);
-
     program_set_uniform_int(program, "num_transforms", num_transforms);
+
+    upload_default_uniforms(context, program);
 
     use_program(program);
 
@@ -417,8 +466,8 @@ static uint64_t instancing_buffer_mesh_id(struct instancing_buffer *buffer) {
 
 static void instancing_buffer_flush(
         struct render_context *context, struct instancing_buffer *buffer) {
-    // upload_instancing_buffer(buffer,
-    // &context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH]);
+    upload_instancing_buffer(
+            buffer, &context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH]);
 
     vector(mat4) transforms = buffer->transforms;
     vector(uint32_t) required_textures = buffer->required_textures;
@@ -430,16 +479,19 @@ static void instancing_buffer_flush(
             vector_size(transforms),
             required_textures,
             vector_size(required_textures));
+
+    vector_clear(transforms);
+    vector_clear(required_textures);
 }
 
 static int run_mesh_command(
         struct render_context *context, struct command_mesh const *command) {
+    // at the end I'll probably have a map of mesh_id -> instancing_buffer
+    // and do everything at flush-time.
     struct frame_cache *cache = &context->frame_cache;
 
     if (cache->current_instancing_buffer) {
         if (cache->current_instancing_buffer->mesh_id != command->mesh_id) {
-            instancing_buffer_flush(context, cache->current_instancing_buffer);
-            vector_clear(cache->current_instancing_buffer->transforms);
             // setup to mesh_id
             cache->current_instancing_buffer =
                     map_get(cache->instancing_buffers,
@@ -488,16 +540,10 @@ static int run_mesh_command(
 }
 
 int backend_flush(struct render_context *context) {
-    if (context->frame_cache.current_instancing_buffer) {
-        instancing_buffer_flush(
-                context, context->frame_cache.current_instancing_buffer);
-    }
-
     for (size_t i = 0; i < vector_size(context->frame_cache.instancing_buffers);
-            i++) {
-        vector_clear(context->frame_cache.instancing_buffers[i].transforms);
-        vector_clear(
-                context->frame_cache.instancing_buffers[i].required_textures);
+            ++i) {
+        instancing_buffer_flush(
+                context, &context->frame_cache.instancing_buffers[i]);
     }
 
     return 0;
