@@ -28,7 +28,7 @@
     ({                                                                         \
         auto _v = map_get(v, value, hash);                                     \
         if (!_v) {                                                             \
-            _v = value_or();                                                     \
+            _v = value_or();                                                   \
             map_insert(v, _v, hash);                                           \
         }                                                                      \
         _v;                                                                    \

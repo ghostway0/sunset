@@ -22,7 +22,7 @@ struct window {
 
 struct render_config {
     size_t window_width, window_height;
-    const char *window_title;
+    char const *window_title;
 };
 
 struct context {

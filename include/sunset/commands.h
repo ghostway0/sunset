@@ -138,9 +138,7 @@ struct command_buffer_options {
 };
 
 #define COMMAND_BUFFER_DEFAULT                                                 \
-    (struct command_buffer_options) {                                          \
-        .buffer_size = 1024                                                    \
-    }
+    (struct command_buffer_options){.buffer_size = 1024}
 
 struct command_buffer {
     struct ring_buffer ring_buffer;
@@ -195,6 +193,7 @@ void command_buffer_add_image(struct command_buffer *command_buffer,
         struct image const *image);
 
 void command_buffer_add_mesh(struct command_buffer *command_buffer,
-                             bool instanced,
+        bool instanced,
         uint32_t mesh_id,
-        uint32_t texture_id, mat4 transform);
+        uint32_t texture_id,
+        mat4 transform);

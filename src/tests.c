@@ -200,7 +200,8 @@ void test_base64_invalid_input(void **state) {
 //     };
 //
 //     quad_tree_create(
-//             3, 5, should_split, split, NULL, &root_chunk, root_bounds, &tree);
+//             3, 5, should_split, split, NULL, &root_chunk, root_bounds,
+//             &tree);
 //
 //     for (size_t i = 0; i < 10; ++i) {
 //         struct object *object = objects + i;

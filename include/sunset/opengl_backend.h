@@ -24,7 +24,6 @@ struct frame_cache {
     map(struct instancing_buffer) instancing_buffers;
     struct instancing_buffer *current_instancing_buffer;
 
-
     mat4 model_matrix;
     mat4 view_matrix;
     mat4 projection_matrix;

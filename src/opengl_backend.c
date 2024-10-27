@@ -291,27 +291,31 @@ void backend_setup_instanced_mesh(
  * Render Pipeline Plan:
  *  - Create a render context (backend_setup): create a window and set up OpenGL
  *
- *  To create shaders, I'll have a struct program which is a collection of shaders.
- *  `backend_create_program` and `backend_program_add_shader` will be used to create
- *  a program and add shaders to it. `backend_link_program` will link the program.
+ *  To create shaders, I'll have a struct program which is a collection of
+ * shaders. `backend_create_program` and `backend_program_add_shader` will be
+ * used to create a program and add shaders to it. `backend_link_program` will
+ * link the program.
  *
- *  To set shader arguments, I'll have a struct active_argument which is a collection
- *  of arguments. `backend_set_program_arguments` will be used to set the arguments.
+ *  To set shader arguments, I'll have a struct active_argument which is a
+ * collection of arguments. `backend_set_program_arguments` will be used to set
+ * the arguments.
  *
- *  I think shaders should have standard arguments, like mvp, and then custom arguments
- *  can be set by the user.
+ *  I think shaders should have standard arguments, like mvp, and then custom
+ * arguments can be set by the user.
  *
  *
- *  How can I prompt a shader once? like for a particle system (although particles may span
- *  multiple frames. how does that work?)
+ *  How can I prompt a shader once? like for a particle system (although
+ * particles may span multiple frames. how does that work?)
  *
  *  Seperation:
- *    struct object is the scene node. should I every frame go over the active objects and put out commands?
- *    That sounds like the most separated structure I could have. Then a frame builder would hold instanced 
- *    stuff for example. we should have the frame cache within render context (like instanced meshes ids).
+ *    struct object is the scene node. should I every frame go over the active
+ * objects and put out commands? That sounds like the most separated structure I
+ * could have. Then a frame builder would hold instanced stuff for example. we
+ * should have the frame cache within render context (like instanced meshes
+ * ids).
  *
- *    meshes in objects should be in ids: they should be registered with the backend and that returns an id
- *    this would enable easy instancing.
+ *    meshes in objects should be in ids: they should be registered with the
+ * backend and that returns an id this would enable easy instancing.
  * */
 
 void backend_draw(struct render_context *context, mat4 view, mat4 projection) {
