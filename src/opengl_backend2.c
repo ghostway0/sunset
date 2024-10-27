@@ -2,9 +2,12 @@
 #include <GLFW/glfw3.h>
 #include <log.h>
 
+#include "cglm/mat4.h"
 #include "sunset/commands.h"
 #include "sunset/config.h"
 #include "sunset/errors.h"
+#include "sunset/geometry.h"
+#include "sunset/map.h"
 #include "sunset/opengl_backend.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
@@ -20,7 +23,7 @@ char const *default_vertex_shader_source =
         "uniform mat4 view;\n"
         "uniform mat4 projection;\n"
         "void main() {\n"
-        "    gl_Position = vec4(aPos, 1.0);\n" // projection * view * model *
+        "    gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
         "}\n";
 
 char const *default_fragment_shader_source =
@@ -35,16 +38,12 @@ char const *instanced_vertex_shader_source =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "uniform mat4 transforms[128];\n"
-        "uniform int num_transforms;\n"
-        "uniform mat4 model;\n"
         "uniform mat4 view;\n"
         "uniform mat4 projection;\n"
         "void main() {\n"
-        "    if (gl_InstanceID < num_transforms) {\n"
-        "        mat4 transform = transforms[gl_InstanceID];\n"
-        "        gl_Position = model * view * projection * transform * "
-        "vec4(aPos, 1.0);\n"
-        "    }\n"
+        "    mat4 transform = transforms[gl_InstanceID];\n"
+        "    gl_Position = projection * view * transform * vec4(aPos, "
+        "1.0);\n"
         "}\n";
 
 static int compile_shader_into(GLuint shader, char const *source) {
@@ -57,6 +56,9 @@ static int compile_shader_into(GLuint shader, char const *source) {
     if (!success) {
         GLchar info_log[512];
         glGetShaderInfoLog(shader, sizeof(info_log), NULL, info_log);
+
+        log_error("shader compilation failed: %s", info_log);
+
         return -ERROR_SHADER_COMPILATION_FAILED;
     }
 
@@ -252,7 +254,7 @@ static int setup_default_shaders(struct render_context *context) {
         return -ERROR_SHADER_COMPILATION_FAILED;
     }
 
-    context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH] = program;
+    context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH] = instanced_program;
 
     return 0;
 }
@@ -289,6 +291,7 @@ int backend_setup(struct render_context *context, struct render_config config) {
     }
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
     glVertexAttribPointer(
             0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
@@ -299,7 +302,6 @@ int backend_setup(struct render_context *context, struct render_config config) {
     }
 
     vector_init(context->meshes, struct compiled_mesh);
-
     vector_init(
             context->frame_cache.instancing_buffers, struct instancing_buffer);
 
@@ -357,6 +359,7 @@ static int program_set_uniform_mat4(struct program program,
     return 0;
 }
 
+[[maybe_unused]]
 static int program_set_uniform_int(
         struct program program, char const *name, int value) {
     GLint loc = glGetUniformLocation((GLuint)program.handle, name);
@@ -407,16 +410,13 @@ static void upload_default_uniforms(
     // (?) bind textures
 }
 
+[[maybe_unused]]
 static int upload_instancing_buffer(
-        struct instancing_buffer *buffer, struct program *program) {
-    if (program_set_uniform_mat4(*program,
+        struct instancing_buffer *buffer, struct program program) {
+    if (program_set_uniform_mat4(program,
                 "transforms",
                 buffer->transforms,
                 vector_size(buffer->transforms))) {
-        return -ERROR_SHADER_LOADING_FAILED;
-    }
-
-    if (program_set_uniform_int(*program, "num_transforms", 1)) {
         return -ERROR_SHADER_LOADING_FAILED;
     }
 
@@ -433,6 +433,8 @@ static void draw_instanced_mesh(struct render_context *context,
     unused(num_required_textures);
 
     const struct compiled_mesh *mesh = &context->meshes[mesh_id];
+    struct program program =
+            context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH];
 
     glBindVertexArray(mesh->vao);
 
@@ -441,15 +443,16 @@ static void draw_instanced_mesh(struct render_context *context,
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
 
-    struct program program =
-            context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH];
+    use_program(program);
+
+    // upload_default_uniforms(context, program);
+
+    program_set_uniform_mat4(
+            program, "view", &context->frame_cache.view_matrix, 1);
+    program_set_uniform_mat4(
+            program, "projection", &context->frame_cache.projection_matrix, 1);
 
     program_set_uniform_mat4(program, "transforms", transforms, num_transforms);
-    program_set_uniform_int(program, "num_transforms", num_transforms);
-
-    upload_default_uniforms(context, program);
-
-    use_program(program);
 
     glDrawElementsInstanced(GL_TRIANGLES,
             mesh->num_indices,
@@ -466,9 +469,6 @@ static uint64_t instancing_buffer_mesh_id(struct instancing_buffer *buffer) {
 
 static void instancing_buffer_flush(
         struct render_context *context, struct instancing_buffer *buffer) {
-    upload_instancing_buffer(
-            buffer, &context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH]);
-
     vector(mat4) transforms = buffer->transforms;
     vector(uint32_t) required_textures = buffer->required_textures;
 
@@ -485,41 +485,35 @@ static void instancing_buffer_flush(
 }
 
 static int run_mesh_command(
-        struct render_context *context, struct command_mesh const *command) {
-    // at the end I'll probably have a map of mesh_id -> instancing_buffer
-    // and do everything at flush-time.
+        struct render_context *context, struct command_mesh command) {
     struct frame_cache *cache = &context->frame_cache;
 
-    if (cache->current_instancing_buffer) {
-        if (cache->current_instancing_buffer->mesh_id != command->mesh_id) {
-            // setup to mesh_id
-            cache->current_instancing_buffer =
-                    map_get(cache->instancing_buffers,
-                            command->mesh_id,
-                            instancing_buffer_mesh_id);
-        }
+    if (!command.instanced) {
+        struct program program = context->backend_programs[PROGRAM_DRAW_MESH];
+        struct compiled_mesh *mesh = &context->meshes[command.mesh_id];
 
-        // append transform to transform buffer
-        vector_append_copy(cache->current_instancing_buffer->transforms,
-                command->transform);
+        glm_mat4_copy(command.transform, cache->model_matrix);
 
-        // (?) append texture to texture buffer
-    } else if (!command->instanced) {
-        use_program(context->backend_programs[PROGRAM_DRAW_MESH]);
+        glBindVertexArray(mesh->vao);
 
-        glBindVertexArray(context->meshes[command->mesh_id].vao);
-        glDrawElements(GL_TRIANGLES,
-                context->meshes[command->mesh_id].num_indices,
-                GL_UNSIGNED_INT,
-                0);
+        // (?) bind texture
+
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
+
+        use_program(program);
+
+        upload_default_uniforms(context, program);
+
+        glDrawElements(GL_TRIANGLES, mesh->num_indices, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
     } else {
         if (!map_get(cache->instancing_buffers,
-                    command->mesh_id,
+                    command.mesh_id,
                     instancing_buffer_mesh_id)) {
             struct instancing_buffer buffer;
-            buffer.mesh_id = command->mesh_id;
+            buffer.mesh_id = command.mesh_id;
             vector_init(buffer.transforms, mat4);
             vector_init(buffer.required_textures, uint32_t);
 
@@ -528,13 +522,20 @@ static int run_mesh_command(
                     instancing_buffer_mesh_id);
         }
 
-        cache->current_instancing_buffer = map_get(cache->instancing_buffers,
-                command->mesh_id,
+        struct instancing_buffer *buffer = map_get(cache->instancing_buffers,
+                command.mesh_id,
                 instancing_buffer_mesh_id);
 
-        vector_append_copy(cache->current_instancing_buffer->transforms,
-                command->transform);
+        vector_append_copy(buffer->transforms, command.transform);
     }
+
+    return 0;
+}
+
+int backend_start_frame(
+        struct render_context *context, mat4 view, mat4 projection) {
+    glm_mat4_copy(projection, context->frame_cache.projection_matrix);
+    glm_mat4_copy(view, context->frame_cache.view_matrix);
 
     return 0;
 }
@@ -549,12 +550,43 @@ int backend_flush(struct render_context *context) {
     return 0;
 }
 
+[[maybe_unused]]
+static int compile_texture(struct texture const *texture,
+        struct compiled_texture *compiled_texture) {
+    glGenTextures(1, &compiled_texture->tex);
+    glBindTexture(GL_TEXTURE_2D, compiled_texture->tex);
+
+    glTexImage2D(GL_TEXTURE_2D,
+            0,
+            GL_RGB,
+            texture->image.w,
+            texture->image.h,
+            0,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            texture->image.pixels);
+
+    // now when I need the texture, do:
+    // glBindBuffer(GL_READ_BUFFER, compiled_texture->tex);
+    // then copy the pixels to the buffer
+
+    return 0;
+}
+
+[[maybe_unused]]
+int backend_regsiter_texture(
+        struct render_context *context, struct texture const *texture) {
+    unused(context);
+    unused(texture);
+
+    return 0;
+}
+
 void backend_draw(struct render_context *context,
         struct command_buffer *command_buffer,
         mat4 view,
         mat4 projection) {
-    unused(view);
-    unused(projection);
+    backend_start_frame(context, view, projection);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -571,7 +603,7 @@ void backend_draw(struct render_context *context,
 
         switch (command.type) {
             case COMMAND_MESH:
-                run_mesh_command(context, &command.data.mesh);
+                run_mesh_command(context, command.data.mesh);
                 break;
             default:
                 log_error("unhandled command type %d", command.type);

@@ -1,5 +1,4 @@
 #include "sunset/ecs.h"
-#include "log.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 

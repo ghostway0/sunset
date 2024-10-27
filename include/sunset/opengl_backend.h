@@ -43,6 +43,11 @@ struct instancing_buffer {
     vector(uint32_t) required_textures;
 };
 
+struct compiled_texture {
+    uint32_t id;
+    GLuint tex;
+};
+
 // backend-specific data
 struct render_context {
     size_t width, height;

@@ -8,7 +8,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include "cglm/cam.h"
 #include "cglm/mat4.h"
 #include "sunset/backend.h"
 #include "sunset/camera.h"
@@ -129,6 +128,32 @@ struct mesh create_test_mesh() {
     test_mesh.vertices = (vec3 *)malloc(test_mesh.num_vertices * sizeof(vec3));
 
     test_mesh.vertices[0][0] = 0.0f;
+    test_mesh.vertices[0][1] = 0.5f;
+    test_mesh.vertices[0][2] = 0.0f;
+    test_mesh.vertices[1][0] = -0.5f;
+    test_mesh.vertices[1][1] = -0.5f;
+    test_mesh.vertices[1][2] = 0.0f;
+    test_mesh.vertices[2][0] = 0.5f;
+    test_mesh.vertices[2][1] = -0.5f;
+    test_mesh.vertices[2][2] = 0.0f;
+
+    test_mesh.num_indices = 3;
+    test_mesh.indices =
+            (uint32_t *)malloc(test_mesh.num_indices * sizeof(uint32_t));
+    test_mesh.indices[0] = 0;
+    test_mesh.indices[1] = 1;
+    test_mesh.indices[2] = 2;
+
+    return test_mesh;
+}
+
+struct mesh create_test_mesh2() {
+    struct mesh test_mesh;
+
+    test_mesh.num_vertices = 3;
+    test_mesh.vertices = (vec3 *)malloc(test_mesh.num_vertices * sizeof(vec3));
+
+    test_mesh.vertices[0][0] = 0.5f;
     test_mesh.vertices[0][1] = 0.5f;
     test_mesh.vertices[0][2] = 0.0f;
     test_mesh.vertices[1][0] = -0.5f;
@@ -307,31 +332,21 @@ int main() {
     struct command_buffer command_buffer;
     command_buffer_init(&command_buffer, COMMAND_BUFFER_DEFAULT);
 
+    camera_rotate_absolute(&camera, 0, 0);
+
+    glm_mat4_identity(camera.view_matrix);
+    glm_mat4_identity(camera.projection_matrix);
+
     while (!glfwWindowShouldClose(render_context.window)) {
         mat4 transform1 = {
-                {1.0f, 0.0f, 0.0f, 1.5f},
-                {0.0f, 1.0f, 0.0f, 0.5f},
-                {0.0f, 0.0f, 1.0f, 0.0f},
+                {1.0f, 0.0f, 0.0f, 0.5f},
+                {0.0f, 1.0f, 0.0f, 0.0f},
+                {0.0f, 0.0f, 1.0f, 0.5f},
                 {0.0f, 0.0f, 0.0f, 1.0f},
         };
 
         command_buffer_add_mesh(&command_buffer, true, 0, 0, transform1);
         command_buffer_add_mesh(&command_buffer, true, 0, 0, GLM_MAT4_IDENTITY);
-
-        mat4 model_matrix = GLM_MAT4_IDENTITY_INIT;
-        mat4 view_matrix = GLM_MAT4_IDENTITY_INIT;
-        mat4 projection_matrix = GLM_MAT4_IDENTITY_INIT;
-
-        glm_perspective(glm_rad(45.0f),
-                800.0f / 600.0f,
-                0.1f,
-                100.0f,
-                projection_matrix);
-        glm_lookat((vec3){0.0f, 0.0f, 3.0f},
-                (vec3){0.0f, 0.0f, 0.0f},
-                (vec3){0.0f, 1.0f, 0.0f},
-                view_matrix);
-        glm_mat4_identity(model_matrix);
 
         backend_draw(&render_context,
                 &command_buffer,
