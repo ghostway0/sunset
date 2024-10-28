@@ -70,3 +70,7 @@ void ring_buffer_pop_wait(
     int err = ring_buffer_pop(ring_buffer, data_out);
     assert(err == 0);
 }
+
+bool ring_buffer_empty(struct ring_buffer *ring_buffer) {
+    return ring_buffer->head == ring_buffer->tail;
+}

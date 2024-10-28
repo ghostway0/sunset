@@ -29,4 +29,6 @@ void ring_buffer_clear(struct ring_buffer *ring_buffer);
 void ring_buffer_pop_wait(
         struct ring_buffer *ring_buffer, size_t n, void *data_out);
 
+bool ring_buffer_empty(struct ring_buffer *ring_buffer);
+
 #endif // RING_BUFFER_H

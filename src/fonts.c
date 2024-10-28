@@ -37,6 +37,21 @@ struct psf2_header {
     uint32_t height, width;
 };
 
+static void flip_image(struct image *image) {
+    struct color *flipped_pixels =
+            malloc(image->w * image->h * sizeof(struct color));
+
+    for (size_t y = 0; y < image->h; y++) {
+        for (size_t x = 0; x < image->w; x++) {
+            flipped_pixels[(image->h - y - 1) * image->w + x] =
+                    image->pixels[y * image->w + x];
+        }
+    }
+
+    free(image->pixels);
+    image->pixels = flipped_pixels;
+}
+
 static int load_glyphs(
         FILE *file, struct psf2_header const *header, struct font *font_out) {
     uint8_t *bitmap = malloc(header->height * header->width);
@@ -49,6 +64,15 @@ static int load_glyphs(
         font_out->glyphs[i].image.pixels =
                 calloc(header->width * header->height, sizeof(struct color));
 
+        font_out->glyphs[i].bounds = (struct rect){
+                .x = 0,
+                .y = 0,
+                .width = header->width,
+                .height = header->height,
+        };
+
+        font_out->glyphs[i].advance_x = header->width;
+
         fread(bitmap, header->height * row_size, 1, file);
 
         for (size_t y = 0; y < header->height; y++) {
@@ -59,6 +83,8 @@ static int load_glyphs(
                         bit ? COLOR_WHITE : COLOR_BLACK;
             }
         }
+
+        flip_image(&font_out->glyphs[i].image);
 
         fseek(file, header->charsize - header->height * row_size, SEEK_CUR);
     }
@@ -111,7 +137,7 @@ int load_font_psf2(char const *path, char const *name, struct font *font_out) {
     fread(&header, sizeof(header), 1, file);
 
     if (*(uint32_t *)header.magic != PSF2_MAGIC) {
-        retval = -ERROR_PARSE;
+        retval = -ERROR_INVALID_FORMAT;
         goto cleanup;
     }
 

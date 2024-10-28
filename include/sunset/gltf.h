@@ -18,7 +18,7 @@
     do {                                                                       \
         json_assert_type(&json, JSON_ARRAY);                                   \
         if (vector_size(json.data.array) != n) {                               \
-            return -ERROR_PARSE;                                               \
+            return -ERROR_INVALID_FORMAT;                                               \
         }                                                                      \
         for (size_t i = 0; i < n; i++) {                                       \
             json_assert_type(&json.data.array[i], JSON_NUMBER);                \
@@ -30,7 +30,7 @@
     do {                                                                       \
         json_assert_type(&json, JSON_ARRAY);                                   \
         if (vector_size(json.data.array) != n * n) {                           \
-            return -ERROR_PARSE;                                               \
+            return -ERROR_INVALID_FORMAT;                                               \
         }                                                                      \
         for (size_t i = 0; i < n; i++) {                                       \
             for (size_t j = 0; j < n; j++) {                                   \

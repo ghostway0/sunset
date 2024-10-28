@@ -92,13 +92,13 @@ int load_tga_image(uint8_t const *data, struct image *image_out) {
     assert(image_out != NULL);
 
     if (memcmp(data, TGA_MAGIC, strlen(TGA_MAGIC)) != 0) {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     struct tga_header *header = (struct tga_header *)(data + strlen(TGA_MAGIC));
 
     if (header->bpp % 8 != 0 || header->bpp >= 32) {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     size_t image_size = header->width * header->height;
@@ -111,7 +111,7 @@ int load_tga_image(uint8_t const *data, struct image *image_out) {
     image_out->h = header->height;
 
     if (image_out->pixels == NULL) {
-        retval = -ERROR_PARSE;
+        retval = -ERROR_INVALID_FORMAT;
         goto cleanup;
     }
 
@@ -161,7 +161,7 @@ int load_tga_image(uint8_t const *data, struct image *image_out) {
             (struct tga_footer *)(data + TGA_HEADER_SIZE + image_size);
 
     if (footer->dot != '.') {
-        retval = -ERROR_PARSE;
+        retval = -ERROR_INVALID_FORMAT;
         goto cleanup;
     }
 

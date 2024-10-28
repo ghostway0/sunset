@@ -9,7 +9,6 @@ struct glyph {
     struct image image;
     struct rect bounds;
     int advance_x;
-    int advance_y;
 };
 
 struct font {

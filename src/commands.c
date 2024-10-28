@@ -46,7 +46,8 @@ void command_text_init(struct command *command,
         char const *text,
         uint32_t text_len) {
     command->type = COMMAND_TEXT;
-    command->data.text = (struct command_text){start, font, text, text_len};
+    command->data.text =
+            (struct command_text){start, font, text, text_len};
 }
 
 void command_image_init(
@@ -189,4 +190,8 @@ void command_buffer_add_mesh(struct command_buffer *command_buffer,
     struct command command;
     command_mesh_init(&command, instanced, mesh_id, texture_id, transform);
     command_buffer_append(command_buffer, &command);
+}
+
+bool command_buffer_empty(struct command_buffer *command_buffer) {
+    return ring_buffer_empty(&command_buffer->ring_buffer);
 }

@@ -7,7 +7,7 @@
 static char const base64_table[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-int base64_encode(char const *in, size_t in_size, vector(char) * out) {
+int base64_encode(uint8_t const *in, size_t in_size, vector(char) * out) {
     size_t out_size = (in_size + 2) / 3 * 4;
     vector_reserve(*out, out_size);
 
@@ -28,7 +28,7 @@ int base64_encode(char const *in, size_t in_size, vector(char) * out) {
     return 0;
 }
 
-int base64_decode(char const *in, size_t in_size, vector(char) * out) {
+int base64_decode(char const *in, size_t in_size, vector(uint8_t) * out) {
     if (in_size % 4 != 0)
         return -1;
 

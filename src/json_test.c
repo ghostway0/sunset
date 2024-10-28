@@ -114,7 +114,7 @@ void test_json_parse_unbalanced_braces(void **state) {
 
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
-    assert_int_equal(err, -ERROR_PARSE);
+    assert_int_equal(err, -ERROR_INVALID_FORMAT);
     json_value_free(&value);
 }
 
@@ -125,7 +125,7 @@ void test_json_parse_unterminated_string(void **state) {
 
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
-    assert_int_equal(err, -ERROR_PARSE);
+    assert_int_equal(err, -ERROR_INVALID_FORMAT);
 
     json_value_free(&value);
 }
@@ -137,7 +137,7 @@ void test_json_parse_missing_comma(void **state) {
 
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
-    assert_int_equal(err, -ERROR_PARSE);
+    assert_int_equal(err, -ERROR_INVALID_FORMAT);
 
     json_value_free(&value);
 }
@@ -149,7 +149,7 @@ void test_json_parse_extra_comma(void **state) {
 
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
-    assert_int_equal(err, -ERROR_PARSE);
+    assert_int_equal(err, -ERROR_INVALID_FORMAT);
 
     json_value_free(&value);
 }
@@ -161,7 +161,7 @@ void test_json_parse_null_key(void **state) {
 
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
-    assert_int_equal(err, -ERROR_PARSE);
+    assert_int_equal(err, -ERROR_INVALID_FORMAT);
 
     json_value_free(&value);
 }
@@ -173,7 +173,7 @@ void test_json_parse_invalid_number_format(void **state) {
 
     struct json_value value;
     int err = json_parse(json, strlen(json), &value);
-    assert_int_equal(err, -ERROR_PARSE);
+    assert_int_equal(err, -ERROR_INVALID_FORMAT);
 
     json_value_free(&value);
 }

@@ -2,7 +2,7 @@
 
 enum error {
     ERROR_IO = 1,
-    ERROR_PARSE,
+    ERROR_INVALID_FORMAT,
     ERROR_RINGBUFFER_PTR_OVERRUN,
     ERROR_INVALID_ARGUMENTS,
     ERROR_STREAM_OVERRUN,
@@ -11,6 +11,7 @@ enum error {
     ERROR_OUT_OF_BOUNDS,
     ERROR_SHADER_COMPILATION_FAILED,
     ERROR_SHADER_LOADING_FAILED,
+    ERROR_BACKEND_UNKNOWN,
 };
 
 void error_print(char const *scope, int retval);

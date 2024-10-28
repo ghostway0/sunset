@@ -9,7 +9,7 @@ void error_print(char const *scope, int retval) {
         case ERROR_IO:
             log_error("%s: io error\n", scope);
             break;
-        case ERROR_PARSE:
+        case ERROR_INVALID_FORMAT:
             log_error("%s: parse error\n", scope);
             break;
         case ERROR_RINGBUFFER_PTR_OVERRUN:

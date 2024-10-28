@@ -197,3 +197,5 @@ void command_buffer_add_mesh(struct command_buffer *command_buffer,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform);
+
+bool command_buffer_empty(struct command_buffer *command_buffer);

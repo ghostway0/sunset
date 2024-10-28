@@ -33,6 +33,7 @@ enum backend_program_type {
     PROGRAM_DRAW_INSTANCED_MESH,
     PROGRAM_DRAW_MESH,
     PROGRAM_DRAW_DIRECT_LIGHT,
+    PROGRAM_DRAW_TEXT,
     NUM_BACKEND_PROGRAMS,
 };
 
@@ -47,6 +48,15 @@ struct compiled_texture {
     GLuint tex;
 };
 
+struct compiled_font {
+    uint32_t id;
+    GLuint vao;
+    GLuint vbo;
+
+    GLuint *glyph_tex;
+    size_t num_glyphs;
+};
+
 // backend-specific data
 struct render_context {
     size_t width, height;
@@ -56,7 +66,7 @@ struct render_context {
     struct frame_cache frame_cache;
     struct program backend_programs[NUM_BACKEND_PROGRAMS];
     vector(struct compiled_mesh) meshes;
-    vector(struct compiled_texture) textures;
+    vector(GLuint) textures;
 };
 
 uint32_t backend_register_mesh(

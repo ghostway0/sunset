@@ -19,7 +19,7 @@
             struct json_value *value_json = &(json)->data.array[i];            \
             T value;                                                           \
             if (parse_fn(value_json, &value)) {                                \
-                return -ERROR_PARSE;                                           \
+                return -ERROR_INVALID_FORMAT;                                           \
             }                                                                  \
             vector_append(vec_out, value);                                     \
         }                                                                      \
@@ -49,7 +49,7 @@ static void gltf_file_init(struct gltf_file *file) {
 static int parse_accessor_json(
         const struct json_value *json, struct accessor *accessor_out) {
     if (json->type != JSON_OBJECT) {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     for (size_t i = 0; i < vector_size(json->data.object); i++) {
@@ -89,7 +89,7 @@ static int parse_accessor_json(
             } else if (strcmp(kv.value.data.string, "MAT4") == 0) {
                 accessor_out->type = ACCESSOR_MAT4;
             } else {
-                return -ERROR_PARSE;
+                return -ERROR_INVALID_FORMAT;
             }
         }
     }
@@ -125,18 +125,18 @@ static int parse_buffers_json(
         }
 
         if (buffer.byte_length == 0) {
-            return -ERROR_PARSE;
+            return -ERROR_INVALID_FORMAT;
         }
 
         if (buffer.uri == NULL) {
-            return -ERROR_PARSE;
+            return -ERROR_INVALID_FORMAT;
         }
 
         vector_append(*buffers, buffer);
     }
 
     if (vector_size(*buffers) == 0) {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     return 0;
@@ -209,7 +209,7 @@ static int parse_primitive_attribute(const struct key_value *attribute_kv,
         primitive_out->attributes[PRIMITIVE_JOINTS_0] =
                 attribute_kv->value.data.whole_number;
     } else {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     return 0;
@@ -230,7 +230,7 @@ static int parse_primitive_attributes(
 
         json_assert_type(&attribute_kv.value, JSON_WHOLE_NUMBER);
         if (parse_primitive_attribute(&attribute_kv, primitive_out) != 0) {
-            return -ERROR_PARSE;
+            return -ERROR_INVALID_FORMAT;
         }
     }
 
@@ -248,7 +248,7 @@ static int parse_primitive_properties(
         json_assert_type(&kv->value, JSON_WHOLE_NUMBER);
 
         if (kv->value.data.whole_number >= NUM_PRIMITIVE_TYPES) {
-            return -ERROR_PARSE;
+            return -ERROR_INVALID_FORMAT;
         }
 
         primitive_out->mode = kv->value.data.whole_number;
@@ -256,7 +256,7 @@ static int parse_primitive_properties(
         json_assert_type(&kv->value, JSON_WHOLE_NUMBER);
         primitive_out->material = kv->value.data.whole_number;
     } else {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     return 0;
@@ -270,7 +270,7 @@ static int parse_primitive_json(
         struct key_value kv = json->data.object[i];
 
         if (parse_primitive_properties(&kv, primitive_out) != 0) {
-            return -ERROR_PARSE;
+            return -ERROR_INVALID_FORMAT;
         }
     }
 
@@ -399,7 +399,7 @@ static int parse_animation_sampler_json(const struct json_value *json,
             } else if (strcmp(kv.value.data.string, "CUBICSPLINE") == 0) {
                 sampler_out->interpolation = INTERPOLATION_CUBICSPLINE;
             } else {
-                return -ERROR_PARSE;
+                return -ERROR_INVALID_FORMAT;
             }
         } else if (strcmp(kv.key, "output") == 0) {
             json_assert_type(&kv.value, JSON_WHOLE_NUMBER);
@@ -432,7 +432,7 @@ static int parse_animation_channel_target_json(const struct json_value *json,
             } else if (strcmp(kv.value.data.string, "weights") == 0) {
                 target_out->path = ANIMATION_PATH_WEIGHTS;
             } else {
-                return -ERROR_PARSE;
+                return -ERROR_INVALID_FORMAT;
             }
         }
     }
@@ -455,7 +455,7 @@ static int parse_animation_channel_json(const struct json_value *json,
 
             if (parse_animation_channel_target_json(
                         &kv.value, &channel_out->target)) {
-                return -ERROR_PARSE;
+                return -ERROR_INVALID_FORMAT;
             }
         }
     }
@@ -497,13 +497,13 @@ static int parse_image_json(
     json_assert_type(json, JSON_OBJECT);
 
     if (vector_size(json->data.object) != 1) {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     struct key_value kv = json->data.object[0];
 
     if (strcmp(kv.key, "uri") != 0) {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     json_assert_type(&kv.value, JSON_STRING);
@@ -569,7 +569,7 @@ int parse_gltf_json(const struct json_value *json, struct gltf_file *file_out) {
     int retval = 0;
 
     if (json->type != JSON_OBJECT) {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     for (size_t i = 0; i < vector_size(json->data.object); i++) {

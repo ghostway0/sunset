@@ -12,7 +12,7 @@
 #define bump(p)                                                                \
     ({                                                                         \
         if (p->cursor >= p->json_size) {                                       \
-            return -ERROR_PARSE;                                               \
+            return -ERROR_INVALID_FORMAT;                                               \
         }                                                                      \
         p->buffer[p->cursor++];                                                \
     })
@@ -22,7 +22,7 @@
         size_t start = p->cursor;                                              \
         p->cursor += n;                                                        \
         if (p->cursor >= p->json_size) {                                       \
-            return -ERROR_PARSE;                                               \
+            return -ERROR_INVALID_FORMAT;                                               \
         }                                                                      \
         p->buffer + start;                                                     \
     })
@@ -50,7 +50,7 @@ static void skip_whitespace(struct parser *p) {
 
 static int parse_string(struct parser *p, struct json_value *value_out) {
     if (bump(p) != '"') {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     size_t start = p->cursor;
@@ -79,7 +79,7 @@ static int parse_number(struct parser *p, struct json_value *value_out) {
     double result = strtod(start, &end);
 
     if (start == end) {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     p->cursor += (end - start);
@@ -106,7 +106,7 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
     value_out->type = JSON_OBJECT;
 
     if (p->buffer[p->cursor] != '{') {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     vector_init(value_out->data.object, struct key_value);
@@ -130,7 +130,7 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
         skip_whitespace(p);
 
         if (p->buffer[p->cursor] != ':') {
-            return -ERROR_PARSE;
+            return -ERROR_INVALID_FORMAT;
         }
 
         bump(p);
@@ -155,7 +155,7 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
         }
 
         if (p->buffer[p->cursor] != ',') {
-            return -ERROR_PARSE;
+            return -ERROR_INVALID_FORMAT;
         }
 
         bump(p);
@@ -168,7 +168,7 @@ static int parse_array(struct parser *p, struct json_value *value_out) {
     int retval;
 
     if (p->buffer[p->cursor] != '[') {
-        return -ERROR_PARSE;
+        return -ERROR_INVALID_FORMAT;
     }
 
     bump(p);
@@ -194,7 +194,7 @@ static int parse_array(struct parser *p, struct json_value *value_out) {
         }
 
         if (p->buffer[p->cursor] != ',') {
-            return -ERROR_PARSE;
+            return -ERROR_INVALID_FORMAT;
         }
 
         bump(p);
@@ -247,7 +247,7 @@ static int parse_value(struct parser *p, struct json_value *value_out) {
         return 0;
     }
 
-    return -ERROR_PARSE;
+    return -ERROR_INVALID_FORMAT;
 }
 
 int json_parse(

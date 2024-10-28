@@ -1,11 +1,15 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <log.h>
+#include <stddef.h>
 
+#include "cglm/cam.h"
 #include "cglm/mat4.h"
+#include "cglm/types.h"
 #include "sunset/commands.h"
 #include "sunset/config.h"
 #include "sunset/errors.h"
+#include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
 #include "sunset/opengl_backend.h"
@@ -44,6 +48,26 @@ char const *instanced_vertex_shader_source =
         "    mat4 transform = transforms[gl_InstanceID];\n"
         "    gl_Position = projection * view * transform * vec4(aPos, "
         "1.0);\n"
+        "}\n";
+
+char const *text_vertex_shader_source =
+        "#version 330 core\n"
+        "layout (location = 0) in vec4 vertex;\n"
+        "out vec2 TexCoords;\n"
+        "uniform mat4 projection;\n"
+        "void main() {\n"
+        "    gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);\n"
+        "    TexCoords = vertex.zw;\n"
+        "}\n";
+
+char const *text_fragment_shader_source =
+        "#version 330 core\n"
+        "in vec2 TexCoords;\n"
+        "out vec4 color;\n"
+        "uniform sampler2D text;\n"
+        "void main() {\n"
+        "    float sampled = texture(text, TexCoords).r;\n"
+        "    color = vec4(sampled, sampled, sampled, 1.0);\n"
         "}\n";
 
 static int compile_shader_into(GLuint shader, char const *source) {
@@ -256,6 +280,28 @@ static int setup_default_shaders(struct render_context *context) {
 
     context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH] = instanced_program;
 
+    struct program text_program;
+    if (backend_create_program(&text_program)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    if (backend_program_add_shader(
+                &text_program, text_vertex_shader_source, GL_VERTEX_SHADER)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    if (backend_program_add_shader(&text_program,
+                text_fragment_shader_source,
+                GL_FRAGMENT_SHADER)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    if (backend_link_program(&text_program)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    context->backend_programs[PROGRAM_DRAW_TEXT] = text_program;
+
     return 0;
 }
 
@@ -265,6 +311,13 @@ int backend_setup(struct render_context *context, struct render_config config) {
     if (!glfwInit()) {
         return -ERROR_IO;
     }
+
+    context->width = config.window_width;
+    context->height = config.window_height;
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glEnable(GL_BLEND);
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -290,13 +343,6 @@ int backend_setup(struct render_context *context, struct render_config config) {
         goto failure;
     }
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-
-    glVertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
     if ((retval = setup_default_shaders(context))) {
         goto failure;
     }
@@ -304,6 +350,8 @@ int backend_setup(struct render_context *context, struct render_config config) {
     vector_init(context->meshes, struct compiled_mesh);
     vector_init(
             context->frame_cache.instancing_buffers, struct instancing_buffer);
+
+    glDepthFunc(GL_ALWAYS);
 
     return 0;
 
@@ -550,27 +598,112 @@ int backend_flush(struct render_context *context) {
     return 0;
 }
 
-[[maybe_unused]]
-static int compile_texture(struct texture const *texture,
-        struct compiled_texture *compiled_texture) {
-    glGenTextures(1, &compiled_texture->tex);
-    glBindTexture(GL_TEXTURE_2D, compiled_texture->tex);
+static GLuint compile_texture(struct image const *texture) {
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
 
     glTexImage2D(GL_TEXTURE_2D,
             0,
-            GL_RGB,
-            texture->image.w,
-            texture->image.h,
+            GL_RGBA,
+            texture->w,
+            texture->h,
             0,
-            GL_RGB,
+            GL_RGBA,
             GL_UNSIGNED_BYTE,
-            texture->image.pixels);
+            texture->pixels);
 
-    // now when I need the texture, do:
-    // glBindBuffer(GL_READ_BUFFER, compiled_texture->tex);
-    // then copy the pixels to the buffer
+    GLint swizzleMask[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 
-    return 0;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(
+            GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return tex;
+}
+
+static void run_text_command(
+        struct render_context *context, struct command_text command) {
+    struct program program = context->backend_programs[PROGRAM_DRAW_TEXT];
+
+    use_program(program);
+
+    mat4 ortho_projection;
+    glm_ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f,
+            ortho_projection);
+
+    program_set_uniform_mat4(program, "projection", &ortho_projection, 1);
+
+    GLuint vao, vbo;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+
+    float scale = 1;
+
+    assert(glGetError() == GL_NO_ERROR);
+
+    float current_x = command.start.x;
+
+    for (size_t i = 0; i < command.text_len; i++) {
+        struct glyph const *glyph =
+                font_get_glyph(command.font, command.text[i]);
+
+        if (!glyph) {
+            continue;
+        }
+
+        GLuint tex;
+        if ((tex = compile_texture(&glyph->image)) == 0) {
+            continue;
+        }
+
+        float xpos = current_x + glyph->bounds.x * scale;
+        float ypos = command.start.y + glyph->bounds.y * scale;
+        float w = glyph->bounds.width * scale;
+        float h = glyph->bounds.height * scale;
+
+        float vertices[6][4] = {{xpos, ypos + h, 0.0f, 1.0f},
+                {xpos, ypos, 0.0f, 0.0f},
+                {xpos + w, ypos, 1.0f, 0.0f},
+
+                {xpos, ypos + h, 0.0f, 1.0f},
+                {xpos + w, ypos, 1.0f, 0.0f},
+                {xpos + w, ypos + h, 1.0f, 1.0f}};
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+        program_set_uniform_int(program, "text", 0);
+
+        vec3 color = {1.0f, 1.0f, 1.0f};
+        program_set_uniform_vec3(program, "textColor", &color);
+
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        current_x += glyph->advance_x * scale;
+    }
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindVertexArray(0);
+
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
 }
 
 [[maybe_unused]]
@@ -604,6 +737,9 @@ void backend_draw(struct render_context *context,
         switch (command.type) {
             case COMMAND_MESH:
                 run_mesh_command(context, command.data.mesh);
+                break;
+            case COMMAND_TEXT:
+                run_text_command(context, command.data.text);
                 break;
             default:
                 log_error("unhandled command type %d", command.type);

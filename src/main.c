@@ -20,6 +20,12 @@
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
+uint64_t get_time_ms() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
 void context_init(struct context *context,
         struct command_buffer_options command_buffer_options,
         struct font *fonts,
@@ -188,10 +194,10 @@ int main() {
 
             },
             (struct camera_options){
-                    0.1f,
-                    100.0f,
-                    45.0f,
-                    0.75f,
+            .fov = 45.0f,
+            .sensitivity = 0.1f,
+            .speed = 0.1f,
+            .aspect_ratio = 600.0f / 800.0f,
             },
             &camera);
 
@@ -332,12 +338,19 @@ int main() {
     struct command_buffer command_buffer;
     command_buffer_init(&command_buffer, COMMAND_BUFFER_DEFAULT);
 
-    camera_rotate_absolute(&camera, 0, 0);
-
+    // HACK: this should work by itself... I shouldn't
+    // need to set them manually
     glm_mat4_identity(camera.view_matrix);
     glm_mat4_identity(camera.projection_matrix);
 
+    struct font font;
+    load_font_psf2("font.psf", "robinlinden", &font);
+
+    uint64_t avg_frame_time = 0;
+
     while (!glfwWindowShouldClose(render_context.window)) {
+        uint64_t frame_start = get_time_ms();
+
         mat4 transform1 = {
                 {1.0f, 0.0f, 0.0f, 0.5f},
                 {0.0f, 1.0f, 0.0f, 0.0f},
@@ -348,12 +361,32 @@ int main() {
         command_buffer_add_mesh(&command_buffer, true, 0, 0, transform1);
         command_buffer_add_mesh(&command_buffer, true, 0, 0, GLM_MAT4_IDENTITY);
 
+        char *buffer;
+        asprintf(&buffer, "frame time: %lums (fps: %.1f)", avg_frame_time, 1000.0 / avg_frame_time);
+
+        // command_buffer_add_zindex_set(&command_buffer, 0);
+        command_buffer_add_text(
+                &command_buffer, (struct point){200, 400}, &font, buffer, strlen(buffer));
+        // command_buffer_add_zindex_set(&command_buffer, 1);
+
+        // TODO:
+        // command_buffer_add_static_text(&command_buffer, (struct point){200, 500}, &font, "hello world");
+        // command_buffer_add_static_overlay command
+
         backend_draw(&render_context,
                 &command_buffer,
                 camera.view_matrix,
                 camera.projection_matrix);
 
-        glfwPollEvents();
+        assert(command_buffer_empty(&command_buffer));
+        free(buffer);
+
+        uint64_t frame_time = get_time_ms() - frame_start;
+        if (frame_time < 16) {
+            usleep((16 - frame_time) * 1000);
+        }
+
+        avg_frame_time = (avg_frame_time + frame_time) / 2;
     }
 
     // cleanup:

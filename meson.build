@@ -1,7 +1,7 @@
 project(
   'gaming',
   'c',
-  default_options: ['c_std=gnu2x', 'warning_level=2', 'werror=true']
+  default_options: ['c_std=gnu2x', 'warning_level=2', 'werror=true'],
 )
 
 add_project_arguments(
