@@ -46,8 +46,7 @@ void command_text_init(struct command *command,
         char const *text,
         uint32_t text_len) {
     command->type = COMMAND_TEXT;
-    command->data.text =
-            (struct command_text){start, font, text, text_len};
+    command->data.text = (struct command_text){start, font, text, text_len};
 }
 
 void command_image_init(

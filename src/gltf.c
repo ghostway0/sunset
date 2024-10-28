@@ -19,7 +19,7 @@
             struct json_value *value_json = &(json)->data.array[i];            \
             T value;                                                           \
             if (parse_fn(value_json, &value)) {                                \
-                return -ERROR_INVALID_FORMAT;                                           \
+                return -ERROR_INVALID_FORMAT;                                  \
             }                                                                  \
             vector_append(vec_out, value);                                     \
         }                                                                      \

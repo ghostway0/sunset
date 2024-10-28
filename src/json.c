@@ -12,7 +12,7 @@
 #define bump(p)                                                                \
     ({                                                                         \
         if (p->cursor >= p->json_size) {                                       \
-            return -ERROR_INVALID_FORMAT;                                               \
+            return -ERROR_INVALID_FORMAT;                                      \
         }                                                                      \
         p->buffer[p->cursor++];                                                \
     })
@@ -22,7 +22,7 @@
         size_t start = p->cursor;                                              \
         p->cursor += n;                                                        \
         if (p->cursor >= p->json_size) {                                       \
-            return -ERROR_INVALID_FORMAT;                                               \
+            return -ERROR_INVALID_FORMAT;                                      \
         }                                                                      \
         p->buffer + start;                                                     \
     })

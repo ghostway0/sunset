@@ -618,8 +618,7 @@ static GLuint compile_texture(struct image const *texture) {
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(
-            GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -634,8 +633,7 @@ static void run_text_command(
     use_program(program);
 
     mat4 ortho_projection;
-    glm_ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f,
-            ortho_projection);
+    glm_ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f, ortho_projection);
 
     program_set_uniform_mat4(program, "projection", &ortho_projection, 1);
 

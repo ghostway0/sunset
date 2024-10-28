@@ -194,10 +194,10 @@ int main() {
 
             },
             (struct camera_options){
-            .fov = 45.0f,
-            .sensitivity = 0.1f,
-            .speed = 0.1f,
-            .aspect_ratio = 600.0f / 800.0f,
+                    .fov = 45.0f,
+                    .sensitivity = 0.1f,
+                    .speed = 0.1f,
+                    .aspect_ratio = 600.0f / 800.0f,
             },
             &camera);
 
@@ -362,16 +362,23 @@ int main() {
         command_buffer_add_mesh(&command_buffer, true, 0, 0, GLM_MAT4_IDENTITY);
 
         char *buffer;
-        asprintf(&buffer, "frame time: %lums (fps: %.1f)", avg_frame_time, 1000.0 / avg_frame_time);
+        asprintf(&buffer,
+                "frame time: %lums (fps: %.1f)",
+                avg_frame_time,
+                1000.0 / avg_frame_time);
 
         // command_buffer_add_zindex_set(&command_buffer, 0);
-        command_buffer_add_text(
-                &command_buffer, (struct point){200, 400}, &font, buffer, strlen(buffer));
+        command_buffer_add_text(&command_buffer,
+                (struct point){200, 400},
+                &font,
+                buffer,
+                strlen(buffer));
         // command_buffer_add_zindex_set(&command_buffer, 1);
 
         // TODO:
-        // command_buffer_add_static_text(&command_buffer, (struct point){200, 500}, &font, "hello world");
-        // command_buffer_add_static_overlay command
+        // command_buffer_add_static_text(&command_buffer, (struct point){200,
+        // 500}, &font, "hello world"); command_buffer_add_static_overlay
+        // command
 
         backend_draw(&render_context,
                 &command_buffer,
