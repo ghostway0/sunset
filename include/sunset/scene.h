@@ -22,6 +22,7 @@ struct physics_object {
     vec3 acceleration;
     float mass;
     float damping;
+    bool should_fix;
 };
 
 struct object;

@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "log.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
@@ -94,6 +93,36 @@ static void apply_constraint_forces(struct physics const *physics, float dt) {
     }
 }
 
+static void fix_collision(struct object *a, struct object *b) {
+    vec3 overlap_min, overlap_max;
+
+    struct box *box_a = &a->bounding_box;
+    struct box *box_b = &b->bounding_box;
+
+    assert(box_collide(box_a, box_b));
+
+    glm_vec3_maxv(box_a->min, box_b->min, overlap_min);
+    glm_vec3_minv(box_a->max, box_b->max, overlap_max);
+
+    vec3 mtv = {0.0f, 0.0f, 0.0f};
+    float overlap_x = overlap_max[0] - overlap_min[0];
+    float overlap_y = overlap_max[1] - overlap_min[1];
+    float overlap_z = overlap_max[2] - overlap_min[2];
+
+    if (overlap_x < overlap_y && overlap_x < overlap_z) {
+        mtv[0] = (box_a->min[0] < box_b->min[0]) ? -overlap_x : overlap_x;
+    } else if (overlap_y < overlap_z) {
+        mtv[1] = (box_a->min[1] < box_b->min[1]) ? -overlap_y : overlap_y;
+    } else {
+        mtv[2] = (box_a->min[2] < box_b->min[2]) ? -overlap_z : overlap_z;
+    }
+
+    glm_vec3_scale(mtv, 0.5f, mtv);
+
+    glm_vec3_add(a->transform.position, mtv, a->transform.position);
+    glm_vec3_sub(b->transform.position, mtv, b->transform.position);
+}
+
 static void update_collisions(struct physics const *physics,
         struct scene const *scene,
         struct event_queue *event_queue) {
@@ -124,6 +153,10 @@ static void update_collisions(struct physics const *physics,
                             sizeof(collision_event));
 
                     event_queue_push(event_queue, &event);
+                }
+
+                if (object->physics.should_fix && other->physics.should_fix) {
+                    fix_collision(object, other);
                 }
             }
         }

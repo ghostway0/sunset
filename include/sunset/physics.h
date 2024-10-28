@@ -4,10 +4,8 @@
 
 #include <cglm/vec3.h>
 #include <stdint.h>
-#include <string.h>
 
 #include "sunset/events.h"
-#include "sunset/geometry.h"
 #include "sunset/scene.h"
 #include "sunset/vector.h"
 
