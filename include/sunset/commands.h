@@ -57,6 +57,7 @@ struct command_text {
     struct font *font;
     char const *text;
     uint32_t text_len;
+    enum window_point alignment;
 };
 
 struct command_image {
@@ -120,7 +121,8 @@ void command_text_init(struct command *command,
         struct point start,
         struct font *font,
         char const *text,
-        uint32_t text_len);
+        uint32_t text_len,
+        enum window_point alignment);
 
 void command_image_init(
         struct command *command, struct point pos, struct image const *image);
@@ -138,9 +140,7 @@ struct command_buffer_options {
 };
 
 #define COMMAND_BUFFER_DEFAULT                                                 \
-    (struct command_buffer_options) {                                          \
-        .buffer_size = 1024                                                    \
-    }
+    (struct command_buffer_options){.buffer_size = 1024}
 
 struct command_buffer {
     struct ring_buffer ring_buffer;
@@ -188,7 +188,8 @@ void command_buffer_add_text(struct command_buffer *command_buffer,
         struct point start,
         struct font *font,
         char const *text,
-        uint32_t text_len);
+        uint32_t text_len,
+        enum window_point alignment);
 
 void command_buffer_add_image(struct command_buffer *command_buffer,
         struct point pos,

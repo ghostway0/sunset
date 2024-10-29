@@ -315,10 +315,6 @@ int backend_setup(struct render_context *context, struct render_config config) {
     context->width = config.window_width;
     context->height = config.window_height;
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glEnable(GL_BLEND);
-
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -337,6 +333,10 @@ int backend_setup(struct render_context *context, struct render_config config) {
     }
 
     glfwMakeContextCurrent(context->window);
+
+    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glEnable(GL_BLEND);
 
     if (glewInit() != GLEW_OK) {
         retval = -ERROR_IO;
@@ -649,9 +649,13 @@ static void run_text_command(
 
     float scale = 1;
 
-    assert(glGetError() == GL_NO_ERROR);
+    float y_alignment_offset = command.alignment == WINDOW_POINT_TOP_LEFT
+                    || command.alignment == WINDOW_POINT_TOP_RIGHT
+            ? context->height
+            : 0;
 
     float current_x = command.start.x;
+    float y = command.start.y + y_alignment_offset;
 
     for (size_t i = 0; i < command.text_len; i++) {
         struct glyph const *glyph =
@@ -667,7 +671,7 @@ static void run_text_command(
         }
 
         float xpos = current_x + glyph->bounds.x * scale;
-        float ypos = command.start.y + glyph->bounds.y * scale;
+        float ypos = y + glyph->bounds.y * scale;
         float w = glyph->bounds.width * scale;
         float h = glyph->bounds.height * scale;
 

@@ -44,9 +44,11 @@ void command_text_init(struct command *command,
         struct point start,
         struct font *font,
         char const *text,
-        uint32_t text_len) {
+        uint32_t text_len,
+        enum window_point alignment) {
     command->type = COMMAND_TEXT;
-    command->data.text = (struct command_text){start, font, text, text_len};
+    command->data.text =
+            (struct command_text){start, font, text, text_len, alignment};
 }
 
 void command_image_init(
@@ -133,9 +135,10 @@ void command_buffer_add_text(struct command_buffer *command_buffer,
         struct point start,
         struct font *font,
         char const *text,
-        uint32_t text_len) {
+        uint32_t text_len,
+        enum window_point alignment) {
     struct command command;
-    command_text_init(&command, start, font, text, text_len);
+    command_text_init(&command, start, font, text, text_len, alignment);
     command_buffer_append(command_buffer, &command);
 }
 

@@ -26,6 +26,21 @@ uint64_t get_time_ms() {
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
+int compare_uint64_t(void const *a, void const *b) {
+    return *(uint64_t *)a - *(uint64_t *)b;
+}
+
+#define top_percentile(arr, n, p, compare)                                     \
+    ({                                                                         \
+        size_t *sorted = malloc(n * sizeof(size_t));                           \
+        memcpy(sorted, arr, n * sizeof(size_t));                               \
+        qsort(sorted, n, sizeof(size_t), compare);                             \
+        size_t idx = n - n * p / 100;                                          \
+        size_t result = sorted[idx];                                           \
+        free(sorted);                                                          \
+        result;                                                                \
+    })
+
 void context_init(struct context *context,
         struct command_buffer_options command_buffer_options,
         struct font *fonts,
@@ -348,6 +363,11 @@ int main() {
 
     uint64_t avg_frame_time = 0;
 
+    uint64_t frame_time_window[100] = {0};
+    size_t frame_time_window_idx = 0;
+
+    glfwSwapInterval(1);
+
     while (!glfwWindowShouldClose(render_context.window)) {
         uint64_t frame_start = get_time_ms();
 
@@ -363,16 +383,17 @@ int main() {
 
         char *buffer;
         asprintf(&buffer,
-                "frame time: %lums (fps: %.1f)",
+                "frame time: %llums (fps: %.1f)",
                 avg_frame_time,
                 1000.0 / avg_frame_time);
 
         // command_buffer_add_zindex_set(&command_buffer, 0);
         command_buffer_add_text(&command_buffer,
-                (struct point){200, 400},
+                (struct point){0, -24},
                 &font,
                 buffer,
-                strlen(buffer));
+                strlen(buffer),
+                WINDOW_POINT_TOP_LEFT);
         // command_buffer_add_zindex_set(&command_buffer, 1);
 
         // TODO:
@@ -394,6 +415,19 @@ int main() {
         }
 
         avg_frame_time = (avg_frame_time + frame_time) / 2;
+
+        frame_time_window[frame_time_window_idx] = frame_time;
+        frame_time_window_idx = (frame_time_window_idx + 1)
+                % (sizeof(frame_time_window) / sizeof(frame_time_window[0]));
+
+        if (frame_time_window_idx == 0) {
+            uint64_t top_1_percentile = top_percentile(frame_time_window,
+                    sizeof(frame_time_window) / sizeof(frame_time_window[0]),
+                    1,
+                    compare_uint64_t);
+
+            log_trace("top 1%% avg %llums", top_1_percentile);
+        }
     }
 
     // cleanup:

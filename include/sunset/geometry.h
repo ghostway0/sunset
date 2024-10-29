@@ -14,8 +14,8 @@
 #define rect_args(r) r.x, r.y, r.width, r.height
 
 struct point {
-    size_t x;
-    size_t y;
+    int32_t x;
+    int32_t y;
 };
 
 struct rect {
@@ -90,3 +90,10 @@ bool position_within_rect(vec3 position, struct rect rect);
 bool position_within_box(vec3 position, struct box box);
 
 float rect_distance_to_camera(vec3 camera_position, struct rect rect);
+
+enum window_point {
+    WINDOW_POINT_TOP_LEFT,
+    WINDOW_POINT_TOP_RIGHT,
+    WINDOW_POINT_BOTTOM_LEFT,
+    WINDOW_POINT_BOTTOM_RIGHT,
+};
