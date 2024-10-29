@@ -695,6 +695,8 @@ static void run_text_command(
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
         current_x += glyph->advance_x * scale;
+
+        glDeleteTextures(1, &tex);
     }
 
     glEnableVertexAttribArray(0);

@@ -376,9 +376,26 @@ int main() {
     while (!glfwWindowShouldClose(render_context.window)) {
         uint64_t frame_start = get_time_ms();
 
+        // keyboard input wasd. 10 degrees every time
+        if (glfwGetKey(render_context.window, GLFW_KEY_W) == GLFW_PRESS) {
+            camera_rotate_scaled(&camera, 0.0f, 10.0f);
+        }
+
+        if (glfwGetKey(render_context.window, GLFW_KEY_S) == GLFW_PRESS) {
+            camera_rotate_scaled(&camera, 0.0f, -10.0f);
+        }
+
+        if (glfwGetKey(render_context.window, GLFW_KEY_A) == GLFW_PRESS) {
+            camera_rotate_scaled(&camera, 10.0f, 0.0f);
+        }
+
+        if (glfwGetKey(render_context.window, GLFW_KEY_D) == GLFW_PRESS) {
+            camera_rotate_scaled(&camera, -10.0f, 0.0f);
+        }
+
         mat4 transform1;
         glm_mat4_identity(transform1);
-        glmc_translate_z(transform1, -1.0f);
+        glmc_translate_z(transform1, -3.0f);
 
         command_buffer_add_mesh(&command_buffer, false, 0, 0, transform1);
         command_buffer_add_mesh(
