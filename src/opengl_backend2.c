@@ -649,13 +649,12 @@ static void run_text_command(
 
     float scale = 1;
 
-    float y_alignment_offset = command.alignment == WINDOW_POINT_TOP_LEFT
+    float y = command.alignment == WINDOW_POINT_TOP_LEFT
                     || command.alignment == WINDOW_POINT_TOP_RIGHT
-            ? context->height
-            : 0;
+            ?  context->height - command.start.y
+            : command.start.y;
 
     float current_x = command.start.x;
-    float y = command.start.y + y_alignment_offset;
 
     for (size_t i = 0; i < command.text_len; i++) {
         struct glyph const *glyph =

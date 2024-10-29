@@ -416,7 +416,7 @@ int main() {
 
         // command_buffer_add_zindex_set(&command_buffer, 0);
         command_buffer_add_text(&command_buffer,
-                (struct point){0, -24},
+                (struct point){0, 24},
                 &font,
                 buffer,
                 strlen(buffer),

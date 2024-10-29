@@ -17,7 +17,7 @@ void show_image_grayscale(struct image const *image) {
 
 void show_image_grayscale_at(struct image const *image, struct point pos) {
     for (size_t y = 0; y < image->h; y++) {
-        printf("\033[%d;%dH", (int)(pos.y + y), pos.x);
+        printf("\033[%u;%uH", pos.y + (uint32_t)y, pos.x);
 
         for (size_t x = 0; x < image->w; x++) {
             uint8_t pixel = color_to_grayscale(image->pixels[y * image->w + x]);

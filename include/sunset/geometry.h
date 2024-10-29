@@ -20,8 +20,8 @@
 #define mat4_fmt_args(m) vec4_args(m[0]), vec4_args(m[1]), vec4_args(m[2]), vec4_args(m[3])
 
 struct point {
-    int32_t x;
-    int32_t y;
+    uint32_t x;
+    uint32_t y;
 };
 
 struct rect {
