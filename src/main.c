@@ -3,12 +3,14 @@
 
 #include <stddef.h>
 #include <string.h>
-
-#include <log.h>
-#include <sys/mman.h>
 #include <unistd.h>
 
-#include "cglm/mat4.h"
+#include <cglm/mat4.h>
+#include <log.h>
+#include <sys/mman.h>
+
+#include "cglm/call/affine.h"
+#include "cglm/util.h"
 #include "sunset/backend.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
@@ -209,10 +211,10 @@ int main() {
 
             },
             (struct camera_options){
-                    .fov = 45.0f,
+                    .fov = glm_rad(45.0f),
                     .sensitivity = 0.1f,
                     .speed = 0.1f,
-                    .aspect_ratio = 600.0f / 800.0f,
+                    .aspect_ratio = 800.0f / 600.0f,
             },
             &camera);
 
@@ -284,6 +286,14 @@ int main() {
             .num_children = 0,
     };
 
+    log_debug(mat4_format, mat4_fmt_args(camera.projection_matrix));
+    log_debug(mat4_format, mat4_fmt_args(camera.view_matrix));
+
+    mat4 view_project;
+    glm_mat4_mul(camera.projection_matrix, camera.view_matrix, view_project);
+
+    log_debug(mat4_format, mat4_fmt_args(view_project));
+
     struct object **objects = malloc(sizeof(struct object *) * 2);
 
     // should be owned by the scene. but for now, we'll just leak it, cuz ...
@@ -353,11 +363,6 @@ int main() {
     struct command_buffer command_buffer;
     command_buffer_init(&command_buffer, COMMAND_BUFFER_DEFAULT);
 
-    // HACK: this should work by itself... I shouldn't
-    // need to set them manually
-    glm_mat4_identity(camera.view_matrix);
-    glm_mat4_identity(camera.projection_matrix);
-
     struct font font;
     load_font_psf2("font.psf", "robinlinden", &font);
 
@@ -371,15 +376,13 @@ int main() {
     while (!glfwWindowShouldClose(render_context.window)) {
         uint64_t frame_start = get_time_ms();
 
-        mat4 transform1 = {
-                {1.0f, 0.0f, 0.0f, 0.5f},
-                {0.0f, 1.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 1.0f, 0.5f},
-                {0.0f, 0.0f, 0.0f, 1.0f},
-        };
+        mat4 transform1;
+        glm_mat4_identity(transform1);
+        glmc_translate_z(transform1, -1.0f);
 
-        command_buffer_add_mesh(&command_buffer, true, 0, 0, transform1);
-        command_buffer_add_mesh(&command_buffer, true, 0, 0, GLM_MAT4_IDENTITY);
+        command_buffer_add_mesh(&command_buffer, false, 0, 0, transform1);
+        command_buffer_add_mesh(
+                &command_buffer, false, 0, 0, GLM_MAT4_IDENTITY);
 
         char *buffer;
         asprintf(&buffer,

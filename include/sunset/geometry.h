@@ -13,6 +13,12 @@
 #define rect_format "rect(%zu, %zu, %zu, %zu)"
 #define rect_args(r) r.x, r.y, r.width, r.height
 
+#define vec4_format "vec4(%f, %f, %f, %f)"
+#define vec4_args(v) v[0], v[1], v[2], v[3]
+
+#define mat4_format "mat4(\n\t" vec4_format ",\n\t" vec4_format ",\n\t" vec4_format ",\n\t" vec4_format ",\n)"
+#define mat4_fmt_args(m) vec4_args(m[0]), vec4_args(m[1]), vec4_args(m[2]), vec4_args(m[3])
+
 struct point {
     int32_t x;
     int32_t y;

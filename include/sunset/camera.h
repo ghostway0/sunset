@@ -11,6 +11,7 @@ struct camera_state {
 };
 
 struct camera_options {
+    // in radians
     float fov;
     float speed;
     float sensitivity;

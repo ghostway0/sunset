@@ -1,11 +1,12 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <log.h>
 #include <stddef.h>
 
-#include "cglm/cam.h"
-#include "cglm/mat4.h"
-#include "cglm/types.h"
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <cglm/cam.h>
+#include <cglm/mat4.h>
+#include <cglm/types.h>
+#include <log.h>
+
 #include "sunset/commands.h"
 #include "sunset/config.h"
 #include "sunset/errors.h"
@@ -335,7 +336,6 @@ int backend_setup(struct render_context *context, struct render_config config) {
     glfwMakeContextCurrent(context->window);
 
     glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glEnable(GL_BLEND);
 
     if (glewInit() != GLEW_OK) {

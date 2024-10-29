@@ -1,4 +1,4 @@
-#include <math.h>
+#include <log.h>
 #include <string.h>
 
 #include <cglm/cam.h>
@@ -29,11 +29,11 @@ void camera_init(struct camera_state state,
     camera_out->yaw = state.yaw;
     camera_out->pitch = state.pitch;
 
-    glm_vec3_normalize_to(
+    glm_vec3_copy(
             (vec3){
-                    cosf(state.yaw) * cosf(state.pitch),
                     sinf(state.pitch),
-                    sinf(state.yaw) * cosf(state.pitch),
+                    -sinf(state.yaw) * cosf(state.pitch),
+                    -cosf(state.yaw) * cosf(state.pitch),
             },
             camera_out->direction);
 
@@ -73,8 +73,6 @@ void camera_rotate_absolute(
     glm_vec3_normalize(camera->up);
 
     calculate_view_matrix(camera, camera->view_matrix);
-    calculate_projection_matrix(
-            camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
 void camera_rotate_scaled(struct camera *camera, float x_angle, float y_angle) {
@@ -94,8 +92,6 @@ void camera_move(struct camera *camera, vec3 direction) {
     glm_vec3_add(camera->position, direction, camera->position);
 
     calculate_view_matrix(camera, camera->view_matrix);
-    calculate_projection_matrix(
-            camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
 void camera_recalculate_vectors(struct camera *camera) {
