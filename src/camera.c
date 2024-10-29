@@ -5,6 +5,8 @@
 #include <cglm/vec3.h>
 
 #include "sunset/camera.h"
+#include "cglm/quat.h"
+#include "cglm/types.h"
 #include "sunset/math.h"
 
 // world->camera transformation matrix
@@ -59,12 +61,14 @@ void camera_rotate_absolute(
     camera->pitch = clamp(camera->pitch, -GLM_PI_2, GLM_PI_2);
     camera->yaw = fmodf(camera->yaw, 2 * GLM_PI);
 
-    glm_vec3_rotate(
-            camera->direction, x_angle * camera->sensitivity, camera->up);
+    versor up_quat, right_quat;
+    glm_quatv(up_quat, x_angle, camera->up);
+    glm_quatv(right_quat, y_angle, camera->right);
 
-    glm_vec3_rotate(
-            camera->direction, y_angle * camera->sensitivity, camera->right);
-    glm_vec3_rotate(camera->up, y_angle * camera->sensitivity, camera->right);
+    versor combined;
+    glm_quat_add(up_quat, right_quat, combined);
+
+    glm_quat_rotatev(combined, camera->direction, camera->direction);
 
     glm_vec3_normalize(camera->direction);
     glm_vec3_cross(camera->direction, camera->up, camera->right);

@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -26,6 +27,12 @@ uint64_t get_time_ms() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+uint64_t get_time_us() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 }
 
 int compare_uint64_t(void const *a, void const *b) {
@@ -212,7 +219,7 @@ int main() {
             },
             (struct camera_options){
                     .fov = glm_rad(45.0f),
-                    .sensitivity = 0.1f,
+                    .sensitivity = 0.01f,
                     .speed = 0.1f,
                     .aspect_ratio = 800.0f / 600.0f,
             },
