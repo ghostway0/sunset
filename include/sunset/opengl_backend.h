@@ -67,6 +67,8 @@ struct render_context {
     struct program backend_programs[NUM_BACKEND_PROGRAMS];
     vector(struct compiled_mesh) meshes;
     vector(GLuint) textures;
+
+    struct command_buffer command_buffer;
 };
 
 uint32_t backend_register_mesh(

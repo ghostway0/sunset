@@ -52,3 +52,5 @@ void camera_vec_to_world(struct camera *camera, vec3 direction);
 bool camera_point_in_frustum(struct camera *camera, vec3 point);
 
 bool camera_box_within_frustum(struct camera *camera, struct box box);
+
+void camera_set_rotation(struct camera *camera, float x_angle, float y_angle);

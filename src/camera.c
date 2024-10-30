@@ -1,12 +1,11 @@
-#include <log.h>
 #include <string.h>
 
 #include <cglm/cam.h>
 #include <cglm/vec3.h>
 
-#include "sunset/camera.h"
 #include "cglm/quat.h"
 #include "cglm/types.h"
+#include "sunset/camera.h"
 #include "sunset/math.h"
 
 // world->camera transformation matrix
@@ -31,48 +30,66 @@ void camera_init(struct camera_state state,
     camera_out->yaw = state.yaw;
     camera_out->pitch = state.pitch;
 
-    glm_vec3_copy(
-            (vec3){
-                    sinf(state.pitch),
-                    -sinf(state.yaw) * cosf(state.pitch),
-                    -cosf(state.yaw) * cosf(state.pitch),
-            },
-            camera_out->direction);
-
-    glm_vec3_cross(camera_out->up, camera_out->direction, camera_out->right);
-    glm_vec3_cross(camera_out->direction, camera_out->right, camera_out->up);
+    camera_set_rotation(camera_out, camera_out->yaw, camera_out->pitch);
 
     camera_out->fov = options.fov;
     camera_out->sensitivity = options.sensitivity;
     camera_out->speed = options.speed;
     camera_out->aspect_ratio = options.aspect_ratio;
 
-    calculate_view_matrix(camera_out, camera_out->view_matrix);
     calculate_projection_matrix(camera_out,
             camera_out->aspect_ratio,
             camera_out->projection_matrix);
 }
 
-void camera_rotate_absolute(
-        struct camera *camera, float x_angle, float y_angle) {
-    camera->yaw += x_angle;
-    camera->pitch += y_angle;
+void camera_rotate_absolute(struct camera *camera, float x_angle, float y_angle) {
+    // NOTE: when pitch is clamped, camera is flipped
+    camera->pitch = clamp(camera->pitch + y_angle, -GLM_PI_2, GLM_PI_2);
+    camera->yaw = fmodf(camera->yaw + x_angle, 2 * GLM_PI);
+
+    versor yaw_quat;
+    glm_quatv(yaw_quat, x_angle, camera->world_up);
+
+    versor pitch_quat;
+    glm_quatv(pitch_quat, y_angle, camera->right);
+
+    versor rotation_quat;
+    glm_quat_mul(yaw_quat, pitch_quat, rotation_quat);
+
+    glm_quat_rotatev(rotation_quat, camera->direction, camera->direction);
+    glm_quat_rotatev(rotation_quat, camera->up, camera->up);
+
+    glm_vec3_cross(camera->direction, camera->up, camera->right);
+    glm_vec3_normalize(camera->right);
+    glm_vec3_normalize(camera->up);
+
+    calculate_view_matrix(camera, camera->view_matrix);
+}
+
+void camera_set_rotation(struct camera *camera, float x_angle, float y_angle) {
+    camera->yaw = x_angle;
+    camera->pitch = y_angle;
 
     camera->pitch = clamp(camera->pitch, -GLM_PI_2, GLM_PI_2);
     camera->yaw = fmodf(camera->yaw, 2 * GLM_PI);
 
-    versor up_quat, right_quat;
-    glm_quatv(up_quat, x_angle, camera->up);
-    glm_quatv(right_quat, y_angle, camera->right);
+    glm_vec3_copy(
+            (vec3){
+                    sinf(camera->pitch),
+                    -sinf(camera->yaw) * cosf(camera->pitch),
+                    -cosf(camera->yaw) * cosf(camera->pitch),
+            },
+            camera->direction);
 
-    versor combined;
-    glm_quat_add(up_quat, right_quat, combined);
+    glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, camera->world_up);
 
-    glm_quat_rotatev(combined, camera->direction, camera->direction);
+    glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f},
+            camera->up);
+
+    glm_vec3_cross(camera->up, camera->direction, camera->right);
+    glm_vec3_cross(camera->direction, camera->right, camera->up);
 
     glm_vec3_normalize(camera->direction);
-    glm_vec3_cross(camera->direction, camera->up, camera->right);
-
     glm_vec3_normalize(camera->right);
     glm_vec3_normalize(camera->up);
 
@@ -87,12 +104,14 @@ void camera_rotate_scaled(struct camera *camera, float x_angle, float y_angle) {
 
 // camera direction to world space
 void camera_vec_to_world(struct camera *camera, vec3 direction) {
-    glm_vec3_rotate(direction, -camera->yaw, camera->up);
-    glm_vec3_rotate(direction, -camera->pitch, camera->right);
+    glm_vec3_rotate(direction, camera->yaw, camera->world_up);
+    glm_vec3_rotate(direction, camera->pitch, camera->right);
 }
 
 void camera_move(struct camera *camera, vec3 direction) {
     glm_vec3_scale(direction, camera->speed, direction);
+    camera_vec_to_world(camera, direction);
+
     glm_vec3_add(camera->position, direction, camera->position);
 
     calculate_view_matrix(camera, camera->view_matrix);

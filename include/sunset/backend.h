@@ -48,3 +48,5 @@ int backend_setup_shader(struct program *program,
 struct instanced_mesh *backend_create_instanced_mesh(
         struct render_context *context,
         struct compiled_mesh const *compiled_mesh);
+
+void backend_set_user_context(struct render_context *context, void *user_context);

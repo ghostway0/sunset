@@ -5,6 +5,8 @@
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
+#include "sunset/backend.h"
+
 static bool should_split(struct oct_tree *tree, struct oct_node *node) {
     unused(tree);
 
@@ -87,4 +89,23 @@ void object_move(struct object *object, vec3 direction) {
     for (size_t i = 0; i < object->num_children; ++i) {
         object_move(object->children[i], direction);
     }
+}
+
+static int render_object(
+        struct object *object, struct render_context *render_context) {
+    unused(object);
+    unused(render_context);
+
+    return 0;
+}
+
+int scene_render(struct scene *scene, struct render_context *render_context) {
+    struct chunk *chunk =
+            oct_tree_query(&scene->oct_tree, scene->camera.position);
+
+    for (size_t i = 0; i < chunk->num_objects; ++i) {
+        render_object(chunk->objects[i], render_context);
+    }
+
+    return 0;
 }

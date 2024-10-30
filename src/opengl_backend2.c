@@ -24,10 +24,13 @@
 char const *default_vertex_shader_source =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
+        "layout (location = 1) in vec2 aTexCoords;\n"
+        "out vec2 TexCoords;\n"
         "uniform mat4 model;\n"
         "uniform mat4 view;\n"
         "uniform mat4 projection;\n"
         "void main() {\n"
+        "    TexCoords = aTexCoords;\n"
         "    gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
         "}\n";
 
@@ -36,6 +39,16 @@ char const *default_fragment_shader_source =
         "out vec4 FragColor;\n"
         "void main() {\n"
         "    FragColor = vec4(gl_FragCoord.x / 500.0, gl_FragCoord.y / 800.0, "
+        "0.0, 1.0);\n"
+        "}\n";
+
+char const *textured_fragment_shader_source =
+        "#version 330 core\n"
+        "in vec2 TexCoords;\n"
+        "out vec4 FragColor;\n"
+        "uniform sampler2D texture;\n"
+        "void main() {\n"
+        "    FragColor = texture(texture, TexCoords);\n"
         "0.0, 1.0);\n"
         "}\n";
 
@@ -53,12 +66,12 @@ char const *instanced_vertex_shader_source =
 
 char const *text_vertex_shader_source =
         "#version 330 core\n"
-        "layout (location = 0) in vec4 vertex;\n"
+        "layout (location = 0) in vec4 aPos;\n"
         "out vec2 TexCoords;\n"
         "uniform mat4 projection;\n"
         "void main() {\n"
-        "    gl_Position = projection * vec4(vertex.xy, 0.0, 1.0);\n"
-        "    TexCoords = vertex.zw;\n"
+        "    gl_Position = projection * vec4(aPos.xy, 0.0, 1.0);\n"
+        "    TexCoords = aPos.zw;\n"
         "}\n";
 
 char const *text_fragment_shader_source =
@@ -361,6 +374,10 @@ failure:
     return retval;
 }
 
+void backend_set_user_context(struct render_context *context, void *user_context) {
+    glfwSetWindowUserPointer(context->window, user_context);
+}
+
 /*
  * command mesh pseudo-code (instanced, mesh_id, texture_id, transform):
  *   if current_instancing_buffer:
@@ -651,7 +668,7 @@ static void run_text_command(
 
     float y = command.alignment == WINDOW_POINT_TOP_LEFT
                     || command.alignment == WINDOW_POINT_TOP_RIGHT
-            ?  context->height - command.start.y
+            ? context->height - command.start.y
             : command.start.y;
 
     float current_x = command.start.x;

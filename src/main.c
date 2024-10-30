@@ -54,11 +54,15 @@ void context_init(struct context *context,
         struct command_buffer_options command_buffer_options,
         struct font *fonts,
         size_t num_fonts,
-        void *render_context) {
+        void *render_context,
+        struct camera camera) {
     context->fonts = fonts;
     context->num_fonts = num_fonts;
     context->render_context = render_context;
     command_buffer_init(&context->command_buffer, command_buffer_options);
+    context->camera = camera;
+
+    context->mouse.first_mouse = true;
 }
 
 void context_free(struct context *context) {
@@ -177,6 +181,24 @@ struct mesh create_test_mesh() {
     return test_mesh;
 }
 
+static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    struct context *context = glfwGetWindowUserPointer(window);
+
+    if (context->mouse.first_mouse) {
+        log_debug("first mouse %f %f", xpos, ypos);
+
+        context->mouse.x = xpos;
+        context->mouse.y = ypos;
+        context->mouse.first_mouse = false;
+    }
+
+
+    camera_rotate_scaled(&context->camera, context->mouse.x - xpos, context->mouse.y - ypos );
+
+    context->mouse.x = xpos;
+    context->mouse.y = ypos;
+}
+
 struct mesh create_test_mesh2() {
     struct mesh test_mesh;
 
@@ -293,14 +315,6 @@ int main() {
             .num_children = 0,
     };
 
-    log_debug(mat4_format, mat4_fmt_args(camera.projection_matrix));
-    log_debug(mat4_format, mat4_fmt_args(camera.view_matrix));
-
-    mat4 view_project;
-    glm_mat4_mul(camera.projection_matrix, camera.view_matrix, view_project);
-
-    log_debug(mat4_format, mat4_fmt_args(view_project));
-
     struct object **objects = malloc(sizeof(struct object *) * 2);
 
     // should be owned by the scene. but for now, we'll just leak it, cuz ...
@@ -380,24 +394,42 @@ int main() {
 
     glfwSwapInterval(1);
 
+    struct context context;
+    context_init(&context,
+            COMMAND_BUFFER_DEFAULT,
+            &font,
+            1,
+            &render_context,
+            camera);
+
+    backend_set_user_context(&render_context, &context);
+
+    glfwSetInputMode(render_context.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(render_context.window, GLFW_RAW_MOUSE_MOTION,
+    // GLFW_TRUE); set callback
+    glfwSetCursorPosCallback(render_context.window, mouse_callback);
+
     while (!glfwWindowShouldClose(render_context.window)) {
         uint64_t frame_start = get_time_ms();
 
-        // keyboard input wasd. 10 degrees every time
         if (glfwGetKey(render_context.window, GLFW_KEY_W) == GLFW_PRESS) {
-            camera_rotate_scaled(&camera, 0.0f, 10.0f);
+            camera_move(&context.camera, (vec3){0.0f, 0.0f, -1.0f});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_S) == GLFW_PRESS) {
-            camera_rotate_scaled(&camera, 0.0f, -10.0f);
+            camera_move(&context.camera, (vec3){0.0f, 0.0f, 1.0f});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_A) == GLFW_PRESS) {
-            camera_rotate_scaled(&camera, 10.0f, 0.0f);
+            camera_move(&context.camera, (vec3){-1.0f, 0.0f, 0.0f});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_D) == GLFW_PRESS) {
-            camera_rotate_scaled(&camera, -10.0f, 0.0f);
+            camera_move(&context.camera, (vec3){1.0f, 0.0f, 0.0f});
+        }
+
+        if (glfwGetKey(render_context.window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(render_context.window, GLFW_TRUE);
         }
 
         mat4 transform1;
@@ -430,8 +462,8 @@ int main() {
 
         backend_draw(&render_context,
                 &command_buffer,
-                camera.view_matrix,
-                camera.projection_matrix);
+                context.camera.view_matrix,
+                context.camera.projection_matrix);
 
         assert(command_buffer_empty(&command_buffer));
         free(buffer);

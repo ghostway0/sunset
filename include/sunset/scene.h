@@ -59,9 +59,9 @@ struct object {
     struct physics_object physics;
     struct box bounding_box;
     struct transform transform;
-    struct mesh *meshes;
+    struct compiled_mesh *meshes;
     size_t num_meshes;
-    struct texture *textures;
+    struct compiled_texture *textures;
     size_t num_textures;
     struct material *materials;
     size_t num_materials;

@@ -5,6 +5,7 @@
 #include "camera.h"
 #include "scene.h"
 #include "sunset/commands.h"
+#include "sunset/geometry.h"
 #include "vector.h"
 
 struct active_animation {
@@ -25,11 +26,20 @@ struct render_config {
     char const *window_title;
 };
 
+struct mouse {
+    float x;
+    float y;
+    bool first_mouse;
+};
+
 struct context {
     struct command_buffer command_buffer;
     struct font *fonts;
     size_t num_fonts;
     void *render_context;
+
+    struct mouse mouse;
+    struct camera camera;
 };
 //
 //
