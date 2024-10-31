@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <cglm/mat4.h>
@@ -27,6 +28,36 @@ uint64_t get_time_ms() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+struct timespec get_time() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts;
+}
+
+uint64_t time_since_ms(struct timespec start) {
+    struct timespec now = get_time();
+    return (now.tv_sec - start.tv_sec) * 1000
+            + (now.tv_nsec - start.tv_nsec) / 1000000;
+}
+
+uint64_t time_since_us(struct timespec start) {
+    struct timespec now = get_time();
+    return (now.tv_sec - start.tv_sec) * 1000000
+            + (now.tv_nsec - start.tv_nsec) / 1000;
+}
+
+uint64_t time_elapsed_ms(struct timespec start) {
+    struct timespec now = get_time();
+    return (now.tv_sec - start.tv_sec) * 1000
+            + (now.tv_nsec - start.tv_nsec) / 1000000;
+}
+
+uint64_t time_elapsed_us(struct timespec start) {
+    struct timespec now = get_time();
+    return (now.tv_sec - start.tv_sec) * 1000000
+            + (now.tv_nsec - start.tv_nsec) / 1000;
 }
 
 uint64_t get_time_us() {
@@ -192,8 +223,8 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
         context->mouse.first_mouse = false;
     }
 
-
-    camera_rotate_scaled(&context->camera, context->mouse.x - xpos, context->mouse.y - ypos );
+    camera_rotate_scaled(
+            &context->camera, context->mouse.x - xpos, context->mouse.y - ypos);
 
     context->mouse.x = xpos;
     context->mouse.y = ypos;
@@ -231,6 +262,15 @@ int main() {
     struct scene scene;
     struct camera camera;
 
+    struct render_context render_context = {};
+
+    if (backend_setup(&render_context,
+                (struct render_config){
+                        .window_width = 800, .window_height = 600})) {
+        log_debug("wtf");
+        return -1;
+    }
+
     camera_init(
             (struct camera_state){
                     {0.0f, 0.0f, 0.0f},
@@ -247,6 +287,9 @@ int main() {
             },
             &camera);
 
+    uint32_t triangle_mesh_id =
+            backend_register_mesh(&render_context, create_test_mesh());
+
     struct object object = {
             .physics =
                     (struct physics_object){
@@ -261,12 +304,11 @@ int main() {
                     },
             .transform =
                     (struct transform){
-                            {0.0f, 0.0f, 0.0f},
-                            {0.0f, 0.0f, 0.0f},
-                            1.0f,
+                            .position = {0.0f, 0.0f, 0.0f},
+                            .rotation = {0.0f, 0.0f, 0.0f},
+                            .scale = 1.0f,
                     },
-            .meshes = NULL,
-            .num_meshes = 0,
+            .mesh_id = triangle_mesh_id,
             .textures = NULL,
             .num_textures = 0,
             .materials = NULL,
@@ -295,12 +337,11 @@ int main() {
                     },
             .transform =
                     (struct transform){
-                            {0.0f, 0.0f, 0.0f},
-                            {0.0f, 0.0f, 0.0f},
-                            1.0f,
+                            .position = {0.0f, 0.0f, -4.0f},
+                            .rotation = {0.0f, 0.0f, 0.0f},
+                            .scale = 1.0f,
                     },
-            .meshes = NULL,
-            .num_meshes = 0,
+            .mesh_id = triangle_mesh_id,
             .textures = NULL,
             .num_textures = 0,
             .materials = NULL,
@@ -327,7 +368,11 @@ int main() {
     struct chunk *root_chunk = malloc(sizeof(struct chunk));
 
     *root_chunk = (struct chunk){
-            .bounds = {0},
+            .bounds =
+                    {
+                            {0.0f, 0.0f, 0.0f},
+                            {100.0f, 100.0f, 100.0f},
+                    },
             .objects = objects,
             .num_objects = 2,
             .lights = NULL,
@@ -342,47 +387,15 @@ int main() {
 
     physics_add_object(&physics, &object);
     physics_add_object(&physics, &object2);
-    physics_add_constraint(&physics, &object, &object2, 2.0f);
 
     struct event_queue event_queue;
     event_queue_init(&event_queue);
 
-    physics_step(&physics, &scene, &event_queue, 1 / 60.0f);
+    // event_queue_free(&event_queue);
+    // scene_destroy(&scene);
+    // physics_free(&physics);
 
-    for (size_t i = 0; i < vector_size(event_queue.events); i++) {
-        struct event event = event_queue.events[i];
-
-        switch (event.type_id) {
-            case SYSTEM_EVENT_COLLISION: {
-                struct collision_event *collision_event =
-                        (struct collision_event *)event.data;
-                log_debug("collision: %p %p",
-                        collision_event->a,
-                        collision_event->b);
-                break;
-            }
-            default:
-                log_debug("event %u", event.type_id);
-        }
-    }
-
-    struct render_context render_context = {};
-
-    if (backend_setup(&render_context,
-                (struct render_config){
-                        .window_width = 800, .window_height = 600})) {
-        log_debug("wtf");
-        return -1;
-    }
-
-    event_queue_free(&event_queue);
-    scene_destroy(&scene);
-    physics_free(&physics);
-
-    backend_register_mesh(&render_context, create_test_mesh());
-
-    struct command_buffer command_buffer;
-    command_buffer_init(&command_buffer, COMMAND_BUFFER_DEFAULT);
+    command_buffer_init(&render_context.command_buffer, COMMAND_BUFFER_DEFAULT);
 
     struct font font;
     load_font_psf2("font.psf", "robinlinden", &font);
@@ -410,7 +423,7 @@ int main() {
     glfwSetCursorPosCallback(render_context.window, mouse_callback);
 
     while (!glfwWindowShouldClose(render_context.window)) {
-        uint64_t frame_start = get_time_ms();
+        struct timespec frame_start = get_time();
 
         if (glfwGetKey(render_context.window, GLFW_KEY_W) == GLFW_PRESS) {
             camera_move(&context.camera, (vec3){0.0f, 0.0f, -1.0f});
@@ -432,22 +445,23 @@ int main() {
             glfwSetWindowShouldClose(render_context.window, GLFW_TRUE);
         }
 
-        mat4 transform1;
-        glm_mat4_identity(transform1);
-        glmc_translate_z(transform1, -3.0f);
-
-        command_buffer_add_mesh(&command_buffer, false, 0, 0, transform1);
-        command_buffer_add_mesh(
-                &command_buffer, false, 0, 0, GLM_MAT4_IDENTITY);
+        scene_render(&scene, &render_context);
 
         char *buffer;
         asprintf(&buffer,
                 "frame time: %llums (fps: %.1f)",
-                avg_frame_time,
-                1000.0 / avg_frame_time);
+                avg_frame_time / 1000,
+                1000000.0f / avg_frame_time);
+
+        physics_step(&physics, &scene, &event_queue, 1 / 60.0f);
+
+        for (size_t i = 0; i < vector_size(event_queue.events); i++) {
+            struct event event = event_queue_pop(&event_queue);
+            log_debug("event %u", event.type_id);
+        }
 
         // command_buffer_add_zindex_set(&command_buffer, 0);
-        command_buffer_add_text(&command_buffer,
+        command_buffer_add_text(&render_context.command_buffer,
                 (struct point){0, 24},
                 &font,
                 buffer,
@@ -461,16 +475,16 @@ int main() {
         // command
 
         backend_draw(&render_context,
-                &command_buffer,
+                &render_context.command_buffer,
                 context.camera.view_matrix,
                 context.camera.projection_matrix);
 
-        assert(command_buffer_empty(&command_buffer));
+        assert(command_buffer_empty(&render_context.command_buffer));
         free(buffer);
 
-        uint64_t frame_time = get_time_ms() - frame_start;
-        if (frame_time < 16) {
-            usleep((16 - frame_time) * 1000);
+        uint64_t frame_time = time_elapsed_us(frame_start);
+        if (frame_time < 16000) {
+            usleep(16000 - frame_time);
         }
 
         avg_frame_time = (avg_frame_time + frame_time) / 2;
@@ -485,7 +499,7 @@ int main() {
                     1,
                     compare_uint64_t);
 
-            log_trace("top 1%% avg %llums", top_1_percentile);
+            log_trace("top 1%% avg %llums", top_1_percentile / 1000);
         }
     }
 

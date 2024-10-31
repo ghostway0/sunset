@@ -122,3 +122,8 @@ bool box_collide(struct box const *a, struct box const *b) {
 
     return true;
 }
+
+void box_translate(struct box *box, vec3 translation) {
+    glm_vec3_add(box->min, translation, box->min);
+    glm_vec3_add(box->max, translation, box->max);
+}

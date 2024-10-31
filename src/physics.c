@@ -135,14 +135,16 @@ static void update_collisions(struct physics const *physics,
         for (size_t i = 0; i < chunk->num_objects; i++) {
             struct object *object = chunk->objects[i];
 
+            struct box object_box = object->bounding_box;
+            box_translate(&object_box, object->transform.position);
+
             for (size_t j = i + 1; j < vector_size(physics->objects); j++) {
                 struct object *other = physics->objects[j];
 
-                if (object == other) {
-                    continue;
-                }
+                struct box other_box = other->bounding_box;
+                box_translate(&other_box, other->transform.position);
 
-                if (box_collide(&object->bounding_box, &other->bounding_box)) {
+                if (box_collide(&object_box, &other_box)) {
                     struct collision_event collision_event = {
                             .a = object, .b = other};
 
@@ -152,7 +154,7 @@ static void update_collisions(struct physics const *physics,
                             &collision_event,
                             sizeof(collision_event));
 
-                    event_queue_push(event_queue, &event);
+                    event_queue_push(event_queue, event);
                 }
 
                 if (object->physics.should_fix && other->physics.should_fix) {

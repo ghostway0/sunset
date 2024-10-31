@@ -3,10 +3,7 @@
 #include <stddef.h>
 
 #include "camera.h"
-#include "scene.h"
 #include "sunset/commands.h"
-#include "sunset/geometry.h"
-#include "vector.h"
 
 struct active_animation {
     float start_time;

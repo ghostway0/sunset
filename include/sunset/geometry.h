@@ -53,6 +53,8 @@ struct box {
     vec3 max;
 };
 
+void box_translate(struct box *box, vec3 translation);
+
 bool box_collide(struct box const *a, struct box const *b);
 
 struct texture {

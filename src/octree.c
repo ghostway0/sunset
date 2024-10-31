@@ -97,6 +97,11 @@ void *oct_tree_query(struct oct_tree const *tree, vec3 position) {
     while (current != NULL) {
         struct oct_node *next = NULL;
 
+
+        if (current->data) {
+            return current->data;
+        }
+
         for (size_t i = 0; i < 8; ++i) {
             if (current->children[i] != NULL
                     && box_contains_point(
@@ -106,10 +111,7 @@ void *oct_tree_query(struct oct_tree const *tree, vec3 position) {
             }
         }
 
-        if (next == NULL) {
-            return current->data;
-        }
-
+        assert(next);
         current = next;
     }
 

@@ -7,6 +7,7 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
+#include "sunset/backend.h"
 #include "sunset/camera.h"
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
@@ -59,8 +60,7 @@ struct object {
     struct physics_object physics;
     struct box bounding_box;
     struct transform transform;
-    struct compiled_mesh *meshes;
-    size_t num_meshes;
+    uint32_t mesh_id;
     struct compiled_texture *textures;
     size_t num_textures;
     struct material *materials;
@@ -127,3 +127,5 @@ void scene_move_camera(struct scene *scene, vec3 direction);
 void scene_destroy(struct scene *scene);
 
 struct chunk *scene_get_chunk_for(struct scene const *scene, vec3 position);
+
+int scene_render(struct scene *scene, struct render_context *render_context);

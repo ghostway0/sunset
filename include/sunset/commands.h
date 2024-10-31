@@ -130,7 +130,6 @@ void command_image_init(
 void command_custom_init(struct command *command, struct program *program);
 
 void command_mesh_init(struct command *command,
-        bool instanced,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform);
@@ -196,7 +195,6 @@ void command_buffer_add_image(struct command_buffer *command_buffer,
         struct image const *image);
 
 void command_buffer_add_mesh(struct command_buffer *command_buffer,
-        bool instanced,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform);

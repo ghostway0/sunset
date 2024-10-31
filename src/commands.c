@@ -168,13 +168,12 @@ void command_custom_init(struct command *command, struct program *program) {
 }
 
 void command_mesh_init(struct command *command,
-        bool instanced,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform) {
     command->type = COMMAND_MESH;
     command->data.mesh = (struct command_mesh){
-            instanced,
+            true,
             false,
             mesh_id,
             texture_id,
@@ -185,12 +184,11 @@ void command_mesh_init(struct command *command,
 }
 
 void command_buffer_add_mesh(struct command_buffer *command_buffer,
-        bool instanced,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform) {
     struct command command;
-    command_mesh_init(&command, instanced, mesh_id, texture_id, transform);
+    command_mesh_init(&command, mesh_id, texture_id, transform);
     command_buffer_append(command_buffer, &command);
 }
 

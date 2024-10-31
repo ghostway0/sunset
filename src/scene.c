@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cglm/affine.h"
+#include "cglm/types.h"
+#include "sunset/commands.h"
 #include "sunset/scene.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
@@ -91,10 +94,31 @@ void object_move(struct object *object, vec3 direction) {
     }
 }
 
+static void object_calculate_model_matrix(
+        struct object *object, mat4 model_matrix) {
+    glm_mat4_identity(model_matrix);
+
+    glm_translate(model_matrix, object->transform.position);
+
+    glm_rotate(model_matrix,
+            object->transform.rotation[0],
+            (vec3){1.0f, 0.0f, 0.0f});
+    glm_rotate(model_matrix,
+            object->transform.rotation[1],
+            (vec3){0.0f, 1.0f, 0.0f});
+    glm_rotate(model_matrix,
+            object->transform.rotation[2],
+            (vec3){0.0f, 0.0f, 1.0f});
+}
+
 static int render_object(
-        struct object *object, struct render_context *render_context) {
-    unused(object);
-    unused(render_context);
+        struct object *object, struct command_buffer *command_buffer) {
+    mat4 model_matrix;
+    object_calculate_model_matrix(object, model_matrix);
+
+    command_buffer_add_mesh(command_buffer, object->mesh_id, 0, model_matrix);
+
+    // TODO: add textures and materials
 
     return 0;
 }
@@ -104,7 +128,7 @@ int scene_render(struct scene *scene, struct render_context *render_context) {
             oct_tree_query(&scene->oct_tree, scene->camera.position);
 
     for (size_t i = 0; i < chunk->num_objects; ++i) {
-        render_object(chunk->objects[i], render_context);
+        render_object(chunk->objects[i], &render_context->command_buffer);
     }
 
     return 0;

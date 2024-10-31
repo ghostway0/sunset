@@ -42,7 +42,8 @@ void camera_init(struct camera_state state,
             camera_out->projection_matrix);
 }
 
-void camera_rotate_absolute(struct camera *camera, float x_angle, float y_angle) {
+void camera_rotate_absolute(
+        struct camera *camera, float x_angle, float y_angle) {
     // NOTE: when pitch is clamped, camera is flipped
     camera->pitch = clamp(camera->pitch + y_angle, -GLM_PI_2, GLM_PI_2);
     camera->yaw = fmodf(camera->yaw + x_angle, 2 * GLM_PI);
@@ -83,8 +84,7 @@ void camera_set_rotation(struct camera *camera, float x_angle, float y_angle) {
 
     glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, camera->world_up);
 
-    glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f},
-            camera->up);
+    glm_vec3_copy((vec3){0.0f, 1.0f, 0.0f}, camera->up);
 
     glm_vec3_cross(camera->up, camera->direction, camera->right);
     glm_vec3_cross(camera->direction, camera->right, camera->up);
@@ -118,12 +118,7 @@ void camera_move(struct camera *camera, vec3 direction) {
 }
 
 void camera_recalculate_vectors(struct camera *camera) {
-    glm_vec3_normalize(camera->direction);
-    glm_vec3_cross(camera->direction, camera->right, camera->up);
-    glm_vec3_normalize(camera->up);
-    glm_vec3_cross(camera->up, camera->direction, camera->right);
-    glm_vec3_normalize(camera->right);
-    calculate_view_matrix(camera, camera->view_matrix);
+    camera_set_rotation(camera, camera->yaw, camera->pitch);
     calculate_projection_matrix(
             camera, camera->aspect_ratio, camera->projection_matrix);
 }

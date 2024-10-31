@@ -39,8 +39,8 @@ void event_queue_add_handler(
     vector_append(queue->handlers[type_id], handler);
 }
 
-void event_queue_push(struct event_queue *queue, struct event const *event) {
-    vector_append(queue->events, *event);
+void event_queue_push(struct event_queue *queue, struct event const event) {
+    vector_append_copy(queue->events, event);
 }
 
 void event_queue_process(struct event_queue *queue) {
@@ -56,4 +56,9 @@ void event_queue_process(struct event_queue *queue) {
     }
 
     vector_clear(queue->events);
+}
+
+
+struct event event_queue_pop(struct event_queue *queue) {
+    return vector_pop(queue->events);
 }
