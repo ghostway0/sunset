@@ -97,7 +97,6 @@ void *oct_tree_query(struct oct_tree const *tree, vec3 position) {
     while (current != NULL) {
         struct oct_node *next = NULL;
 
-
         if (current->data) {
             return current->data;
         }

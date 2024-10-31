@@ -58,7 +58,6 @@ void event_queue_process(struct event_queue *queue) {
     vector_clear(queue->events);
 }
 
-
 struct event event_queue_pop(struct event_queue *queue) {
     return vector_pop(queue->events);
 }

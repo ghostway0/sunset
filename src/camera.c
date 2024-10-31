@@ -125,6 +125,20 @@ void camera_recalculate_vectors(struct camera *camera) {
             camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
+
+bool camera_sphere_in_frustum(struct camera *camera, vec3 center, float radius) {
+    vec4 sphere_center = {center[0], center[1], center[2], 1.0f};
+    mat4 view_projection;
+    vec4 clip;
+
+    glm_mat4_mul(camera->projection_matrix, camera->view_matrix, view_projection);
+    glm_mat4_mulv(view_projection, sphere_center, clip);
+
+    return within(clip[0], -clip[3] - radius, clip[3] + radius) ||
+           within(clip[1], -clip[3] - radius, clip[3] + radius) ||
+           within(clip[2], -clip[3] - radius, clip[3] + radius);
+}
+
 bool camera_point_in_frustum(struct camera *camera, vec3 point) {
     vec4 quat_point = {point[0], point[1], point[2], 1.0f};
     mat4 view_projection;
@@ -134,27 +148,15 @@ bool camera_point_in_frustum(struct camera *camera, vec3 point) {
             camera->projection_matrix, camera->view_matrix, view_projection);
     glm_mat4_mulv(view_projection, quat_point, clip);
 
-    return clip[0] >= -clip[3] && clip[0] <= clip[3] && clip[1] >= -clip[3]
-            && clip[1] <= clip[3] && clip[2] >= -clip[3] && clip[2] <= clip[3];
+    return within(clip[0], -clip[3], clip[3])
+            && within(clip[1], -clip[3], clip[3])
+            && within(clip[2], -clip[3], clip[3]);
 }
 
 bool camera_box_within_frustum(struct camera *camera, struct box box) {
-    vec3 points[8] = {
-            {box.min[0], box.min[1], box.min[2]},
-            {box.min[0], box.min[1], box.max[2]},
-            {box.min[0], box.max[1], box.min[2]},
-            {box.min[0], box.max[1], box.max[2]},
-            {box.max[0], box.min[1], box.min[2]},
-            {box.max[0], box.min[1], box.max[2]},
-            {box.max[0], box.max[1], box.min[2]},
-            {box.max[0], box.max[1], box.max[2]},
-    };
+    vec3 center;
+    float radius = box_get_radius(&box);
+    box_get_center(&box, center);
 
-    for (size_t i = 0; i < 8; i++) {
-        if (camera_point_in_frustum(camera, points[i])) {
-            return true;
-        }
-    }
-
-    return false;
+    return camera_sphere_in_frustum(camera, center, radius);
 }

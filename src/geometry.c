@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "cglm/types.h"
+#include "cglm/vec3.h"
 #include "sunset/color.h"
 #include "sunset/geometry.h"
 
@@ -126,4 +128,17 @@ bool box_collide(struct box const *a, struct box const *b) {
 void box_translate(struct box *box, vec3 translation) {
     glm_vec3_add(box->min, translation, box->min);
     glm_vec3_add(box->max, translation, box->max);
+}
+
+float box_get_radius(struct box *box) {
+    vec3 height_2;
+    glm_vec3_sub(box->max, box->min, height_2);
+    glm_vec3_scale(height_2, sqrt(2) / 2, height_2);
+
+    return glm_vec3_norm(height_2);
+}
+
+void box_get_center(struct box *box, vec3 center_out) {
+    glm_vec3_add(box->min, box->max, center_out);
+    glm_vec3_scale(center_out, 0.5, center_out);
 }

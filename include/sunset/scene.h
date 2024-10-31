@@ -128,4 +128,6 @@ void scene_destroy(struct scene *scene);
 
 struct chunk *scene_get_chunk_for(struct scene const *scene, vec3 position);
 
-int scene_render(struct scene *scene, struct render_context *render_context);
+int scene_render(struct scene *scene,
+        struct render_context *render_context,
+        struct camera *camera);

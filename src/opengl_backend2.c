@@ -374,7 +374,8 @@ failure:
     return retval;
 }
 
-void backend_set_user_context(struct render_context *context, void *user_context) {
+void backend_set_user_context(
+        struct render_context *context, void *user_context) {
     glfwSetWindowUserPointer(context->window, user_context);
 }
 

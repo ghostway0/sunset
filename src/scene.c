@@ -124,17 +124,17 @@ static int render_object(
     return 0;
 }
 
-int scene_render(struct scene *scene, struct render_context *render_context) {
+int scene_render(struct scene *scene,
+        struct render_context *render_context,
+        struct camera *camera) {
     struct chunk *chunk =
             oct_tree_query(&scene->oct_tree, scene->camera.position);
 
     for (size_t i = 0; i < chunk->num_objects; ++i) {
         struct box object_bounds = chunk->objects[i]->bounding_box;
 
-        render_object(chunk->objects[i], &render_context->command_buffer);
-        if (camera_box_within_frustum(&scene->camera, object_bounds)) {
-        } else {
-            // log_debug("Object out of frustum %zu", i);
+        if (camera_box_within_frustum(camera, object_bounds)) {
+            render_object(chunk->objects[i], &render_context->command_buffer);
         }
     }
 

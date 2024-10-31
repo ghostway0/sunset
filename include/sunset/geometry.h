@@ -16,8 +16,11 @@
 #define vec4_format "vec4(%f, %f, %f, %f)"
 #define vec4_args(v) v[0], v[1], v[2], v[3]
 
-#define mat4_format "mat4(\n\t" vec4_format ",\n\t" vec4_format ",\n\t" vec4_format ",\n\t" vec4_format ",\n)"
-#define mat4_fmt_args(m) vec4_args(m[0]), vec4_args(m[1]), vec4_args(m[2]), vec4_args(m[3])
+#define mat4_format                                                            \
+    "mat4(\n\t" vec4_format ",\n\t" vec4_format ",\n\t" vec4_format            \
+    ",\n\t" vec4_format ",\n)"
+#define mat4_fmt_args(m)                                                       \
+    vec4_args(m[0]), vec4_args(m[1]), vec4_args(m[2]), vec4_args(m[3])
 
 struct point {
     uint32_t x;
@@ -105,3 +108,7 @@ enum window_point {
     WINDOW_POINT_BOTTOM_LEFT,
     WINDOW_POINT_BOTTOM_RIGHT,
 };
+
+float box_get_radius(struct box *box);
+
+void box_get_center(struct box *box, vec3 center_out);

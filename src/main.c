@@ -302,8 +302,8 @@ int main() {
                     },
             .bounding_box =
                     (struct box){
-                            {0.0f, 0.0f, 0.0f},
-                            {1, 1.0f, 0.1f},
+                            {-0.5f, 0.0f, 0.0f},
+                            {0.5f, 1.0f, 0.01f},
                     },
             .transform =
                     (struct transform){
@@ -339,8 +339,8 @@ int main() {
                     },
             .bounding_box =
                     (struct box){
-                            {0.0f, 0.0f, 0.0f},
-                            {1, 1.0f, 0.1f},
+                            {-0.5f, 0.0f, 0.0f},
+                            {0.5f, 1.0f, 0.01f},
                     },
             .transform =
                     (struct transform){
@@ -450,7 +450,7 @@ int main() {
             glfwSetWindowShouldClose(render_context.window, GLFW_TRUE);
         }
 
-        scene_render(&scene, &render_context);
+        scene_render(&scene, &render_context, &context.camera);
 
         char *buffer;
         asprintf(&buffer,
