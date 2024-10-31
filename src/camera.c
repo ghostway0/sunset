@@ -5,8 +5,10 @@
 
 #include "cglm/quat.h"
 #include "cglm/types.h"
+#include "log.h"
 #include "sunset/camera.h"
 #include "sunset/math.h"
+#include "sunset/utils.h"
 
 // world->camera transformation matrix
 static void calculate_view_matrix(struct camera *camera, mat4 dest) {
@@ -124,20 +126,16 @@ void camera_recalculate_vectors(struct camera *camera) {
 }
 
 bool camera_point_in_frustum(struct camera *camera, vec3 point) {
-    vec4 clip = {point[0], point[1], point[2], 1.0f};
-
+    vec4 quat_point = {point[0], point[1], point[2], 1.0f};
     mat4 view_projection;
+    vec4 clip;
+
     glm_mat4_mul(
             camera->projection_matrix, camera->view_matrix, view_projection);
+    glm_mat4_mulv(view_projection, quat_point, clip);
 
-    glm_mat4_mulv(view_projection, clip, clip);
-
-    clip[0] /= clip[3];
-    clip[1] /= clip[3];
-    clip[2] /= clip[3];
-
-    return clip[0] >= -1.0f && clip[0] <= 1.0f && clip[1] >= -1.0f
-            && clip[1] <= 1.0f && clip[2] >= -1.0f && clip[2] <= 1.0f;
+    return clip[0] >= -clip[3] && clip[0] <= clip[3] && clip[1] >= -clip[3]
+            && clip[1] <= clip[3] && clip[2] >= -clip[3] && clip[2] <= clip[3];
 }
 
 bool camera_box_within_frustum(struct camera *camera, struct box box) {

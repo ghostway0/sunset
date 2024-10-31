@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "log.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
@@ -135,16 +136,10 @@ static void update_collisions(struct physics const *physics,
         for (size_t i = 0; i < chunk->num_objects; i++) {
             struct object *object = chunk->objects[i];
 
-            struct box object_box = object->bounding_box;
-            box_translate(&object_box, object->transform.position);
-
             for (size_t j = i + 1; j < vector_size(physics->objects); j++) {
                 struct object *other = physics->objects[j];
 
-                struct box other_box = other->bounding_box;
-                box_translate(&other_box, other->transform.position);
-
-                if (box_collide(&object_box, &other_box)) {
+                if (box_collide(&object->bounding_box, &other->bounding_box)) {
                     struct collision_event collision_event = {
                             .a = object, .b = other};
 
@@ -155,10 +150,11 @@ static void update_collisions(struct physics const *physics,
                             sizeof(collision_event));
 
                     event_queue_push(event_queue, event);
-                }
 
-                if (object->physics.should_fix && other->physics.should_fix) {
-                    fix_collision(object, other);
+                    if (object->physics.should_fix
+                            && other->physics.should_fix) {
+                        fix_collision(object, other);
+                    }
                 }
             }
         }
@@ -175,13 +171,13 @@ void physics_step(struct physics const *physics,
 
     update_collisions(physics, scene, event_queue);
 
-    for (size_t i = 0; i < vector_size(physics->objects); i++) {
-        struct object *object = physics->objects[i];
-
-        glm_vec3_add(object->physics.acceleration,
-                (vec3){0.0f, -9.81f, 0.0f},
-                object->physics.acceleration);
-    }
+    // for (size_t i = 0; i < vector_size(physics->objects); i++) {
+    //     struct object *object = physics->objects[i];
+    //
+    //     glm_vec3_add(object->physics.acceleration,
+    //             (vec3){0.0f, -9.81f, 0.0f},
+    //             object->physics.acceleration);
+    // }
 
     for (size_t i = 0; i < vector_size(physics->objects); i++) {
         struct object *object = physics->objects[i];
@@ -191,11 +187,46 @@ void physics_step(struct physics const *physics,
                 object->physics.velocity);
 
         glm_vec3_scale(object->physics.velocity,
-                object->physics.damping,
+                1.0 - object->physics.damping,
                 object->physics.velocity);
 
+        vec3 velocity_scaled;
+        glm_vec3_scale(object->physics.velocity, dt, velocity_scaled);
+
+        if (object->physics.should_fix) {
+            vec3 moved;
+            glm_vec3_add(object->transform.position, velocity_scaled, moved);
+
+            struct box new_box = object->bounding_box;
+            box_translate(&new_box, velocity_scaled);
+
+            struct const_octree_iterator iterator;
+            octree_const_iterator_init(&scene->oct_tree, &iterator);
+
+            while (iterator.current != NULL) {
+                struct chunk *chunk = iterator.current->data;
+
+                for (size_t j = 0; j < chunk->num_objects; j++) {
+                    struct object *other = chunk->objects[j];
+
+                    if (object == other) {
+                        continue;
+                    }
+
+                    if (box_collide(&new_box, &other->bounding_box)) {
+                        glm_vec3_zero(object->physics.velocity);
+                        glm_vec3_zero(velocity_scaled);
+                        break;
+                    }
+                }
+
+                octree_const_iterator_next(&iterator);
+            }
+        }
+
+        box_translate(&object->bounding_box, velocity_scaled);
         glm_vec3_add(object->transform.position,
-                object->physics.velocity,
+                velocity_scaled,
                 object->transform.position);
     }
 }

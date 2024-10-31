@@ -13,6 +13,7 @@
 
 #include "cglm/call/affine.h"
 #include "cglm/util.h"
+#include "cglm/vec3.h"
 #include "sunset/backend.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
@@ -293,14 +294,16 @@ int main() {
     struct object object = {
             .physics =
                     (struct physics_object){
-                            .velocity = {0.0f, 0.0f, 0.0f},
+                            .velocity = {0.0f, 0.0f, -0.3f},
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
+                            .damping = 0.0f,
+                            .should_fix = true,
                     },
             .bounding_box =
                     (struct box){
                             {0.0f, 0.0f, 0.0f},
-                            {1.0f, 1.0f, 1.0f},
+                            {1, 1.0f, 0.1f},
                     },
             .transform =
                     (struct transform){
@@ -323,17 +326,21 @@ int main() {
             .num_children = 0,
     };
 
+    box_translate(&object.bounding_box, object.transform.position);
+
     struct object object2 = {
             .physics =
                     (struct physics_object){
                             .velocity = {0.0f, 0.0f, 0.0f},
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
+                            .damping = 0.0f,
+                            .should_fix = true,
                     },
             .bounding_box =
                     (struct box){
                             {0.0f, 0.0f, 0.0f},
-                            {1.0f, 1.0f, 1.0f},
+                            {1, 1.0f, 0.1f},
                     },
             .transform =
                     (struct transform){
@@ -355,6 +362,8 @@ int main() {
             .children = NULL,
             .num_children = 0,
     };
+
+    box_translate(&object2.bounding_box, object2.transform.position);
 
     struct object **objects = malloc(sizeof(struct object *) * 2);
 
@@ -390,10 +399,6 @@ int main() {
 
     struct event_queue event_queue;
     event_queue_init(&event_queue);
-
-    // event_queue_free(&event_queue);
-    // scene_destroy(&scene);
-    // physics_free(&physics);
 
     command_buffer_init(&render_context.command_buffer, COMMAND_BUFFER_DEFAULT);
 
@@ -449,16 +454,16 @@ int main() {
 
         char *buffer;
         asprintf(&buffer,
-                "frame time: %llums (fps: %.1f)",
+                "frame time: %lums (fps: %.1f)",
                 avg_frame_time / 1000,
                 1000000.0f / avg_frame_time);
 
         physics_step(&physics, &scene, &event_queue, 1 / 60.0f);
 
-        for (size_t i = 0; i < vector_size(event_queue.events); i++) {
-            struct event event = event_queue_pop(&event_queue);
-            log_debug("event %u", event.type_id);
-        }
+        // for (size_t i = 0; i < vector_size(event_queue.events); i++) {
+        //     struct event event = event_queue_pop(&event_queue);
+        //     log_debug("event %u", event.type_id);
+        // }camera.c
 
         // command_buffer_add_zindex_set(&command_buffer, 0);
         command_buffer_add_text(&render_context.command_buffer,
