@@ -63,6 +63,7 @@ sunset_files = [
   'src/commands.c',
   'src/ecs.c',
   'src/tga.c',
+  'src/utils.c',
 ]
 
 sunset_lib = static_library(

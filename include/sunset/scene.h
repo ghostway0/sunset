@@ -97,24 +97,18 @@ struct chunk {
     size_t id;
 };
 
-struct bound_camera {
-    struct camera camera;
-    struct object *target;
-};
-
 struct scene {
     struct object *live_objects;
     size_t num_objects;
     struct oct_tree oct_tree;
-    struct camera *cameras;
-    size_t num_cameras;
+    vector(struct camera) cameras;
     struct image skybox;
     struct effect *effects;
     size_t num_effects;
 };
 
 void scene_init(struct camera *cameras,
-        size_t num_cameras,
+                size_t num_cameras,
         struct image skybox,
         struct effect *effects,
         size_t num_effects,

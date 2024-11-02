@@ -1,85 +1,27 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
-
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 #include <cglm/mat4.h>
+#include <cglm/util.h>
 #include <log.h>
 #include <sys/mman.h>
 
-#include "cglm/util.h"
 #include "sunset/backend.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/events.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
+#include "sunset/math.h"
 #include "sunset/physics.h"
 #include "sunset/render.h"
 #include "sunset/scene.h"
 #include "sunset/utils.h"
-#include "sunset/vector.h"
-
-uint64_t get_time_ms() {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
-}
-
-struct timespec get_time() {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts;
-}
-
-uint64_t time_since_ms(struct timespec start) {
-    struct timespec now = get_time();
-    return (now.tv_sec - start.tv_sec) * 1000
-            + (now.tv_nsec - start.tv_nsec) / 1000000;
-}
-
-uint64_t time_since_us(struct timespec start) {
-    struct timespec now = get_time();
-    return (now.tv_sec - start.tv_sec) * 1000000
-            + (now.tv_nsec - start.tv_nsec) / 1000;
-}
-
-uint64_t time_elapsed_ms(struct timespec start) {
-    struct timespec now = get_time();
-    return (now.tv_sec - start.tv_sec) * 1000
-            + (now.tv_nsec - start.tv_nsec) / 1000000;
-}
-
-uint64_t time_elapsed_us(struct timespec start) {
-    struct timespec now = get_time();
-    return (now.tv_sec - start.tv_sec) * 1000000
-            + (now.tv_nsec - start.tv_nsec) / 1000;
-}
-
-uint64_t get_time_us() {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
-}
-
-int compare_uint64_t(void const *a, void const *b) {
-    return *(uint64_t *)a - *(uint64_t *)b;
-}
-
-#define top_percentile(arr, n, p, compare)                                     \
-    ({                                                                         \
-        size_t *sorted = malloc(n * sizeof(size_t));                           \
-        memcpy(sorted, arr, n * sizeof(size_t));                               \
-        qsort(sorted, n, sizeof(size_t), compare);                             \
-        size_t idx = n - n * p / 100;                                          \
-        size_t result = sorted[idx];                                           \
-        free(sorted);                                                          \
-        result;                                                                \
-    })
 
 void context_init(struct context *context,
         struct command_buffer_options command_buffer_options,
@@ -151,32 +93,6 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 
     context->mouse.x = xpos;
     context->mouse.y = ypos;
-}
-
-struct mesh create_test_mesh2() {
-    struct mesh test_mesh;
-
-    test_mesh.num_vertices = 3;
-    test_mesh.vertices = (vec3 *)malloc(test_mesh.num_vertices * sizeof(vec3));
-
-    test_mesh.vertices[0][0] = 0.5f;
-    test_mesh.vertices[0][1] = 0.5f;
-    test_mesh.vertices[0][2] = 0.0f;
-    test_mesh.vertices[1][0] = -0.5f;
-    test_mesh.vertices[1][1] = -0.5f;
-    test_mesh.vertices[1][2] = 0.0f;
-    test_mesh.vertices[2][0] = 0.5f;
-    test_mesh.vertices[2][1] = -0.5f;
-    test_mesh.vertices[2][2] = 0.0f;
-
-    test_mesh.num_indices = 3;
-    test_mesh.indices =
-            (uint32_t *)malloc(test_mesh.num_indices * sizeof(uint32_t));
-    test_mesh.indices[0] = 0;
-    test_mesh.indices[1] = 1;
-    test_mesh.indices[2] = 2;
-
-    return test_mesh;
 }
 
 int main() {
@@ -336,10 +252,9 @@ int main() {
 
     uint64_t avg_frame_time = 0;
 
-    uint64_t frame_time_window[100] = {0};
-    size_t frame_time_window_idx = 0;
-
-    glfwSwapInterval(1);
+    vector(uint64_t) frame_time_window;
+    vector_init(frame_time_window, uint64_t);
+    vector_reserve(frame_time_window, 100);
 
     struct context context;
     context_init(&context,
@@ -350,6 +265,8 @@ int main() {
             &event_queue);
 
     backend_set_user_context(&render_context, &context);
+
+    char fps_text_buffer[256];
 
     glfwSetInputMode(render_context.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(render_context.window, mouse_callback);
@@ -377,13 +294,7 @@ int main() {
             glfwSetWindowShouldClose(render_context.window, GLFW_TRUE);
         }
 
-        char *buffer;
-        asprintf(&buffer,
-                "frame time: %lums (fps: %.1f)",
-                avg_frame_time / 1000,
-                1000000.0f / avg_frame_time);
-
-        physics_step(&physics, &scene, &event_queue, 1 / 60.0f);
+        physics_step(&physics, &scene, &event_queue, 1.0f / 60.0f);
 
         for (;;) {
             struct event event;
@@ -408,12 +319,18 @@ int main() {
             }
         }
 
+        snprintf(fps_text_buffer,
+                sizeof(fps_text_buffer),
+                "frame time: %lums (fps: %.1f)",
+                avg_frame_time,
+                1000.0f / avg_frame_time);
+
         command_buffer_add_set_zindex(&render_context.command_buffer, 1);
         command_buffer_add_text(&render_context.command_buffer,
                 (struct point){0, 50},
                 &font,
-                buffer,
-                strlen(buffer),
+                fps_text_buffer,
+                strlen(fps_text_buffer),
                 WINDOW_POINT_TOP_LEFT);
         command_buffer_add_set_zindex(&render_context.command_buffer, 0);
 
@@ -425,26 +342,24 @@ int main() {
         // command_buffer_add_static_overlay command
 
         assert(command_buffer_empty(&render_context.command_buffer));
-        free(buffer);
 
-        uint64_t frame_time = time_elapsed_us(frame_start);
-        if (frame_time < 16000) {
-            usleep(16000 - frame_time);
+        uint64_t frame_time_ms = time_since_ms(frame_start);
+
+        if (frame_time_ms < 16) {
+            usleep(16 - frame_time_ms);
         }
 
-        avg_frame_time = (avg_frame_time + frame_time) / 2;
+        avg_frame_time = (avg_frame_time + frame_time_ms) / 2;
 
-        frame_time_window[frame_time_window_idx] = frame_time;
-        frame_time_window_idx = (frame_time_window_idx + 1)
-                % (sizeof(frame_time_window) / sizeof(frame_time_window[0]));
+        vector_append(frame_time_window, frame_time_ms);
 
-        if (frame_time_window_idx == 0) {
+        if (vector_size(frame_time_window) == 100) {
             uint64_t top_1_percentile = top_percentile(frame_time_window,
-                    sizeof(frame_time_window) / sizeof(frame_time_window[0]),
+                    vector_size(frame_time_window),
                     1,
                     compare_uint64_t);
 
-            log_trace("top 1%% avg %llums", top_1_percentile / 1000);
+            log_trace("top 1%% avg %llums", top_1_percentile);
         }
     }
 

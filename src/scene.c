@@ -58,8 +58,8 @@ void scene_init(struct camera *cameras,
         struct box bounds,
         struct chunk *root_chunk,
         struct scene *scene_out) {
-    scene_out->cameras = cameras;
-    scene_out->num_cameras = num_cameras;
+    vector_init(scene_out->cameras, struct camera);
+    vector_append_multiple(scene_out->cameras, cameras, num_cameras);
     scene_out->skybox = skybox;
     scene_out->effects = effects;
     scene_out->num_effects = num_effects;
@@ -79,6 +79,7 @@ struct chunk *scene_get_chunk_for(struct scene const *scene, vec3 position) {
 
 void scene_destroy(struct scene *scene) {
     oct_tree_destroy(&scene->oct_tree);
+    vector_free(scene->cameras);
 }
 
 void object_move(struct object *object, vec3 direction) {
@@ -127,7 +128,7 @@ static int render_object(
 }
 
 int scene_render(struct scene *scene, struct render_context *render_context) {
-    for (size_t i = 0; i < scene->num_cameras; i++) {
+    for (size_t i = 0; i < vector_size(scene->cameras); i++) {
         struct camera *camera = &scene->cameras[i];
 
         struct chunk *chunk =
