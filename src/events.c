@@ -1,13 +1,13 @@
 #include <stdint.h>
 #include <threads.h>
 
-#include "sunset/vector.h"
 #include "sunset/events.h"
+#include "sunset/vector.h"
 
 void event_queue_init(struct event_queue *queue) {
     vector_init(queue->events, struct event);
     vector_init(queue->handlers, event_handler);
-    
+
     queue->lock = malloc(sizeof(mtx_t));
     mtx_init(queue->lock, mtx_recursive);
 }

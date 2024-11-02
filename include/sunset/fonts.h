@@ -12,13 +12,12 @@ struct glyph {
 };
 
 struct font {
-    char const *name;
     struct glyph *glyphs;
     uint32_t *glyph_map;
     size_t num_glyphs;
 };
 
-int load_font_psf2(char const *path, char const *name, struct font *font_out);
+int load_font_psf2(char const *path, struct font *font_out);
 
 struct glyph const *font_get_glyph(struct font const *font, uint32_t codepoint);
 

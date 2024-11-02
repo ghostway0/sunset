@@ -125,7 +125,7 @@ static int correct_glyph_table(FILE *file, struct font *font_out) {
     return 0;
 }
 
-int load_font_psf2(char const *path, char const *name, struct font *font_out) {
+int load_font_psf2(char const *path, struct font *font_out) {
     int retval = 0;
 
     FILE *file = fopen(path, "rb");
@@ -141,7 +141,6 @@ int load_font_psf2(char const *path, char const *name, struct font *font_out) {
         goto cleanup;
     }
 
-    font_out->name = name;
     font_out->num_glyphs = header.length;
     font_out->glyphs = malloc(sizeof(struct glyph) * font_out->num_glyphs);
     font_out->glyph_map = calloc(0x10FFFF, sizeof(uint32_t));

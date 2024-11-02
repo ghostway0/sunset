@@ -351,7 +351,6 @@ int backend_setup(struct render_context *context, struct render_config config) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
-
     if (glewInit() != GLEW_OK) {
         retval = -ERROR_IO;
         goto failure;
@@ -772,8 +771,7 @@ void backend_draw(struct render_context *context,
             case COMMAND_SET_ZINDEX:
                 size_t zindex = command.data.set_zindex.zindex;
                 // TODO: emulate z-index in opengl
-                float depth_offset =
-                        zindex * 0.1;
+                float depth_offset = zindex * 0.1;
                 glDepthRange(0.0 + depth_offset, 1.0 - depth_offset);
 
                 break;

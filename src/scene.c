@@ -160,6 +160,5 @@ void scene_rotate_camera(struct scene *scene,
         size_t camera_index,
         float x_angle,
         float y_angle) {
-    camera_rotate_scaled(
-            &scene->cameras[camera_index], x_angle, y_angle);
+    camera_rotate_scaled(&scene->cameras[camera_index], x_angle, y_angle);
 }

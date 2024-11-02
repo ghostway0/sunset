@@ -196,13 +196,13 @@ bool command_buffer_empty(struct command_buffer *command_buffer) {
     return ring_buffer_empty(&command_buffer->ring_buffer);
 }
 
-
 void command_set_zindex_init(struct command *command, size_t z) {
     command->type = COMMAND_SET_ZINDEX;
     command->data.set_zindex = (struct command_set_zindex){z};
 }
 
-void command_buffer_add_set_zindex(struct command_buffer *command_buffer, size_t z) {
+void command_buffer_add_set_zindex(
+        struct command_buffer *command_buffer, size_t z) {
     struct command command;
     command_set_zindex_init(&command, z);
     command_buffer_append(command_buffer, &command);

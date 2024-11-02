@@ -332,7 +332,7 @@ int main() {
     command_buffer_init(&render_context.command_buffer, COMMAND_BUFFER_DEFAULT);
 
     struct font font;
-    load_font_psf2("font.psf", "robinlinden", &font);
+    load_font_psf2("font.psf", &font);
 
     uint64_t avg_frame_time = 0;
 

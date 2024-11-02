@@ -209,6 +209,7 @@ void command_buffer_add_mesh(struct command_buffer *command_buffer,
         uint32_t texture_id,
         mat4 transform);
 
-void command_buffer_add_set_zindex(struct command_buffer *command_buffer, size_t zindex);
+void command_buffer_add_set_zindex(
+        struct command_buffer *command_buffer, size_t zindex);
 
 bool command_buffer_empty(struct command_buffer *command_buffer);
