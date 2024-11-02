@@ -351,6 +351,7 @@ int backend_setup(struct render_context *context, struct render_config config) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
+
     if (glewInit() != GLEW_OK) {
         retval = -ERROR_IO;
         goto failure;
@@ -364,7 +365,7 @@ int backend_setup(struct render_context *context, struct render_config config) {
     vector_init(
             context->frame_cache.instancing_buffers, struct instancing_buffer);
 
-    glDepthFunc(GL_ALWAYS);
+    glDepthFunc(GL_LESS);
 
     return 0;
 
@@ -651,7 +652,13 @@ static void run_text_command(
     use_program(program);
 
     mat4 ortho_projection;
-    glm_ortho(0.0f, 800.0f, 0.0f, 600.0f, -1.0f, 1.0f, ortho_projection);
+    glm_ortho(0.0f,
+            context->width,
+            0.0f,
+            context->height,
+            -1.0f,
+            1.0f,
+            ortho_projection);
 
     program_set_uniform_mat4(program, "projection", &ortho_projection, 1);
 
@@ -761,6 +768,14 @@ void backend_draw(struct render_context *context,
                 break;
             case COMMAND_TEXT:
                 run_text_command(context, command.data.text);
+                break;
+            case COMMAND_SET_ZINDEX:
+                size_t zindex = command.data.set_zindex.zindex;
+                // TODO: emulate z-index in opengl
+                float depth_offset =
+                        zindex * 0.1;
+                glDepthRange(0.0 + depth_offset, 1.0 - depth_offset);
+
                 break;
             default:
                 log_error("unhandled command type %d", command.type);

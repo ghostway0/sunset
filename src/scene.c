@@ -50,14 +50,16 @@ static void destroy_chunk(void *data) {
     free(chunk);
 }
 
-void scene_init(struct camera camera,
+void scene_init(struct camera *cameras,
+        size_t num_cameras,
         struct image skybox,
         struct effect *effects,
         size_t num_effects,
         struct box bounds,
         struct chunk *root_chunk,
         struct scene *scene_out) {
-    scene_out->camera = camera;
+    scene_out->cameras = cameras;
+    scene_out->num_cameras = num_cameras;
     scene_out->skybox = skybox;
     scene_out->effects = effects;
     scene_out->num_effects = num_effects;
@@ -124,19 +126,40 @@ static int render_object(
     return 0;
 }
 
-int scene_render(struct scene *scene,
-        struct render_context *render_context,
-        struct camera *camera) {
-    struct chunk *chunk =
-            oct_tree_query(&scene->oct_tree, scene->camera.position);
+int scene_render(struct scene *scene, struct render_context *render_context) {
+    for (size_t i = 0; i < scene->num_cameras; i++) {
+        struct camera *camera = &scene->cameras[i];
 
-    for (size_t i = 0; i < chunk->num_objects; ++i) {
-        struct box object_bounds = chunk->objects[i]->bounding_box;
+        struct chunk *chunk =
+                oct_tree_query(&scene->oct_tree, camera->position);
 
-        if (camera_box_within_frustum(camera, object_bounds)) {
-            render_object(chunk->objects[i], &render_context->command_buffer);
+        for (size_t i = 0; i < chunk->num_objects; ++i) {
+            struct box object_bounds = chunk->objects[i]->bounding_box;
+
+            if (camera_box_within_frustum(camera, object_bounds)) {
+                render_object(
+                        chunk->objects[i], &render_context->command_buffer);
+            }
         }
+
+        backend_draw(render_context,
+                &render_context->command_buffer,
+                camera->view_matrix,
+                camera->projection_matrix);
     }
 
     return 0;
+}
+
+void scene_move_camera(
+        struct scene *scene, size_t camera_index, vec3 direction) {
+    camera_move(&scene->cameras[camera_index], direction);
+}
+
+void scene_rotate_camera(struct scene *scene,
+        size_t camera_index,
+        float x_angle,
+        float y_angle) {
+    camera_rotate_scaled(
+            &scene->cameras[camera_index], x_angle, y_angle);
 }

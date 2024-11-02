@@ -18,6 +18,7 @@ enum command_type : uint8_t {
     COMMAND_TEXT,
     COMMAND_IMAGE,
     COMMAND_MESH,
+    COMMAND_SET_ZINDEX,
     COMMAND_CUSTOM,
     NUM_COMMANDS,
 };
@@ -73,6 +74,10 @@ struct command_mesh {
     mat4 transform;
 };
 
+struct command_set_zindex {
+    size_t zindex;
+};
+
 struct command_custom {
     struct program *program;
 };
@@ -91,6 +96,7 @@ struct command {
         struct command_text text;
         struct command_image image;
         struct command_mesh mesh;
+        struct command_set_zindex set_zindex;
         struct command_custom custom;
     } data;
 };
@@ -133,6 +139,8 @@ void command_mesh_init(struct command *command,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform);
+
+void command_set_zindex_init(struct command *command, size_t zindex);
 
 struct command_buffer_options {
     size_t buffer_size;
@@ -200,5 +208,7 @@ void command_buffer_add_mesh(struct command_buffer *command_buffer,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform);
+
+void command_buffer_add_set_zindex(struct command_buffer *command_buffer, size_t zindex);
 
 bool command_buffer_empty(struct command_buffer *command_buffer);

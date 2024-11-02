@@ -11,17 +11,13 @@
 
 enum system_event {
     SYSTEM_EVENT_COLLISION,
+    SYSTEM_EVENT_MOUSE,
 };
 
 struct constraint {
     struct object *a;
     struct object *b;
     float distance;
-};
-
-struct collision_event {
-    struct object *a;
-    struct object *b;
 };
 
 static_assert(

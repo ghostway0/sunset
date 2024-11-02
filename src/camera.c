@@ -125,18 +125,19 @@ void camera_recalculate_vectors(struct camera *camera) {
             camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
-
-bool camera_sphere_in_frustum(struct camera *camera, vec3 center, float radius) {
+bool camera_sphere_in_frustum(
+        struct camera *camera, vec3 center, float radius) {
     vec4 sphere_center = {center[0], center[1], center[2], 1.0f};
     mat4 view_projection;
     vec4 clip;
 
-    glm_mat4_mul(camera->projection_matrix, camera->view_matrix, view_projection);
+    glm_mat4_mul(
+            camera->projection_matrix, camera->view_matrix, view_projection);
     glm_mat4_mulv(view_projection, sphere_center, clip);
 
-    return within(clip[0], -clip[3] - radius, clip[3] + radius) ||
-           within(clip[1], -clip[3] - radius, clip[3] + radius) ||
-           within(clip[2], -clip[3] - radius, clip[3] + radius);
+    return within(clip[0], -clip[3] - radius, clip[3] + radius)
+            || within(clip[1], -clip[3] - radius, clip[3] + radius)
+            || within(clip[2], -clip[3] - radius, clip[3] + radius);
 }
 
 bool camera_point_in_frustum(struct camera *camera, vec3 point) {

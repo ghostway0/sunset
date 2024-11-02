@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "log.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
@@ -140,14 +139,9 @@ static void update_collisions(struct physics const *physics,
                 struct object *other = physics->objects[j];
 
                 if (box_collide(&object->bounding_box, &other->bounding_box)) {
-                    struct collision_event collision_event = {
-                            .a = object, .b = other};
-
-                    struct event event;
-                    event.type_id = SYSTEM_EVENT_COLLISION;
-                    memcpy(event.data,
-                            &collision_event,
-                            sizeof(collision_event));
+                    struct event event = {.type_id = SYSTEM_EVENT_COLLISION,
+                            .data.collision = (struct collision_event){
+                                    .a = object, .b = other}};
 
                     event_queue_push(event_queue, event);
 

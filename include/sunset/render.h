@@ -2,8 +2,8 @@
 
 #include <stddef.h>
 
-#include "camera.h"
 #include "sunset/commands.h"
+#include "sunset/events.h"
 
 struct active_animation {
     float start_time;
@@ -36,7 +36,7 @@ struct context {
     void *render_context;
 
     struct mouse mouse;
-    struct camera camera;
+    struct event_queue *event_queue;
 };
 //
 //

@@ -11,12 +11,11 @@
 #include <log.h>
 #include <sys/mman.h>
 
-#include "cglm/call/affine.h"
 #include "cglm/util.h"
-#include "cglm/vec3.h"
 #include "sunset/backend.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
+#include "sunset/events.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/physics.h"
@@ -87,104 +86,18 @@ void context_init(struct context *context,
         struct font *fonts,
         size_t num_fonts,
         void *render_context,
-        struct camera camera) {
+        struct event_queue *event_queue) {
     context->fonts = fonts;
     context->num_fonts = num_fonts;
     context->render_context = render_context;
     command_buffer_init(&context->command_buffer, command_buffer_options);
-    context->camera = camera;
+    context->event_queue = event_queue;
 
     context->mouse.first_mouse = true;
 }
 
 void context_free(struct context *context) {
     command_buffer_free(&context->command_buffer);
-}
-
-int test_run_mesh_command(struct render_context *context, struct mesh mesh);
-
-int stub_render_command(
-        struct context *context, struct command const *command) {
-    unused(context);
-
-    switch (command->type) {
-        case COMMAND_NOP:
-            log_info("command_nop");
-            break;
-        case COMMAND_LINE: {
-            struct command_line const *line = &command->data.line;
-            log_info("command_line: %d %d %d %d",
-                    line->from.x,
-                    line->from.y,
-                    line->to.x,
-                    line->to.y);
-            break;
-        }
-        case COMMAND_RECT: {
-            struct command_rect const *rect = &command->data.rect;
-            log_info("command_rect: %d %d %d %d",
-                    rect->rect.x,
-                    rect->rect.y,
-                    rect->rect.width,
-                    rect->rect.height);
-            break;
-        }
-        case COMMAND_FILLED_RECT: {
-            struct command_filled_rect const *filled_rect =
-                    &command->data.filled_rect;
-            log_info("command_filled_rect: %d %d %d %d",
-                    filled_rect->rect.x,
-                    filled_rect->rect.y,
-                    filled_rect->rect.width,
-                    filled_rect->rect.height);
-            break;
-        }
-        case COMMAND_ARC: {
-            struct command_arc const *arc = &command->data.arc;
-            log_info("command_arc: %d %d %d %f %f",
-                    arc->center.x,
-                    arc->center.y,
-                    arc->r,
-                    arc->a0,
-                    arc->a1);
-            break;
-        }
-        case COMMAND_FILLED_ARC: {
-            struct command_filled_arc const *filled_arc =
-                    &command->data.filled_arc;
-            log_info("command_filled_arc: %d %d %d %f %f",
-                    filled_arc->center.x,
-                    filled_arc->center.y,
-                    filled_arc->r,
-                    filled_arc->a0,
-                    filled_arc->a1);
-            break;
-        }
-        case COMMAND_TEXT: {
-            struct command_text const *text = &command->data.text;
-            log_info("command_text: %d %d %s",
-                    text->start.x,
-                    text->start.y,
-                    text->text);
-            break;
-        }
-        case COMMAND_IMAGE: {
-            struct command_image const *image = &command->data.image;
-            log_info("command_image: %d %d %zu %zu",
-                    image->pos.x,
-                    image->pos.y,
-                    image->image.w,
-                    image->image.h);
-            show_image_grayscale_at(&image->image, image->pos);
-            break;
-        }
-        default: {
-            size_t custom_command_idx = command->type - NUM_COMMANDS;
-            log_info("custom_command %zu", custom_command_idx);
-        }
-    }
-
-    return 0;
 }
 
 struct mesh create_test_mesh() {
@@ -217,15 +130,24 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     struct context *context = glfwGetWindowUserPointer(window);
 
     if (context->mouse.first_mouse) {
-        log_debug("first mouse %f %f", xpos, ypos);
-
         context->mouse.x = xpos;
         context->mouse.y = ypos;
         context->mouse.first_mouse = false;
+        return;
     }
 
-    camera_rotate_scaled(
-            &context->camera, context->mouse.x - xpos, context->mouse.y - ypos);
+    float xoffset = context->mouse.x - xpos;
+    float yoffset = context->mouse.y - ypos;
+
+    event_queue_push(context->event_queue,
+            (struct event){
+                    .type_id = SYSTEM_EVENT_MOUSE,
+                    .data.mouse_move =
+                            (struct mouse_move_event){
+                                    .x = xoffset,
+                                    .y = yoffset,
+                            },
+            });
 
     context->mouse.x = xpos;
     context->mouse.y = ypos;
@@ -267,7 +189,7 @@ int main() {
 
     if (backend_setup(&render_context,
                 (struct render_config){
-                        .window_width = 800, .window_height = 600})) {
+                        .window_width = 1920, .window_height = 1080})) {
         log_debug("wtf");
         return -1;
     }
@@ -284,7 +206,7 @@ int main() {
                     .fov = glm_rad(45.0f),
                     .sensitivity = 0.01f,
                     .speed = 0.1f,
-                    .aspect_ratio = 800.0f / 600.0f,
+                    .aspect_ratio = 1920.0 / 1080.0,
             },
             &camera);
 
@@ -389,7 +311,14 @@ int main() {
             .id = 0,
     };
 
-    scene_init(camera, skybox, NULL, 0, root_chunk->bounds, root_chunk, &scene);
+    scene_init(&camera,
+            1,
+            skybox,
+            NULL,
+            0,
+            root_chunk->bounds,
+            root_chunk,
+            &scene);
 
     struct physics physics;
     physics_init(&physics);
@@ -418,39 +347,35 @@ int main() {
             &font,
             1,
             &render_context,
-            camera);
+            &event_queue);
 
     backend_set_user_context(&render_context, &context);
 
     glfwSetInputMode(render_context.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    // glfwSetInputMode(render_context.window, GLFW_RAW_MOUSE_MOTION,
-    // GLFW_TRUE); set callback
     glfwSetCursorPosCallback(render_context.window, mouse_callback);
 
     while (!glfwWindowShouldClose(render_context.window)) {
         struct timespec frame_start = get_time();
 
         if (glfwGetKey(render_context.window, GLFW_KEY_W) == GLFW_PRESS) {
-            camera_move(&context.camera, (vec3){0.0f, 0.0f, -1.0f});
+            scene_move_camera(&scene, 0, (vec3){0.0f, 0.0f, -1.0f});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_S) == GLFW_PRESS) {
-            camera_move(&context.camera, (vec3){0.0f, 0.0f, 1.0f});
+            scene_move_camera(&scene, 0, (vec3){0.0f, 0.0f, 1.0f});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_A) == GLFW_PRESS) {
-            camera_move(&context.camera, (vec3){-1.0f, 0.0f, 0.0f});
+            scene_move_camera(&scene, 0, (vec3){-1.0f, 0.0f, 0.0f});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_D) == GLFW_PRESS) {
-            camera_move(&context.camera, (vec3){1.0f, 0.0f, 0.0f});
+            scene_move_camera(&scene, 0, (vec3){1.0f, 0.0f, 0.0f});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(render_context.window, GLFW_TRUE);
         }
-
-        scene_render(&scene, &render_context, &context.camera);
 
         char *buffer;
         asprintf(&buffer,
@@ -460,29 +385,44 @@ int main() {
 
         physics_step(&physics, &scene, &event_queue, 1 / 60.0f);
 
-        // for (size_t i = 0; i < vector_size(event_queue.events); i++) {
-        //     struct event event = event_queue_pop(&event_queue);
-        //     log_debug("event %u", event.type_id);
-        // }camera.c
+        for (;;) {
+            struct event event;
+            if (event_queue_pop(&event_queue, &event)) {
+                break;
+            }
 
-        // command_buffer_add_zindex_set(&command_buffer, 0);
+            switch (event.type_id) {
+                case SYSTEM_EVENT_COLLISION: {
+                    struct collision_event collision = event.data.collision;
+                    log_debug("collision between %p and %p",
+                            collision.a,
+                            collision.b);
+                    break;
+                }
+                case SYSTEM_EVENT_MOUSE: {
+                    struct mouse_move_event mouse_move = event.data.mouse_move;
+
+                    scene_rotate_camera(&scene, 0, mouse_move.x, mouse_move.y);
+                    break;
+                }
+            }
+        }
+
+        command_buffer_add_set_zindex(&render_context.command_buffer, 1);
         command_buffer_add_text(&render_context.command_buffer,
-                (struct point){0, 24},
+                (struct point){0, 50},
                 &font,
                 buffer,
                 strlen(buffer),
                 WINDOW_POINT_TOP_LEFT);
-        // command_buffer_add_zindex_set(&command_buffer, 1);
+        command_buffer_add_set_zindex(&render_context.command_buffer, 0);
+
+        scene_render(&scene, &render_context);
 
         // TODO:
-        // command_buffer_add_static_text(&command_buffer, (struct point){200,
-        // 500}, &font, "hello world"); command_buffer_add_static_overlay
-        // command
-
-        backend_draw(&render_context,
-                &render_context.command_buffer,
-                context.camera.view_matrix,
-                context.camera.projection_matrix);
+        // command_buffer_add_static_text(&command_buffer, (struct
+        // point){200, 500}, &font, "hello world");
+        // command_buffer_add_static_overlay command
 
         assert(command_buffer_empty(&render_context.command_buffer));
         free(buffer);
