@@ -67,6 +67,18 @@ struct object {
 
 void object_move(struct object *object, vec3 direction);
 
+void object_rotate(struct object *object, vec3 rotation);
+
+void object_destroy(struct object *object);
+
+void object_set_velocity(struct object *object, vec3 velocity);
+
+void object_scale_velocity(struct object *object, float factor);
+
+void object_add_velocity(struct object *object, vec3 acceleration);
+
+void object_calculate_model_matrix(struct object *object, mat4 model_matrix_out);
+
 enum light_type {
     LIGHT_DIRECTIONAL,
     LIGHT_SPOTLIGHT,

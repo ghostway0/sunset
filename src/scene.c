@@ -86,20 +86,61 @@ void object_move(struct object *object, vec3 direction) {
     glm_vec3_add(
             object->transform.position, direction, object->transform.position);
 
-    glm_vec3_add(object->bounding_box.min, direction, object->bounding_box.min);
-    glm_vec3_add(object->bounding_box.max, direction, object->bounding_box.max);
-
-    if (object->parent != NULL) {
-        object_move(object->parent, direction);
-    }
+    box_translate(&object->bounding_box, direction);
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_move(object->children[i], direction);
     }
 }
 
-static void object_calculate_model_matrix(
-        struct object *object, mat4 model_matrix) {
+void object_rotate(struct object *object, vec3 rotation) {
+    glm_vec3_add(
+            object->transform.rotation, rotation, object->transform.rotation);
+
+    for (size_t i = 0; i < object->num_children; ++i) {
+        object_rotate(object->children[i], rotation);
+    }
+}
+
+static void object_set_velocity_relative(
+        struct object *object, vec3 velocity, vec3 parent_velocity) {
+    vec3 diff;
+    glm_vec3_sub(velocity, parent_velocity, diff);
+
+    glm_vec3_add(object->physics.velocity, diff, object->physics.velocity);
+
+    for (size_t i = 0; i < object->num_children; ++i) {
+        object_set_velocity_relative(
+                object->children[i], velocity, object->physics.velocity);
+    }
+}
+
+void object_set_velocity(struct object *object, vec3 velocity) {
+    for (size_t i = 0; i < object->num_children; ++i) {
+        object_set_velocity_relative(
+                object->children[i], velocity, object->physics.velocity);
+    }
+
+    glm_vec3_copy(velocity, object->physics.velocity);
+}
+
+void object_scale_velocity(struct object *object, float factor) {
+    glm_vec3_scale(object->physics.velocity, factor, object->physics.velocity);
+
+    for (size_t i = 0; i < object->num_children; ++i) {
+        object_scale_velocity(object->children[i], factor);
+    }
+}
+
+void object_add_velocity(struct object *object, vec3 acceleration) {
+    glm_vec3_add(object->physics.velocity, acceleration, object->physics.velocity);
+
+    for (size_t i = 0; i < object->num_children; ++i) {
+        object_add_velocity(object->children[i], acceleration);
+    }
+}
+
+void object_calculate_model_matrix(struct object *object, mat4 model_matrix) {
     glm_mat4_identity(model_matrix);
 
     glm_translate(model_matrix, object->transform.position);

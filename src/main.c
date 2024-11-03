@@ -175,7 +175,7 @@ int main() {
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
                             .damping = 0.0f,
-                            .should_fix = true,
+                            .should_fix = false,
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
@@ -315,10 +315,11 @@ int main() {
                 }
                 case SYSTEM_EVENT_MOUSE: {
                     struct mouse_move_event mouse_move = event.data.mouse_move;
-
                     scene_rotate_camera(&scene, 0, mouse_move.x, mouse_move.y);
                     break;
                 }
+                default:
+                    unreachable();
             }
         }
 

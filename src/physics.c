@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "cglm/types.h"
+#include "log.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
@@ -101,23 +102,22 @@ static void calculate_mtv(struct box a, struct box b, vec3 mtv_out) {
 
     assert(box_collide(&a, &b));
 
+    glm_vec3_zero(mtv_out);
+
     glm_vec3_maxv(a.min, b.min, overlap_min);
     glm_vec3_minv(a.max, b.max, overlap_max);
 
-    vec3 mtv = {0.0f, 0.0f, 0.0f};
     float overlap_x = overlap_max[0] - overlap_min[0];
     float overlap_y = overlap_max[1] - overlap_min[1];
     float overlap_z = overlap_max[2] - overlap_min[2];
 
     if (overlap_x < overlap_y && overlap_x < overlap_z) {
-        mtv[0] = (a.min[0] < b.min[0]) ? -overlap_x : overlap_x;
+        mtv_out[0] = (a.min[0] < b.min[0]) ? -overlap_x : overlap_x;
     } else if (overlap_y < overlap_z) {
-        mtv[1] = (a.min[1] < b.min[1]) ? -overlap_y : overlap_y;
+        mtv_out[1] = (a.min[1] < b.min[1]) ? -overlap_y : overlap_y;
     } else {
-        mtv[2] = (a.min[2] < b.min[2]) ? -overlap_z : overlap_z;
+        mtv_out[2] = (a.min[2] < b.min[2]) ? -overlap_z : overlap_z;
     }
-
-    glm_vec3_scale(mtv, 0.5f, mtv_out);
 }
 
 static struct physics_material combine_materials(
@@ -128,14 +128,15 @@ static struct physics_material combine_materials(
     };
 }
 
-static void fix_collision(struct physics_object *a,
-        bool fix_a,
-        struct physics_object *b,
-        bool fix_b) {
-    assert(a->should_fix || b->should_fix);
+static void fix_combined_velocities(
+        struct object *a, bool fix_a, struct object *b, bool fix_b) {
+    struct physics_object *a_attr = &a->physics;
+    struct physics_object *b_attr = &b->physics;
+
+    assert(a_attr->should_fix || b_attr->should_fix);
 
     struct physics_material combined_material =
-            combine_materials(a->material, b->material);
+            combine_materials(a_attr->material, b_attr->material);
 
     if (fix_a && fix_b) {
         // v1' = (m1 - e * m2) * v1 + (1 + e) * m2 * v2 / (m1 + m2)
@@ -143,38 +144,45 @@ static void fix_collision(struct physics_object *a,
         // where v1 and v2 are the initial velocities of the two objects
 
         vec3 new_velocity;
-        glm_vec3_scale(a->velocity,
-                a->mass - combined_material.restitution * b->mass,
+        glm_vec3_scale(a_attr->velocity,
+                a_attr->mass - combined_material.restitution * b_attr->mass,
                 new_velocity);
 
         vec3 other_velocity;
-        glm_vec3_scale(b->velocity,
-                (1.0f + combined_material.restitution) * b->mass,
+        glm_vec3_scale(b_attr->velocity,
+                (1.0f + combined_material.restitution) * b_attr->mass,
                 other_velocity);
 
         glm_vec3_add(new_velocity, other_velocity, new_velocity);
-        glm_vec3_scale(new_velocity, 1.0f / (a->mass + b->mass), a->velocity);
+        glm_vec3_scale(new_velocity,
+                1.0f / (a_attr->mass + b_attr->mass),
+                a_attr->velocity);
 
-        glm_vec3_scale(b->velocity,
-                b->mass - combined_material.restitution * a->mass,
+        glm_vec3_scale(b_attr->velocity,
+                b_attr->mass - combined_material.restitution * a_attr->mass,
                 new_velocity);
 
-        glm_vec3_scale(a->velocity,
-                (1.0f + combined_material.restitution) * a->mass,
+        glm_vec3_scale(a_attr->velocity,
+                (1.0f + combined_material.restitution) * a_attr->mass,
                 other_velocity);
 
         glm_vec3_add(new_velocity, other_velocity, new_velocity);
-        glm_vec3_scale(new_velocity, 1.0f / (a->mass + b->mass), b->velocity);
+        glm_vec3_scale(new_velocity,
+                1.0f / (a_attr->mass + b_attr->mass),
+                new_velocity);
+
+        object_set_velocity(a, new_velocity);
+        object_set_velocity(b, new_velocity);
     }
 
     if (!fix_b) {
         // b's mass is infinite
-        glm_vec3_scale(a->velocity, -combined_material.restitution, b->velocity);
+        object_scale_velocity(a, -combined_material.restitution);
     }
 
     if (!fix_a) {
         // a's mass is infinite
-        glm_vec3_scale(b->velocity, -combined_material.restitution, a->velocity);
+        object_scale_velocity(b, -combined_material.restitution);
     }
 }
 
@@ -195,18 +203,13 @@ void physics_step(struct physics const *physics,
     for (size_t i = 0; i < vector_size(physics->objects); i++) {
         struct object *object = physics->objects[i];
 
-        glm_vec3_add(object->physics.velocity,
-                object->physics.acceleration,
-                object->physics.velocity);
+        object_add_velocity(object, object->physics.acceleration);
 
-        glm_vec3_scale(object->physics.velocity,
-                1.0 - object->physics.damping,
-                object->physics.velocity);
+        object_scale_velocity(object, 1.0f - object->physics.damping);
 
-        vec3 velocity_scaled;
+        vec3 velocity_scaled, moved;
+
         glm_vec3_scale(object->physics.velocity, dt, velocity_scaled);
-
-        vec3 moved;
         glm_vec3_add(object->transform.position, velocity_scaled, moved);
 
         // NOTE: when frame-rate is too low, this may
@@ -230,11 +233,36 @@ void physics_step(struct physics const *physics,
                     continue;
                 }
 
+                if (box_collide(&object->bounding_box, &other->bounding_box)) {
+                    vec3 mtv;
+                    calculate_mtv(
+                            object->bounding_box, other->bounding_box, mtv);
+
+                    float scale = object->physics.should_fix
+                                    && other->physics.should_fix
+                            ? 0.5f
+                            : 1.0f;
+
+                    log_debug("MTV: %f %f %f", mtv[0], mtv[1], mtv[2]);
+
+                    glm_vec3_scale(mtv, scale, mtv);
+
+                    if (object->physics.should_fix) {
+                        object_move(object, mtv);
+                    }
+
+                    if (other->physics.should_fix) {
+                        glm_vec3_negate(mtv);
+                        object_move(other, mtv);
+                    }
+                }
+
                 if (box_collide(&path_box, &other->bounding_box)) {
-                    if (object->physics.should_fix || other->physics.should_fix) {
-                        fix_collision(&object->physics,
+                    if (object->physics.should_fix
+                            || other->physics.should_fix) {
+                        fix_combined_velocities(object,
                                 object->physics.should_fix,
-                                &other->physics,
+                                other,
                                 other->physics.should_fix);
 
                         found_collision = true;
@@ -244,6 +272,7 @@ void physics_step(struct physics const *physics,
                             (struct event){.type_id = SYSTEM_EVENT_COLLISION,
                                     .data.collision = (struct collision_event){
                                             .a = object, .b = other}});
+
                     break;
                 }
             }
@@ -252,10 +281,7 @@ void physics_step(struct physics const *physics,
         }
 
         if (!found_collision) {
-            box_translate(&object->bounding_box, velocity_scaled);
-            glm_vec3_add(object->transform.position,
-                    velocity_scaled,
-                    object->transform.position);
+            object_move(object, velocity_scaled);
         }
     }
 }
