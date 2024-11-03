@@ -6,7 +6,6 @@
 #include <stdint.h>
 
 #include "sunset/events.h"
-#include "sunset/scene.h"
 #include "sunset/vector.h"
 
 enum system_event {
@@ -19,6 +18,22 @@ struct constraint {
     struct object *b;
     float distance;
 };
+
+struct physics_material {
+    float restitution;
+    float friction;
+};
+
+struct physics_object {
+    vec3 velocity;
+    vec3 acceleration;
+    float mass;
+    float damping;
+    bool should_fix;
+
+    struct physics_material material;
+};
+
 
 static_assert(
         sizeof(struct collision_event) <= 60, "collision_event too large");
@@ -39,6 +54,8 @@ void physics_add_constraint(struct physics *physics,
         struct object *a,
         struct object *b,
         float distance);
+
+struct scene;
 
 void physics_step(struct physics const *physics,
         struct scene const *scene,

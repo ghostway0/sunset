@@ -138,6 +138,7 @@ int main() {
                             .mass = 1.0f,
                             .damping = 0.0f,
                             .should_fix = true,
+                            .material = {.restitution = 0.9},
                     },
             .bounding_box =
                     (struct box){
@@ -175,6 +176,7 @@ int main() {
                             .mass = 1.0f,
                             .damping = 0.0f,
                             .should_fix = true,
+                            .material = {.restitution = 0.9},
                     },
             .bounding_box =
                     (struct box){

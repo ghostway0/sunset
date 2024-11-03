@@ -11,19 +11,12 @@
 #include "sunset/camera.h"
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
+#include "sunset/physics.h"
 
 struct transform {
     vec3 position;
     vec3 rotation;
     float scale;
-};
-
-struct physics_object {
-    vec3 velocity;
-    vec3 acceleration;
-    float mass;
-    float damping;
-    bool should_fix;
 };
 
 struct object;
