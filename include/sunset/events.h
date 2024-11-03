@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <threads.h>
+#include <pthread.h>
 
 #include "vector.h"
 
@@ -12,7 +12,7 @@ struct event_queue {
     /// maps event type to a vector of event handlers
     vector(vector(event_handler)) handlers;
 
-    mtx_t *lock;
+    pthread_mutex_t *lock;
 };
 
 struct mouse_move_event {

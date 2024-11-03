@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -321,7 +322,7 @@ int main() {
 
         snprintf(fps_text_buffer,
                 sizeof(fps_text_buffer),
-                "frame time: %lums (fps: %.1f)",
+                "frame time: %" PRIu64 "ms (fps: %.1f)",
                 avg_frame_time,
                 1000.0f / avg_frame_time);
 
