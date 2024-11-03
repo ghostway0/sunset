@@ -112,3 +112,5 @@ enum window_point {
 float box_get_radius(struct box *box);
 
 void box_get_center(struct box *box, vec3 center_out);
+
+void box_extend_to(struct box *box, vec3 point);

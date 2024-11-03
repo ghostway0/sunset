@@ -5,6 +5,7 @@
 #include "cglm/types.h"
 #include "cglm/vec3.h"
 #include "sunset/color.h"
+#include "sunset/math.h"
 #include "sunset/geometry.h"
 
 void show_image_grayscale(struct image const *image) {
@@ -141,4 +142,11 @@ float box_get_radius(struct box *box) {
 void box_get_center(struct box *box, vec3 center_out) {
     glm_vec3_add(box->min, box->max, center_out);
     glm_vec3_scale(center_out, 0.5, center_out);
+}
+
+void box_extend_to(struct box *box, vec3 point) {
+    for (size_t i = 0; i < 3; i++) {
+        box->min[i] = min(box->min[i], point[i]);
+        box->max[i] = max(box->max[i], point[i]);
+    }
 }

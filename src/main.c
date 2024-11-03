@@ -23,6 +23,7 @@
 #include "sunset/render.h"
 #include "sunset/scene.h"
 #include "sunset/utils.h"
+#include "sunset/vector.h"
 
 void context_init(struct context *context,
         struct command_buffer_options command_buffer_options,
@@ -102,8 +103,7 @@ int main() {
     struct scene scene;
     struct camera camera;
 
-    struct render_context render_context = {};
-
+    struct render_context render_context;
     if (backend_setup(&render_context,
                 (struct render_config){
                         .window_width = 1920, .window_height = 1080})) {
@@ -133,8 +133,8 @@ int main() {
     struct object object = {
             .physics =
                     (struct physics_object){
-                            .velocity = {0.0f, 0.0f, -0.3f},
-                            .acceleration = {0.0f, 0.0f, 0.0f},
+                            .velocity = {0.0f, 0.0f, 0.0f},
+                            .acceleration = {0.0f, 0.0f, -0.05f},
                             .mass = 1.0f,
                             .damping = 0.0f,
                             .should_fix = true,
@@ -322,9 +322,9 @@ int main() {
 
         snprintf(fps_text_buffer,
                 sizeof(fps_text_buffer),
-                "frame time: %" PRIu64 "ms (fps: %.1f)",
-                avg_frame_time,
-                1000.0f / avg_frame_time);
+                "frame time: %llums (fps: %.1f)",
+                avg_frame_time / 1000,
+                1000000.0f / avg_frame_time);
 
         command_buffer_add_set_zindex(&render_context.command_buffer, 1);
         command_buffer_add_text(&render_context.command_buffer,
@@ -350,7 +350,7 @@ int main() {
             usleep(16 - frame_time_ms);
         }
 
-        avg_frame_time = (avg_frame_time + frame_time_ms) / 2;
+        avg_frame_time = (avg_frame_time + time_since_us(frame_start)) / 2;
 
         vector_append(frame_time_window, frame_time_ms);
 
@@ -361,6 +361,7 @@ int main() {
                     compare_uint64_t);
 
             log_trace("top 1%% avg %llums", top_1_percentile);
+            vector_clear(frame_time_window);
         }
     }
 

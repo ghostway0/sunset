@@ -93,16 +93,14 @@ static void apply_constraint_forces(struct physics const *physics, float dt) {
     }
 }
 
-static void fix_collision(struct object *a, struct object *b) {
+[[maybe_unused]]
+static void calcualte_mtv(struct box a, struct box b, vec3 mtv_out) {
     vec3 overlap_min, overlap_max;
 
-    struct box *box_a = &a->bounding_box;
-    struct box *box_b = &b->bounding_box;
+    assert(box_collide(&a, &b));
 
-    assert(box_collide(box_a, box_b));
-
-    glm_vec3_maxv(box_a->min, box_b->min, overlap_min);
-    glm_vec3_minv(box_a->max, box_b->max, overlap_max);
+    glm_vec3_maxv(a.min, b.min, overlap_min);
+    glm_vec3_minv(a.max, b.max, overlap_max);
 
     vec3 mtv = {0.0f, 0.0f, 0.0f};
     float overlap_x = overlap_max[0] - overlap_min[0];
@@ -110,51 +108,14 @@ static void fix_collision(struct object *a, struct object *b) {
     float overlap_z = overlap_max[2] - overlap_min[2];
 
     if (overlap_x < overlap_y && overlap_x < overlap_z) {
-        mtv[0] = (box_a->min[0] < box_b->min[0]) ? -overlap_x : overlap_x;
+        mtv[0] = (a.min[0] < b.min[0]) ? -overlap_x : overlap_x;
     } else if (overlap_y < overlap_z) {
-        mtv[1] = (box_a->min[1] < box_b->min[1]) ? -overlap_y : overlap_y;
+        mtv[1] = (a.min[1] < b.min[1]) ? -overlap_y : overlap_y;
     } else {
-        mtv[2] = (box_a->min[2] < box_b->min[2]) ? -overlap_z : overlap_z;
+        mtv[2] = (a.min[2] < b.min[2]) ? -overlap_z : overlap_z;
     }
 
-    glm_vec3_scale(mtv, 0.5f, mtv);
-
-    glm_vec3_add(a->transform.position, mtv, a->transform.position);
-    glm_vec3_sub(b->transform.position, mtv, b->transform.position);
-}
-
-static void update_collisions(struct physics const *physics,
-        struct scene const *scene,
-        struct event_queue *event_queue) {
-    struct const_octree_iterator iterator;
-    octree_const_iterator_init(&scene->oct_tree, &iterator);
-
-    while (iterator.current != NULL) {
-        struct chunk *chunk = iterator.current->data;
-
-        for (size_t i = 0; i < chunk->num_objects; i++) {
-            struct object *object = chunk->objects[i];
-
-            for (size_t j = i + 1; j < vector_size(physics->objects); j++) {
-                struct object *other = physics->objects[j];
-
-                if (box_collide(&object->bounding_box, &other->bounding_box)) {
-                    struct event event = {.type_id = SYSTEM_EVENT_COLLISION,
-                            .data.collision = (struct collision_event){
-                                    .a = object, .b = other}};
-
-                    event_queue_push(event_queue, event);
-
-                    if (object->physics.should_fix
-                            && other->physics.should_fix) {
-                        fix_collision(object, other);
-                    }
-                }
-            }
-        }
-
-        octree_const_iterator_next(&iterator);
-    }
+    glm_vec3_scale(mtv, 0.5f, mtv_out);
 }
 
 void physics_step(struct physics const *physics,
@@ -162,8 +123,6 @@ void physics_step(struct physics const *physics,
         struct event_queue *event_queue,
         float dt) {
     apply_constraint_forces(physics, dt);
-
-    update_collisions(physics, scene, event_queue);
 
     // for (size_t i = 0; i < vector_size(physics->objects); i++) {
     //     struct object *object = physics->objects[i];
@@ -187,35 +146,41 @@ void physics_step(struct physics const *physics,
         vec3 velocity_scaled;
         glm_vec3_scale(object->physics.velocity, dt, velocity_scaled);
 
-        if (object->physics.should_fix) {
-            vec3 moved;
-            glm_vec3_add(object->transform.position, velocity_scaled, moved);
+        vec3 moved;
+        glm_vec3_add(object->transform.position, velocity_scaled, moved);
 
-            struct box new_box = object->bounding_box;
-            box_translate(&new_box, velocity_scaled);
+        struct box path_box = object->bounding_box;
+        box_extend_to(&path_box, moved);
 
-            struct const_octree_iterator iterator;
-            octree_const_iterator_init(&scene->oct_tree, &iterator);
+        struct const_octree_iterator iterator;
+        octree_const_iterator_init(&scene->oct_tree, &iterator);
 
-            while (iterator.current != NULL) {
-                struct chunk *chunk = iterator.current->data;
+        while (iterator.current != NULL) {
+            struct chunk *chunk = iterator.current->data;
 
-                for (size_t j = 0; j < chunk->num_objects; j++) {
-                    struct object *other = chunk->objects[j];
+            for (size_t j = 0; j < chunk->num_objects; j++) {
+                struct object *other = chunk->objects[j];
 
-                    if (object == other) {
-                        continue;
-                    }
-
-                    if (box_collide(&new_box, &other->bounding_box)) {
-                        glm_vec3_zero(object->physics.velocity);
-                        glm_vec3_zero(velocity_scaled);
-                        break;
-                    }
+                if (object == other) {
+                    continue;
                 }
 
-                octree_const_iterator_next(&iterator);
+                if (box_collide(&path_box, &other->bounding_box)) {
+                    if (object->physics.should_fix) {
+                        glm_vec3_zero(object->physics.velocity);
+                        glm_vec3_zero(object->physics.acceleration);
+                        glm_vec3_zero(velocity_scaled);
+                    }
+
+                    event_queue_push(event_queue,
+                            (struct event){.type_id = SYSTEM_EVENT_COLLISION,
+                                    .data.collision = (struct collision_event){
+                                            .a = object, .b = other}});
+                    break;
+                }
             }
+
+            octree_const_iterator_next(&iterator);
         }
 
         box_translate(&object->bounding_box, velocity_scaled);
