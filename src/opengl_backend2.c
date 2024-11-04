@@ -38,8 +38,16 @@ char const *default_fragment_shader_source =
         "#version 330 core\n"
         "out vec4 FragColor;\n"
         "void main() {\n"
-        "    FragColor = vec4(gl_FragCoord.x / 500.0, gl_FragCoord.y / 800.0, "
-        "0.0, 1.0);\n"
+        "    float ndc = (2.0 * gl_FragCoord.z - gl_DepthRange.near - "
+        "gl_DepthRange.far) / (gl_DepthRange.far - gl_DepthRange.near);\n"
+        "    float clip = ndc / gl_FragCoord.w;\n"
+        "    float depth = (clip * 0.5) + 0.5;\n"
+        "\n"
+        "    float r = sin(depth * 3.1415 * 4.0) * 0.5 + 0.5;\n"
+        "    float g = cos(depth * 3.1415 * 4.0) * 0.5 + 0.5;\n"
+        "    float b = sin(depth * 3.1415 * 2.0) * 0.5 + 0.5;\n"
+        "\n"
+        "    FragColor = vec4(r, g, b, 1.0);\n"
         "}\n";
 
 char const *textured_fragment_shader_source =

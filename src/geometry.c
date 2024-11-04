@@ -150,3 +150,9 @@ void box_extend_to(struct box *box, vec3 point) {
         box->max[i] = max(box->max[i], point[i]);
     }
 }
+
+void box_closest_point(struct box const *box, vec3 point, vec3 closest_out) {
+    for (size_t i = 0; i < 3; i++) {
+        closest_out[i] = fmax(box->min[i], fmin(point[i], box->max[i]));
+    }
+}

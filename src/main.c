@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -70,6 +71,35 @@ struct mesh create_test_mesh() {
     return test_mesh;
 }
 
+void create_test_ground_mesh(struct mesh *mesh) {
+    // just a plane
+    mesh->num_vertices = 4;
+    mesh->vertices = (vec3 *)malloc(mesh->num_vertices * sizeof(vec3));
+
+    mesh->vertices[0][0] = -100.0f;
+    mesh->vertices[0][1] = -1.0f;
+    mesh->vertices[0][2] = -100.0f;
+    mesh->vertices[1][0] = -100.0f;
+    mesh->vertices[1][1] = -1.0f;
+    mesh->vertices[1][2] = 100.0f;
+    mesh->vertices[2][0] = 100.0f;
+
+    mesh->vertices[2][1] = -1.0f;
+    mesh->vertices[2][2] = 100.0f;
+    mesh->vertices[3][0] = 100.0f;
+    mesh->vertices[3][1] = -1.0f;
+    mesh->vertices[3][2] = -100.0f;
+
+    mesh->num_indices = 6;
+    mesh->indices = (uint32_t *)malloc(mesh->num_indices * sizeof(uint32_t));
+    mesh->indices[0] = 0;
+    mesh->indices[1] = 1;
+    mesh->indices[2] = 2;
+    mesh->indices[3] = 2;
+    mesh->indices[4] = 3;
+    mesh->indices[5] = 0;
+}
+
 static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     struct context *context = glfwGetWindowUserPointer(window);
 
@@ -130,11 +160,17 @@ int main() {
     uint32_t triangle_mesh_id =
             backend_register_mesh(&render_context, create_test_mesh());
 
+
+    struct mesh ground_mesh;
+    create_test_ground_mesh(&ground_mesh);
+    uint32_t ground_mesh_id =
+            backend_register_mesh(&render_context, ground_mesh);
+
     struct object object = {
             .physics =
                     (struct physics_object){
                             .velocity = {0.0f, 0.0f, 0.0f},
-                            .acceleration = {0.0f, 0.0f, -0.05f},
+                            .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
                             .damping = 0.0f,
                             .should_fix = true,
@@ -164,6 +200,7 @@ int main() {
             .parent = NULL,
             .children = NULL,
             .num_children = 0,
+        .label = "triangle1",
     };
 
     box_translate(&object.bounding_box, object.transform.position);
@@ -175,7 +212,7 @@ int main() {
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
                             .damping = 0.0f,
-                            .should_fix = false,
+                            .should_fix = true,
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
@@ -202,16 +239,60 @@ int main() {
             .parent = NULL,
             .children = NULL,
             .num_children = 0,
+        .label = "triangle2",
     };
 
     box_translate(&object2.bounding_box, object2.transform.position);
 
-    struct object **objects = malloc(sizeof(struct object *) * 2);
+    struct object ground_object = {
+            .physics =
+                    (struct physics_object){
+                            .velocity = {0.0f, 0.0f, 0.0f},
+                            .acceleration = {0.0f, 0.0f, 0.0f},
+                            .mass = INFINITY,
+                            .damping = 0.0f,
+                            .should_fix = false,
+                            .material = {.restitution = 0.9},
+                    },
+            .bounding_box =
+                    (struct box){
+                            {-100.0f, -10.0, -100.0f},
+                            {100.0f, 0.0, 100.0f},
+                    },
+            .transform =
+                    (struct transform){
+                            .position = {0.0f, -10.0f, 0.0f},
+                            .rotation = {0.0f, 0.0f, 0.0f},
+                            .scale = 1.0f,
+                    },
+            .mesh_id = ground_mesh_id,
+            .textures = NULL,
+            .num_textures = 0,
+            .materials = NULL,
+            .num_materials = 0,
+            .controller =
+                    (struct controller){
+                            .type = CONTROLLER_NONE,
+                            .player = {},
+                    },
+            .parent = NULL,
+            .children = NULL,
+            .num_children = 0,
+        .label = "ground",
+    };
+
+    box_translate(
+            &ground_object.bounding_box, ground_object.transform.position);
+
+    log_debug("%p %p %p", &object, &object2, &ground_object);
+
+    struct object **objects = malloc(sizeof(struct object *) * 3);
 
     // should be owned by the scene. but for now, we'll just leak it, cuz ...
     // lazyness
     objects[0] = &object;
     objects[1] = &object2;
+    objects[2] = &ground_object;
 
     struct image skybox = {};
 
@@ -224,7 +305,7 @@ int main() {
                             {100.0f, 100.0f, 100.0f},
                     },
             .objects = objects,
-            .num_objects = 2,
+            .num_objects = 3,
             .lights = NULL,
             .num_lights = 0,
             .id = 0,
@@ -244,6 +325,7 @@ int main() {
 
     physics_add_object(&physics, &object);
     physics_add_object(&physics, &object2);
+    physics_add_object(&physics, &ground_object);
 
     struct event_queue event_queue;
     event_queue_init(&event_queue);
@@ -308,9 +390,10 @@ int main() {
             switch (event.type_id) {
                 case SYSTEM_EVENT_COLLISION: {
                     struct collision_event collision = event.data.collision;
-                    log_debug("collision between %p and %p",
-                            collision.a,
-                            collision.b);
+                    unused(collision);
+                    // log_debug("collision between %p and %p",
+                    //         collision.a,
+                    //         collision.b);
                     break;
                 }
                 case SYSTEM_EVENT_MOUSE: {

@@ -85,7 +85,6 @@ void scene_destroy(struct scene *scene) {
 void object_move(struct object *object, vec3 direction) {
     glm_vec3_add(
             object->transform.position, direction, object->transform.position);
-
     box_translate(&object->bounding_box, direction);
 
     for (size_t i = 0; i < object->num_children; ++i) {
@@ -137,6 +136,14 @@ void object_add_velocity(struct object *object, vec3 acceleration) {
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_add_velocity(object->children[i], acceleration);
+    }
+}
+
+void object_rotate_velocity(struct object *object, float angle, vec3 axis) {
+    glm_vec3_rotate(object->physics.velocity, angle, axis);
+
+    for (size_t i = 0; i < object->num_children; ++i) {
+        object_rotate_velocity(object->children[i], angle, axis);
     }
 }
 

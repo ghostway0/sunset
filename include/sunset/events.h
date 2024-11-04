@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#include "cglm/types.h"
 #include "vector.h"
 
 typedef void (*event_handler)(void *data);
@@ -21,7 +22,9 @@ struct mouse_move_event {
 };
 
 struct collision_event {
+    vec3 a_velocity;
     struct object *a;
+    vec3 b_velocity;
     struct object *b;
 };
 

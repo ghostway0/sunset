@@ -18,10 +18,10 @@
 #define map_get(v, value, hash)                                                \
     ({                                                                         \
         size_t i = 0;                                                          \
-        while (i < vector_size(v) && hash(&v[i]) < value) {                    \
+        while (i < vector_size(v) && hash(&v[i]) < value) {             \
             i++;                                                               \
         }                                                                      \
-        i < vector_size(v) ? &v[i] : NULL;                                     \
+        i < vector_size(v) && hash(&v[i]) == value ? &v[i] : NULL;      \
     })
 
 #define map_get_or_init(v, value, hash, value_or)                              \

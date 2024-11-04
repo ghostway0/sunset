@@ -114,3 +114,8 @@ float box_get_radius(struct box *box);
 void box_get_center(struct box *box, vec3 center_out);
 
 void box_extend_to(struct box *box, vec3 point);
+
+#define box_format "box(min: " vec3_format ", max: " vec3_format ")"
+#define box_args(b) vec3_args(b.min), vec3_args(b.max)
+
+void box_closest_point(struct box const *box, vec3 point, vec3 closest_out);
