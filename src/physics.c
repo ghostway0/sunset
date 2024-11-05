@@ -4,8 +4,6 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
-#include <log.h>
-
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/physics.h"
@@ -140,12 +138,10 @@ static void fix_combined_velocities(struct object *a, struct object *b) {
     struct physics_material combined_material =
             combine_materials(a_attr->material, b_attr->material);
 
-    vec3 closest_point_a, closest_point_b;
-    box_closest_point(&a->bounding_box, b->transform.position, closest_point_a);
-    box_closest_point(&b->bounding_box, a->transform.position, closest_point_b);
-
     vec3 collision_normal;
-    glm_vec3_sub(closest_point_a, closest_point_b, collision_normal);
+    glm_vec3_dot(a_attr->velocity, b_attr->velocity) > 0
+            ? glm_vec3_sub(b_attr->velocity, a_attr->velocity, collision_normal)
+            : glm_vec3_sub(a_attr->velocity, b_attr->velocity, collision_normal);
     glm_vec3_normalize(collision_normal);
 
     if (a_attr->should_fix && b_attr->should_fix) {
@@ -179,15 +175,10 @@ static void fix_combined_velocities(struct object *a, struct object *b) {
 
         glm_vec3_proj(a_attr->velocity, collision_normal, v1_normal);
         glm_vec3_sub(a_attr->velocity, v1_normal, v1_tangent);
-        log_debug("a should fix %s " vec3_format,
-                a->label,
-                vec3_args(collision_normal));
 
         glm_vec3_scale(collision_normal,
                 -glm_vec3_norm(v1_normal) * combined_material.restitution,
                 v1_normal);
-
-        log_debug("%s " vec3_format, a->label, vec3_args(v1_normal));
 
         object_set_velocity(a, v1_normal);
         object_add_velocity(a, v1_tangent);
@@ -244,11 +235,6 @@ void physics_step(struct physics const *physics,
             }
 
             if (box_collide(&path_box, &other->bounding_box)) {
-                log_debug("Collision detected between %s and %s velocity %f",
-                        object->label,
-                        other->label,
-                        glm_vec3_norm(object->physics.velocity));
-
                 struct event event = {
                         .type_id = SYSTEM_EVENT_COLLISION,
                         .data.collision =
@@ -263,12 +249,8 @@ void physics_step(struct physics const *physics,
                 glm_vec3_copy(other->physics.velocity,
                         event.data.collision.b_velocity);
 
-                // if (object->physics.should_fix || other->physics.should_fix)
-                // {
                 fix_combined_velocities(object, other);
-
                 found_collision = true;
-                // }
 
                 event_queue_push(event_queue, event);
 

@@ -390,10 +390,9 @@ int main() {
             switch (event.type_id) {
                 case SYSTEM_EVENT_COLLISION: {
                     struct collision_event collision = event.data.collision;
-                    unused(collision);
-                    // log_debug("collision between %p and %p",
-                    //         collision.a,
-                    //         collision.b);
+                    log_debug("collision between %p and %p",
+                            collision.a,
+                            collision.b);
                     break;
                 }
                 case SYSTEM_EVENT_MOUSE: {
@@ -408,7 +407,7 @@ int main() {
 
         snprintf(fps_text_buffer,
                 sizeof(fps_text_buffer),
-                "frame time: %" PRIu64 "s (fps: %.1f)",
+                "frame time: %" PRIu64 "ms (fps: %.1f)",
                 avg_frame_time / 1000,
                 1000000.0f / avg_frame_time);
 

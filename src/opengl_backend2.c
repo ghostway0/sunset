@@ -382,6 +382,48 @@ failure:
     return retval;
 }
 
+int compile_texture(struct image const *texture, GLuint *tex_out) {
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
+    glTexImage2D(GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            texture->w,
+            texture->h,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            texture->pixels);
+
+    GLint swizzleMask[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    *tex_out = tex;
+
+    return 0;
+}
+
+int backend_register_texture(
+        struct render_context *context, struct image const *texture) {
+    GLuint tex;
+    if (compile_texture(texture, &tex)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    vector_append(context->textures, tex);
+
+    return vector_size(context->textures) - 1;
+}
+
 void backend_set_user_context(
         struct render_context *context, void *user_context) {
     glfwSetWindowUserPointer(context->window, user_context);
