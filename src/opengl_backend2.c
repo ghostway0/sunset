@@ -382,7 +382,7 @@ failure:
     return retval;
 }
 
-int compile_texture(struct image const *texture, GLuint *tex_out) {
+static GLuint compile_texture(struct image const *texture) {
     GLuint tex;
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -407,15 +407,14 @@ int compile_texture(struct image const *texture, GLuint *tex_out) {
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    *tex_out = tex;
-
-    return 0;
+    return tex;
 }
+
 
 int backend_register_texture(
         struct render_context *context, struct image const *texture) {
     GLuint tex;
-    if (compile_texture(texture, &tex)) {
+    if ((tex = compile_texture(texture)) == 0) {
         return -ERROR_SHADER_COMPILATION_FAILED;
     }
 
@@ -588,6 +587,8 @@ static void instancing_buffer_flush(
     vector(mat4) transforms = buffer->transforms;
     vector(uint32_t) required_textures = buffer->required_textures;
 
+    GLuint atlas_buffer;
+
     // draw instanced
     draw_instanced_mesh(context,
             buffer->mesh_id,
@@ -666,35 +667,7 @@ int backend_flush(struct render_context *context) {
     return 0;
 }
 
-static GLuint compile_texture(struct image const *texture) {
-    GLuint tex;
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-
-    glTexImage2D(GL_TEXTURE_2D,
-            0,
-            GL_RGBA,
-            texture->w,
-            texture->h,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            texture->pixels);
-
-    GLint swizzleMask[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
-    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    return tex;
-}
-
-static void run_text_command(
+static int run_text_command(
         struct render_context *context, struct command_text command) {
     struct program program = context->backend_programs[PROGRAM_DRAW_TEXT];
 
@@ -740,7 +713,7 @@ static void run_text_command(
 
         GLuint tex;
         if ((tex = compile_texture(&glyph->image)) == 0) {
-            continue;
+            return -1;
         }
 
         float xpos = current_x + glyph->bounds.x * scale;
@@ -781,6 +754,8 @@ static void run_text_command(
 
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
+
+    return 0;
 }
 
 [[maybe_unused]]
