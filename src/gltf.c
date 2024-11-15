@@ -35,16 +35,16 @@
     } while (0)
 
 static void gltf_file_init(struct gltf_file *file) {
-    vector_init(file->accessors, struct accessor);
-    vector_init(file->buffers, struct gltf_buffer);
-    vector_init(file->buffer_views, struct gltf_buffer_view);
-    vector_init(file->meshes, struct gltf_mesh);
-    vector_init(file->nodes, struct gltf_node);
-    vector_init(file->scenes, struct gltf_scene);
-    vector_init(file->animations, struct gltf_animation);
-    vector_init(file->images, struct gltf_image);
-    vector_init(file->textures, struct gltf_texture);
-    vector_init(file->materials, struct gltf_material);
+    vector_init(file->accessors);
+    vector_init(file->buffers);
+    vector_init(file->buffer_views);
+    vector_init(file->meshes);
+    vector_init(file->nodes);
+    vector_init(file->scenes);
+    vector_init(file->animations);
+    vector_init(file->images);
+    vector_init(file->textures);
+    vector_init(file->materials);
 }
 
 static int parse_accessor_json(
@@ -287,7 +287,7 @@ static int parse_meshes_json(
         json_assert_type(mesh_json, JSON_OBJECT);
 
         struct gltf_mesh mesh;
-        vector_init(mesh.primitives, struct gltf_primitive);
+        vector_init(mesh.primitives);
 
         for (size_t i = 0; i < vector_size(mesh_json->data.object); i++) {
             struct key_value kv = mesh_json->data.object[i];
@@ -364,7 +364,7 @@ static int parse_scene_json(
         const struct json_value *json, struct gltf_scene *scene_out) {
     json_assert_type(json, JSON_OBJECT);
 
-    vector_init(scene_out->nodes, size_t);
+    vector_init(scene_out->nodes);
 
     for (size_t i = 0; i < vector_size(json->data.object); i++) {
         struct key_value kv = json->data.object[i];
@@ -468,8 +468,8 @@ static int parse_animation_json(
         const struct json_value *json, struct gltf_animation *animation_out) {
     json_assert_type(json, JSON_OBJECT);
 
-    vector_init(animation_out->channels, struct gltf_animation_channel);
-    vector_init(animation_out->samplers, struct gltf_animation_sampler);
+    vector_init(animation_out->channels);
+    vector_init(animation_out->samplers);
 
     for (size_t i = 0; i < vector_size(json->data.object); i++) {
         struct key_value kv = json->data.object[i];

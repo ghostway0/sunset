@@ -90,7 +90,7 @@ void test_base64_encode(void **state) {
     unused(state);
 
     vector(char) encoded;
-    vector_init(encoded, char);
+    vector_init(encoded);
 
     char *str = "Hello, World!";
 
@@ -106,7 +106,7 @@ void test_base64_decode(void **state) {
     unused(state);
 
     vector(uint8_t) decoded;
-    vector_init(decoded, char);
+    vector_init(decoded);
 
     int err = base64_decode("SGVsbG8sIFdvcmxkIQ==", 20, &decoded);
     assert_int_equal(err, 0);
@@ -120,7 +120,7 @@ void test_base64_invalid_input(void **state) {
     unused(state);
 
     vector(uint8_t) decoded;
-    vector_init(decoded, char);
+    vector_init(decoded);
 
     int err = base64_decode("SGVsbG8sIFdvcmxkIQ=", 19, &decoded);
     assert_int_equal(err, -1);

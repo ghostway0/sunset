@@ -4,6 +4,7 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
+#include "cglm/util.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/physics.h"
@@ -11,8 +12,8 @@
 #include "sunset/vector.h"
 
 void physics_init(struct physics *physics) {
-    vector_init(physics->objects, struct object *);
-    vector_init(physics->constraints, struct constraint);
+    vector_init(physics->objects);
+    vector_init(physics->constraints);
 }
 
 void physics_free(struct physics *physics) {
@@ -98,6 +99,47 @@ static void apply_constraint_forces(struct physics const *physics, float dt) {
     }
 }
 
+static void aabb_collision_normal(
+        struct box box, vec3 direction, vec3 normal_out) {
+    vec3 center, inv_dir;
+    box_get_center(&box, center);
+
+    inv_dir[0] = 1.0f / direction[0];
+    inv_dir[1] = 1.0f / direction[1];
+    inv_dir[2] = 1.0f / direction[2];
+
+    float tmin = (box.min[0] - center[0]) * inv_dir[0];
+    float tmax = (box.max[0] - center[0]) * inv_dir[0];
+
+    size_t axis = 0;
+    float tmin_temp = (box.min[1] - center[1]) * inv_dir[1];
+    float tmax_temp = (box.max[1] - center[1]) * inv_dir[1];
+
+    if (tmin_temp > tmin) {
+        tmin = tmin_temp;
+        axis = 1;
+    }
+    if (tmax_temp < tmax) {
+        tmax = tmax_temp;
+        axis = 1;
+    }
+
+    tmin_temp = (box.min[2] - center[2]) * inv_dir[2];
+    tmax_temp = (box.max[2] - center[2]) * inv_dir[2];
+
+    if (tmin_temp > tmin) {
+        tmin = tmin_temp;
+        axis = 2;
+    }
+    if (tmax_temp < tmax) {
+        tmax = tmax_temp;
+        axis = 2;
+    }
+
+    glm_vec3_zero(normal_out);
+    normal_out[axis] = (tmin < tmax) ? 1.0 : -1.0;
+}
+
 static void calculate_mtv(struct box a, struct box b, vec3 mtv_out) {
     vec3 overlap_min, overlap_max;
 
@@ -139,10 +181,8 @@ static void fix_combined_velocities(struct object *a, struct object *b) {
             combine_materials(a_attr->material, b_attr->material);
 
     vec3 collision_normal;
-    glm_vec3_dot(a_attr->velocity, b_attr->velocity) > 0
-            ? glm_vec3_sub(b_attr->velocity, a_attr->velocity, collision_normal)
-            : glm_vec3_sub(
-                      a_attr->velocity, b_attr->velocity, collision_normal);
+    aabb_collision_normal(b->bounding_box, a_attr->velocity, collision_normal);
+
     glm_vec3_normalize(collision_normal);
 
     if (a_attr->should_fix && b_attr->should_fix) {
@@ -191,7 +231,7 @@ static void fix_combined_velocities(struct object *a, struct object *b) {
         glm_vec3_sub(b_attr->velocity, v2_normal, v2_tangent);
 
         glm_vec3_scale(collision_normal,
-                glm_vec3_norm(v2_normal) * combined_material.restitution,
+                -glm_vec3_norm(v2_normal) * combined_material.restitution,
                 v2_normal);
 
         object_set_velocity(b, v2_normal);
@@ -254,8 +294,6 @@ void physics_step(struct physics const *physics,
                 found_collision = true;
 
                 event_queue_push(event_queue, event);
-
-                break;
             }
 
             if (box_collide(&object->bounding_box, &other->bounding_box)) {
@@ -276,6 +314,10 @@ void physics_step(struct physics const *physics,
                 if (object->physics.should_fix) {
                     object_move(object, mtv);
                 }
+            }
+
+            if (found_collision) {
+                break;
             }
         }
 

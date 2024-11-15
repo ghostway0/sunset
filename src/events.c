@@ -6,8 +6,8 @@
 #include "sunset/vector.h"
 
 void event_queue_init(struct event_queue *queue) {
-    vector_init(queue->events, struct event);
-    vector_init(queue->handlers, event_handler);
+    vector_init(queue->events);
+    vector_init(queue->handlers);
 
     queue->lock = sunset_malloc(sizeof(pthread_mutex_t));
 

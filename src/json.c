@@ -109,7 +109,7 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
         return -ERROR_INVALID_FORMAT;
     }
 
-    vector_init(value_out->data.object, struct key_value);
+    vector_init(value_out->data.object);
 
     bump(p);
 
@@ -174,7 +174,7 @@ static int parse_array(struct parser *p, struct json_value *value_out) {
     bump(p);
 
     vector(struct json_value) array;
-    vector_init(array, struct json_value);
+    vector_init(array);
 
     for (;;) {
         skip_whitespace(p);

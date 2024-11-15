@@ -1,6 +1,6 @@
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 struct bitmap {
     size_t num_chunks;

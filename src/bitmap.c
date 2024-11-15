@@ -12,7 +12,8 @@ struct bitmap {
 
 void bitmap_init(size_t size, struct bitmap *bitmap_out) {
     bitmap_out->num_chunks = (size + 63) / 64;
-    bitmap_out->chunks = sunset_malloc(bitmap_out->num_chunks * sizeof(uint64_t));
+    bitmap_out->chunks =
+            sunset_malloc(bitmap_out->num_chunks * sizeof(uint64_t));
 }
 
 void bitmap_init_full(size_t size, struct bitmap *bitmap_out) {

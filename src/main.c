@@ -51,17 +51,19 @@ struct mesh create_test_mesh() {
     struct mesh test_mesh;
 
     test_mesh.num_vertices = 3;
-    test_mesh.vertices = (vec3 *)malloc(test_mesh.num_vertices * sizeof(vec3));
+    test_mesh.vertices =
+            malloc(test_mesh.num_vertices * 5 * sizeof(float));
 
-    test_mesh.vertices[0][0] = 0.0f;
-    test_mesh.vertices[0][1] = 0.5f;
-    test_mesh.vertices[0][2] = 0.0f;
-    test_mesh.vertices[1][0] = -0.5f;
-    test_mesh.vertices[1][1] = -0.5f;
-    test_mesh.vertices[1][2] = 0.0f;
-    test_mesh.vertices[2][0] = 0.5f;
-    test_mesh.vertices[2][1] = -0.5f;
-    test_mesh.vertices[2][2] = 0.0f;
+    // clang-format off
+    float vertices[] = {
+        // positions         // texture coords
+        0.0f,  -0.5f, 0.0f,   1.0f, 1.0f, // top right
+        -0.5f, -0.5f, 0.0f,   1.0f, 0.0f, // bottom right
+        0.5f, -0.5f, 0.0f,   0.0f, 0.0f, // bottom left
+    };
+    // clang-format on
+
+    memcpy(test_mesh.vertices, vertices, sizeof(vertices));
 
     test_mesh.num_indices = 3;
     test_mesh.indices =
@@ -76,21 +78,19 @@ struct mesh create_test_mesh() {
 void create_test_ground_mesh(struct mesh *mesh) {
     // just a plane
     mesh->num_vertices = 4;
-    mesh->vertices = (vec3 *)malloc(mesh->num_vertices * sizeof(vec3));
+    mesh->vertices = malloc(mesh->num_vertices * 5 * sizeof(float));
 
-    mesh->vertices[0][0] = -100.0f;
-    mesh->vertices[0][1] = -1.0f;
-    mesh->vertices[0][2] = -100.0f;
-    mesh->vertices[1][0] = -100.0f;
-    mesh->vertices[1][1] = -1.0f;
-    mesh->vertices[1][2] = 100.0f;
-    mesh->vertices[2][0] = 100.0f;
+    // clang-format off
+    float vertices[] = {
+        // positions            // texture coords
+        -100.0f, 0.0f, -100.0f,  1.0f, 1.0f,  // vertex 0
+        -100.0f, 0.0f,  100.0f,  1.0f, 0.0f,  // vertex 1
+         100.0f, 0.0f,  100.0f,  0.0f, 0.0f,  // vertex 2
+         100.0f, 0.0f, -100.0f,  0.0f, 1.0f   // vertex 3
+    };
+    // clang-format on
 
-    mesh->vertices[2][1] = -1.0f;
-    mesh->vertices[2][2] = 100.0f;
-    mesh->vertices[3][0] = 100.0f;
-    mesh->vertices[3][1] = -1.0f;
-    mesh->vertices[3][2] = -100.0f;
+    memcpy(mesh->vertices, vertices, sizeof(vertices));
 
     mesh->num_indices = 6;
     mesh->indices = (uint32_t *)malloc(mesh->num_indices * sizeof(uint32_t));
@@ -143,6 +143,37 @@ int main() {
         return -1;
     }
 
+    FILE *f = fopen("./utc16.tga", "r");
+
+    fseek(f, 0, SEEK_END);
+    size_t file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    void *data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fileno(f), 0);
+    if (data == MAP_FAILED) {
+        perror("mmap");
+        return 2;
+    }
+
+    struct image image;
+    if ((retval = load_tga_image(data, &image))) {
+        return retval;
+    }
+
+    struct rect bounds = {
+            .x = 0,
+            .y = 0,
+            .width = image.w,
+            .height = image.h,
+    };
+
+    uint32_t texture_id;
+    backend_register_texture_atlas(
+            &render_context, &image, &bounds, 1, &texture_id);
+
+    munmap(data, file_size);
+    image_deinit(&image);
+
     camera_init(
             (struct camera_state){
                     {0.0f, 0.0f, 0.0f},
@@ -170,7 +201,7 @@ int main() {
     struct object object = {
             .physics =
                     (struct physics_object){
-                            .velocity = {0.0f, 0.0f, 0.0f},
+                            .velocity = {1.5f, 0.0f, 0.0f},
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
                             .damping = 0.0f,
@@ -189,8 +220,7 @@ int main() {
                             .scale = 1.0f,
                     },
             .mesh_id = triangle_mesh_id,
-            .textures = NULL,
-            .num_textures = 0,
+            .texture_id = texture_id,
             .materials = NULL,
             .num_materials = 0,
             .controller =
@@ -228,8 +258,7 @@ int main() {
                             .scale = 1.0f,
                     },
             .mesh_id = triangle_mesh_id,
-            .textures = NULL,
-            .num_textures = 0,
+            .texture_id = texture_id,
             .materials = NULL,
             .num_materials = 0,
             .controller =
@@ -257,7 +286,7 @@ int main() {
                     },
             .bounding_box =
                     (struct box){
-                            {-100.0f, -10.0, -100.0f},
+                            {-100.0f, 0.0, -100.0f},
                             {100.0f, 0.0, 100.0f},
                     },
             .transform =
@@ -267,8 +296,7 @@ int main() {
                             .scale = 1.0f,
                     },
             .mesh_id = ground_mesh_id,
-            .textures = NULL,
-            .num_textures = 0,
+            .texture_id = texture_id,
             .materials = NULL,
             .num_materials = 0,
             .controller =
@@ -284,8 +312,6 @@ int main() {
 
     box_translate(
             &ground_object.bounding_box, ground_object.transform.position);
-
-    log_debug("%p %p %p", &object, &object2, &ground_object);
 
     struct object **objects = malloc(sizeof(struct object *) * 3);
 
@@ -328,31 +354,6 @@ int main() {
     physics_add_object(&physics, &object2);
     physics_add_object(&physics, &ground_object);
 
-    FILE *f = fopen("/home/ghostway/projects/c/sunset-engine/utc16.tga", "r");
-
-    fseek(f, 0, SEEK_END);
-    size_t file_size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    log_debug("%zu %d", file_size, fileno(f));
-
-    void *data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fileno(f), 0);
-    if (data == MAP_FAILED) {
-        perror("mmap");
-        return 2;
-    }
-
-    struct image image;
-    if (load_tga_image(data, &image)) {
-        log_error("die");
-        return 1;
-    }
-
-    munmap(data, file_size);
-    fclose(f);
-
-    show_image_grayscale(&image);
-
     struct event_queue event_queue;
     event_queue_init(&event_queue);
 
@@ -364,7 +365,7 @@ int main() {
     uint64_t avg_frame_time = 0;
 
     vector(uint64_t) frame_time_window;
-    vector_init(frame_time_window, uint64_t);
+    vector_init(frame_time_window);
     vector_reserve(frame_time_window, 100);
 
     struct context context;

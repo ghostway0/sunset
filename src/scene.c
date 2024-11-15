@@ -25,7 +25,7 @@ static void *split(struct oct_tree *, void *data, struct box bounds) {
     new_chunk->bounds = bounds;
 
     vector(struct object *) in_new_bounds;
-    vector_init(in_new_bounds, struct object);
+    vector_init(in_new_bounds);
 
     for (size_t i = 0; i < chunk->num_objects; ++i) {
         struct object *object = chunk->objects[i];
@@ -57,7 +57,7 @@ void scene_init(struct camera *cameras,
         struct box bounds,
         struct chunk *root_chunk,
         struct scene *scene_out) {
-    vector_init(scene_out->cameras, struct camera);
+    vector_init(scene_out->cameras);
     vector_append_multiple(scene_out->cameras, cameras, num_cameras);
     scene_out->skybox = skybox;
     scene_out->effects = effects;
@@ -168,14 +168,13 @@ static int render_object(
     mat4 model_matrix;
     object_calculate_model_matrix(object, model_matrix);
 
-    command_buffer_add_mesh(command_buffer, object->mesh_id, 0, model_matrix);
-
-    // TODO: add textures and materials
+    command_buffer_add_mesh(command_buffer, object->mesh_id, object->texture_id, model_matrix);
 
     return 0;
 }
 
 int scene_render(struct scene *scene, struct render_context *render_context) {
+    // doesn't make much sense - still need to think that through
     for (size_t i = 0; i < vector_size(scene->cameras); i++) {
         struct camera *camera = &scene->cameras[i];
 

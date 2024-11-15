@@ -41,6 +41,7 @@ enum backend_program_type {
 
 struct instancing_buffer {
     uint32_t mesh_id;
+    uint32_t atlas_id;
     vector(mat4) transforms;
 };
 

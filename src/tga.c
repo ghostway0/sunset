@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "external/log.c/src/log.h"
 #include "sunset/color.h"
 #include "sunset/errors.h"
 #include "sunset/geometry.h"
@@ -51,8 +50,6 @@ int fill_color_map(uint8_t const *data,
         uint8_t b = data[i * pixel_size_bytes + 0];
         uint8_t a =
                 pixel_size_bytes == 4 ? data[i * pixel_size_bytes + 3] : 255;
-
-        log_debug("%zu color_map: %d %d %d %d", i, r, g, b, a);
 
         color_map_out[i] = (struct color){r, g, b, a};
     }
@@ -117,8 +114,6 @@ int load_tga_image(uint8_t const *data, struct image *image_out) {
     size_t image_size = header->width * header->height;
     size_t pixel_size_bytes = header->bpp / 8;
 
-    log_debug("image_size: %zu %zu", image_size, header->bpp);
-
     image_out->pixels = sunset_calloc(image_size, sizeof(struct color));
     image_out->w = header->width;
     image_out->h = header->height;
@@ -155,7 +150,6 @@ int load_tga_image(uint8_t const *data, struct image *image_out) {
                      pixel_size_bytes,
                      image_out->pixels))
                 != 0) {
-            log_error("decompression");
             goto cleanup;
         }
 
@@ -174,14 +168,12 @@ int load_tga_image(uint8_t const *data, struct image *image_out) {
     }
 
     struct tga_footer *footer = (struct tga_footer *)(data + footer_offset);
+    unused(footer);
 
     // if (footer->dot != '.') {
-    //     log_info("%d", footer->dot);
     //     retval = -ERROR_INVALID_FORMAT;
     //     goto cleanup;
     // }
-
-    log_debug("footer: %s", footer->signature);
 
 cleanup:
     if (retval != 0) {

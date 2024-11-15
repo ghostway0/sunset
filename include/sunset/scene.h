@@ -54,8 +54,7 @@ struct object {
     struct box bounding_box;
     struct transform transform;
     uint32_t mesh_id;
-    struct compiled_texture *textures;
-    size_t num_textures;
+    uint32_t texture_id;
     struct material *materials;
     size_t num_materials;
     struct controller controller;

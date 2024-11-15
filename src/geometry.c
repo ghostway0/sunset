@@ -156,3 +156,7 @@ void box_closest_point(struct box const *box, vec3 point, vec3 closest_out) {
         closest_out[i] = fmax(box->min[i], fmin(point[i], box->max[i]));
     }
 }
+
+void image_deinit(struct image *image) {
+    free(image->pixels);
+}

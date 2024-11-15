@@ -51,6 +51,8 @@ struct image {
     struct color *pixels;
 };
 
+void image_deinit(struct image *image);
+
 struct box {
     vec3 min;
     vec3 max;
@@ -74,7 +76,7 @@ struct material {
 };
 
 struct mesh {
-    vec3 *vertices;
+    float *vertices;
     size_t num_vertices;
     uint32_t *indices;
     size_t num_indices;

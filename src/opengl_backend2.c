@@ -55,10 +55,9 @@ char const *textured_fragment_shader_source =
         "#version 330 core\n"
         "in vec2 TexCoords;\n"
         "out vec4 FragColor;\n"
-        "uniform sampler2D texture;\n"
+        "uniform sampler2D sampler;\n"
         "void main() {\n"
-        "    FragColor = texture(texture, TexCoords);\n"
-        "0.0, 1.0);\n"
+        "    FragColor = texture(sampler, TexCoords);\n"
         "}\n";
 
 char const *instanced_vertex_shader_source =
@@ -136,8 +135,18 @@ static int compile_mesh(
             GL_STATIC_DRAW);
 
     glVertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+            0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
+
+    // for mesh 2d
+    // should have different modes for 2d/3d meshes
+    glVertexAttribPointer(1,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            5 * sizeof(float),
+            (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     mesh_out->num_indices = mesh->num_indices;
 
@@ -211,8 +220,9 @@ static int setup_default_shaders(struct render_context *context) {
         return -ERROR_SHADER_COMPILATION_FAILED;
     }
 
-    if (backend_program_add_shader(
-                &program, default_fragment_shader_source, GL_FRAGMENT_SHADER)) {
+    if (backend_program_add_shader(&program,
+                textured_fragment_shader_source,
+                GL_FRAGMENT_SHADER)) {
         return -ERROR_SHADER_COMPILATION_FAILED;
     }
 
@@ -234,7 +244,7 @@ static int setup_default_shaders(struct render_context *context) {
     }
 
     if (backend_program_add_shader(&instanced_program,
-                default_fragment_shader_source,
+                textured_fragment_shader_source,
                 GL_FRAGMENT_SHADER)) {
         return -ERROR_SHADER_COMPILATION_FAILED;
     }
@@ -310,9 +320,10 @@ int backend_setup(struct render_context *context, struct render_config config) {
         goto failure;
     }
 
-    vector_init(context->meshes, struct compiled_mesh);
-    vector_init(
-            context->frame_cache.instancing_buffers, struct instancing_buffer);
+    vector_init(context->meshes);
+    vector_init(context->frame_cache.instancing_buffers);
+    vector_init(context->textures);
+    vector_init(context->atlases);
 
     glDepthFunc(GL_LESS);
 
@@ -377,8 +388,8 @@ int backend_register_texture_atlas(struct render_context *context,
     GLint swizzleMask[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
     glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -519,6 +530,7 @@ static int upload_instancing_buffer(
 
 static void draw_instanced_mesh(struct render_context *context,
         uint32_t mesh_id,
+        uint32_t atlas_id,
         mat4 const *transforms,
         size_t num_transforms) {
     const struct compiled_mesh *mesh = &context->meshes[mesh_id];
@@ -543,11 +555,16 @@ static void draw_instanced_mesh(struct render_context *context,
 
     program_set_uniform_mat4(program, "transforms", transforms, num_transforms);
 
+    program_set_uniform_int(program, "sampler", 0);
+    glBindTexture(GL_TEXTURE_2D, context->atlases[atlas_id].buffer);
+
     glDrawElementsInstanced(GL_TRIANGLES,
             mesh->num_indices,
             GL_UNSIGNED_INT,
             0,
             num_transforms);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     glBindVertexArray(0);
 }
@@ -561,8 +578,11 @@ static void instancing_buffer_flush(
     vector(mat4) transforms = buffer->transforms;
 
     // draw instanced
-    draw_instanced_mesh(
-            context, buffer->mesh_id, transforms, vector_size(transforms));
+    draw_instanced_mesh(context,
+            buffer->mesh_id,
+            buffer->atlas_id,
+            transforms,
+            vector_size(transforms));
 
     vector_clear(transforms);
 }
@@ -592,12 +612,20 @@ static int run_mesh_command(
 
         glBindVertexArray(0);
     } else {
+#ifndef NDEBUG
+        if (command.texture_id >= vector_size(context->textures)) {
+            return ERROR_OUT_OF_BOUNDS;
+        }
+#endif
+        struct compiled_texture texture = context->textures[command.texture_id];
+
         if (!map_get(cache->instancing_buffers,
                     command.mesh_id,
                     instancing_buffer_mesh_id)) {
             struct instancing_buffer buffer;
             buffer.mesh_id = command.mesh_id;
-            vector_init(buffer.transforms, mat4);
+            buffer.atlas_id = texture.atlas_id;
+            vector_init(buffer.transforms);
 
             map_insert(cache->instancing_buffers,
                     buffer,
@@ -607,6 +635,12 @@ static int run_mesh_command(
         struct instancing_buffer *buffer = map_get(cache->instancing_buffers,
                 command.mesh_id,
                 instancing_buffer_mesh_id);
+
+        // NOTE: it is currently required that anything that gets instanced
+        // together is stored within a single atlas.
+        if (texture.atlas_id != buffer->atlas_id) {
+            return ERROR_BACKEND_UNKNOWN;
+        }
 
         vector_append_copy(buffer->transforms, command.transform);
     }
@@ -656,8 +690,8 @@ static int run_text_command(
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
 
-    glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glEnableVertexAttribArray(0);
 
     float scale = 1;
 
@@ -709,9 +743,6 @@ static int run_text_command(
 
         glDeleteTextures(1, &tex);
     }
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
