@@ -4,6 +4,7 @@
 
 #include "sunset/geometry.h"
 #include "sunset/quadtree.h"
+#include "sunset/utils.h"
 
 // split node into 4 quadrants recursively
 static void split_node(struct quad_tree *tree, struct quad_node *node) {
@@ -16,7 +17,7 @@ static void split_node(struct quad_tree *tree, struct quad_node *node) {
 
     for (size_t i = 0; i < 4; ++i) {
         struct rect bounds = rect_subdivide_i(node->bounds, i, 4);
-        node->children[i] = malloc(sizeof(struct quad_node));
+        node->children[i] = sunset_malloc(sizeof(struct quad_node));
 
         void *data = tree->split_i(tree, node->data, bounds);
 
@@ -50,7 +51,7 @@ void quad_tree_create(size_t max_depth,
     tree_out->split_i = split;
     tree_out->destroy_data = destroy_data;
 
-    tree_out->root = malloc(sizeof(struct quad_node));
+    tree_out->root = sunset_malloc(sizeof(struct quad_node));
     quad_node_init(tree_out->root, 0, node_data, root_bounds);
 
     if (tree_out->should_split(tree_out, tree_out->root)) {

@@ -1,8 +1,8 @@
 #include "sunset/utils.h"
 
 #include <assert.h>
-#include <time.h>
 #include <stdint.h>
+#include <time.h>
 
 uint64_t get_time_ms() {
     struct timespec ts;
@@ -33,6 +33,3 @@ uint64_t time_since_us(struct timespec start) {
     return (now.tv_sec - start.tv_sec) * 1000000
             + (now.tv_nsec - start.tv_nsec) / 1000;
 }
-
-
-#define stringify(x) #x

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #include "cglm/types.h"
 #include "vector.h"

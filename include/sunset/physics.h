@@ -34,7 +34,6 @@ struct physics_object {
     struct physics_material material;
 };
 
-
 static_assert(
         sizeof(struct collision_event) <= 60, "collision_event too large");
 

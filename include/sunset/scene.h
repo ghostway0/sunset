@@ -60,7 +60,7 @@ struct object {
     size_t num_materials;
     struct controller controller;
 
-    const char *label;
+    char const *label;
 
     struct object *parent;
     struct object **children;
@@ -79,7 +79,8 @@ void object_scale_velocity(struct object *object, float factor);
 
 void object_add_velocity(struct object *object, vec3 acceleration);
 
-void object_calculate_model_matrix(struct object *object, mat4 model_matrix_out);
+void object_calculate_model_matrix(
+        struct object *object, mat4 model_matrix_out);
 
 void object_rotate_velocity(struct object *object, float angle, vec3 axis);
 
@@ -117,7 +118,7 @@ struct scene {
 };
 
 void scene_init(struct camera *cameras,
-                size_t num_cameras,
+        size_t num_cameras,
         struct image skybox,
         struct effect *effects,
         size_t num_effects,

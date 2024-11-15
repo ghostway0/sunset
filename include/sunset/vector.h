@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "sunset/utils.h"
+
 struct vector_metadata {
     size_t size;
     size_t capacity;
@@ -15,8 +17,9 @@ struct vector_metadata {
 
 #define vector_init(v, T)                                                      \
     ({                                                                         \
-        struct vector_metadata *meta = (struct vector_metadata *)malloc(       \
-                sizeof(struct vector_metadata) + sizeof(T) * 16);              \
+        struct vector_metadata *meta =                                         \
+                (struct vector_metadata *)sunset_malloc(                       \
+                        sizeof(struct vector_metadata) + sizeof(T) * 16);      \
         assert(meta);                                                          \
         meta->size = 0;                                                        \
         meta->capacity = 16;                                                   \
@@ -39,7 +42,7 @@ struct vector_metadata {
     do {                                                                       \
         struct vector_metadata *meta = vector_metadata(v);                     \
         if (meta->capacity < new_capacity) {                                   \
-            meta = (struct vector_metadata *)realloc(meta,                     \
+            meta = (struct vector_metadata *)sunset_realloc(meta,              \
                     sizeof(struct vector_metadata)                             \
                             + sizeof(*(v)) * new_capacity);                    \
             assert(meta);                                                      \

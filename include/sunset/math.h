@@ -1,6 +1,8 @@
 #ifndef MATH_H
 #define MATH_H
 
+#include "sunset/utils.h"
+
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -11,7 +13,7 @@
 
 #define top_percentile(arr, n, p, compare)                                     \
     ({                                                                         \
-        size_t *sorted = malloc(n * sizeof(size_t));                           \
+        size_t *sorted = sunset_malloc(n * sizeof(size_t));                    \
         memcpy(sorted, arr, n * sizeof(size_t));                               \
         qsort(sorted, n, sizeof(size_t), compare);                             \
         size_t idx = n - n * p / 100;                                          \
@@ -19,6 +21,5 @@
         free(sorted);                                                          \
         result;                                                                \
     })
-
 
 #endif // MATH_H

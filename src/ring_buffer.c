@@ -3,6 +3,7 @@
 
 #include "sunset/errors.h"
 #include "sunset/ring_buffer.h"
+#include "sunset/utils.h"
 
 int ring_buffer_append(struct ring_buffer *ring_buffer, void const *data) {
     if (((ring_buffer->head + 1) & (ring_buffer->buffer_size - 1))
@@ -46,7 +47,7 @@ void ring_buffer_init(struct ring_buffer *ring_buffer,
     ring_buffer->head = 0;
     ring_buffer->tail = 0;
     ring_buffer->buffer_size = buffer_size;
-    ring_buffer->buffer = calloc(buffer_size, element_size);
+    ring_buffer->buffer = sunset_calloc(buffer_size, element_size);
     ring_buffer->element_size = element_size;
 
     assert(ring_buffer->buffer != NULL);

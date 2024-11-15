@@ -61,7 +61,7 @@ static int parse_string(struct parser *p, struct json_value *value_out) {
         ;
 
     value_out->type = JSON_STRING;
-    value_out->data.string = malloc(p->cursor - start);
+    value_out->data.string = sunset_malloc(p->cursor - start);
 
     memcpy((void *)value_out->data.string,
             p->buffer + start,

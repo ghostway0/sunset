@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -23,6 +24,7 @@
 #include "sunset/physics.h"
 #include "sunset/render.h"
 #include "sunset/scene.h"
+#include "sunset/tga.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
@@ -160,7 +162,6 @@ int main() {
     uint32_t triangle_mesh_id =
             backend_register_mesh(&render_context, create_test_mesh());
 
-
     struct mesh ground_mesh;
     create_test_ground_mesh(&ground_mesh);
     uint32_t ground_mesh_id =
@@ -200,7 +201,7 @@ int main() {
             .parent = NULL,
             .children = NULL,
             .num_children = 0,
-        .label = "triangle1",
+            .label = "triangle1",
     };
 
     box_translate(&object.bounding_box, object.transform.position);
@@ -239,7 +240,7 @@ int main() {
             .parent = NULL,
             .children = NULL,
             .num_children = 0,
-        .label = "triangle2",
+            .label = "triangle2",
     };
 
     box_translate(&object2.bounding_box, object2.transform.position);
@@ -278,7 +279,7 @@ int main() {
             .parent = NULL,
             .children = NULL,
             .num_children = 0,
-        .label = "ground",
+            .label = "ground",
     };
 
     box_translate(
@@ -326,6 +327,31 @@ int main() {
     physics_add_object(&physics, &object);
     physics_add_object(&physics, &object2);
     physics_add_object(&physics, &ground_object);
+
+    FILE *f = fopen("/home/ghostway/projects/c/sunset-engine/utc16.tga", "r");
+
+    fseek(f, 0, SEEK_END);
+    size_t file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    log_debug("%zu %d", file_size, fileno(f));
+
+    void *data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fileno(f), 0);
+    if (data == MAP_FAILED) {
+        perror("mmap");
+        return 2;
+    }
+
+    struct image image;
+    if (load_tga_image(data, &image)) {
+        log_error("die");
+        return 1;
+    }
+
+    munmap(data, file_size);
+    fclose(f);
+
+    show_image_grayscale(&image);
 
     struct event_queue event_queue;
     event_queue_init(&event_queue);

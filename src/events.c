@@ -2,13 +2,14 @@
 #include <stdint.h>
 
 #include "sunset/events.h"
+#include "sunset/utils.h"
 #include "sunset/vector.h"
 
 void event_queue_init(struct event_queue *queue) {
     vector_init(queue->events, struct event);
     vector_init(queue->handlers, event_handler);
 
-    queue->lock = malloc(sizeof(pthread_mutex_t));
+    queue->lock = sunset_malloc(sizeof(pthread_mutex_t));
 
     pthread_mutexattr_t mutex_attr;
     pthread_mutexattr_init(&mutex_attr);

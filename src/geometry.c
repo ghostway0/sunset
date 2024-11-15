@@ -5,8 +5,8 @@
 #include "cglm/types.h"
 #include "cglm/vec3.h"
 #include "sunset/color.h"
-#include "sunset/math.h"
 #include "sunset/geometry.h"
+#include "sunset/math.h"
 
 void show_image_grayscale(struct image const *image) {
     for (size_t y = 0; y < image->h; y++) {

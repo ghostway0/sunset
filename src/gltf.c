@@ -8,6 +8,7 @@
 
 #include "sunset/errors.h"
 #include "sunset/gltf.h"
+#include "sunset/utils.h"
 #include "sunset/vector.h"
 
 #include "sunset/json.h"
@@ -28,7 +29,7 @@
 #define string_copy(dest, from)                                                \
     do {                                                                       \
         size_t len = strlen(from);                                             \
-        dest = malloc(len);                                                    \
+        dest = sunset_malloc(len);                                             \
         memset(dest, 0, len);                                                  \
         memcpy(dest, from, len + 1);                                           \
     } while (0)

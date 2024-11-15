@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,24 +22,6 @@ enum color_type {
     TGA_TYPE_RLE_RGB = 10,
     TGA_TYPE_RLE_GREY = 11,
 };
-
-// run-length encoding decompression
-static int decompress(uint8_t *data,
-        size_t size,
-        size_t pixel_size_bytes,
-        enum color_type color_type,
-        struct color *out) {
-    assert(data != NULL);
-    assert(out != NULL);
-
-    unused(color_type);
-    unused(size);
-    unused(pixel_size_bytes);
-
-    // note that pixels can also be stored in the color map, and be less than
-
-    return 0;
-}
 
 struct tga_header {
     uint8_t id_length;
@@ -85,6 +68,36 @@ struct tga_footer {
     char null;
 } __attribute__((packed));
 
+static int decompress_rle(uint8_t *data,
+        size_t size,
+        size_t pixel_size_bytes,
+        struct color *out) {
+    size_t offset = 0;
+    struct color pixel;
+
+    while (offset < size) {
+        uint8_t packet_header = data[offset++];
+
+        if (packet_header < 128) { // Raw pixel data
+            packet_header++;
+            for (int i = 0; i < packet_header; ++i) {
+                memcpy(&pixel, data + offset, pixel_size_bytes);
+                offset += pixel_size_bytes;
+                *out++ = pixel;
+            }
+        } else { // RLE packet
+            packet_header -= 127;
+            memcpy(&pixel, data + offset, pixel_size_bytes);
+            offset += pixel_size_bytes;
+            for (int i = 0; i < packet_header; ++i) {
+                *out++ = pixel;
+            }
+        }
+    }
+
+    return 0;
+}
+
 int load_tga_image(uint8_t const *data, struct image *image_out) {
     int retval = 0;
 
@@ -104,66 +117,69 @@ int load_tga_image(uint8_t const *data, struct image *image_out) {
     size_t image_size = header->width * header->height;
     size_t pixel_size_bytes = header->bpp / 8;
 
-    log_debug("image_size: %zu", image_size);
+    log_debug("image_size: %zu %zu", image_size, header->bpp);
 
-    image_out->pixels = calloc(image_size, sizeof(struct color));
+    image_out->pixels = sunset_calloc(image_size, sizeof(struct color));
     image_out->w = header->width;
     image_out->h = header->height;
 
-    if (image_out->pixels == NULL) {
-        retval = -ERROR_INVALID_FORMAT;
-        goto cleanup;
-    }
-
     uint8_t *pixels = (uint8_t *)(data + TGA_HEADER_SIZE);
 
-    if (data[2] == TGA_TYPE_RLE_RGB || data[2] == TGA_TYPE_RLE_GREY) {
-        struct color *color_map =
-                calloc(header->color_map_length, sizeof(struct color));
-        uint8_t const *color_map_data =
-                data + TGA_HEADER_SIZE + header->id_length;
+    ptrdiff_t footer_offset = strlen(TGA_MAGIC) + TGA_HEADER_SIZE
+            + header->id_length + image_size * pixel_size_bytes
+            + header->color_map_length * 2;
 
-        if ((retval = fill_color_map(color_map_data,
+    if (data[2] == TGA_TYPE_RLE_RGB || data[2] == TGA_TYPE_RLE_GREY) {
+        struct color *color_map = NULL;
+        if (header->color_map_length > 0) {
+            color_map = sunset_calloc(
+                    header->color_map_length, sizeof(struct color));
+
+            uint8_t const *color_map_data =
+                    data + TGA_HEADER_SIZE + header->id_length;
+
+            todo();
+
+            for (size_t i = 0; i < header->color_map_length; i++) {
+                color_map[i].r = color_map_data[i * pixel_size_bytes + 2];
+                color_map[i].g = color_map_data[i * pixel_size_bytes + 1];
+                color_map[i].b = color_map_data[i * pixel_size_bytes + 0];
+                color_map[i].a = pixel_size_bytes == 4
+                        ? color_map_data[i * pixel_size_bytes + 3]
+                        : 255;
+            }
+        }
+
+        if ((retval = decompress_rle(pixels,
+                     image_size * pixel_size_bytes,
                      pixel_size_bytes,
-                     header->color_map_length,
-                     color_map))
+                     image_out->pixels))
                 != 0) {
+            log_error("decompression");
             goto cleanup;
         }
 
-        if ((retval = decompress(pixels,
-                     image_size * pixel_size_bytes,
-                     pixel_size_bytes,
-                     header->image_type,
-                     image_out->pixels))
-                != 0) {
-            goto cleanup;
+        if (color_map) {
+            free(color_map);
         }
     } else {
         for (size_t i = 0; i < image_size; i++) {
-            image_out->pixels[i] = (struct color){
-                    pixels[i * pixel_size_bytes + 2],
-                    pixels[i * pixel_size_bytes + 1],
-                    pixels[i * pixel_size_bytes + 0],
-                    pixel_size_bytes == 4 ? pixels[i * pixel_size_bytes + 3]
-                                          : 255};
+            if (pixel_size_bytes == 2) {
+                image_out->pixels[i] =
+                        color_from_16bit(*(uint16_t *)&pixels[2 * i]);
+            } else {
+                unreachable();
+            }
         }
     }
 
-    log_debug("image: %p %d %d %d %d",
-            image_out->pixels,
-            image_out->pixels[0].r,
-            image_out->pixels[0].g,
-            image_out->pixels[0].b,
-            image_out->pixels[0].a);
+    struct tga_footer *footer = (struct tga_footer *)(data + footer_offset);
 
-    struct tga_footer *footer =
-            (struct tga_footer *)(data + TGA_HEADER_SIZE + image_size);
-
-    if (footer->dot != '.') {
-        retval = -ERROR_INVALID_FORMAT;
-        goto cleanup;
-    }
+    // if (footer->dot != '.') {
+    //     log_info("%d", footer->dot);
+    //     retval = -ERROR_INVALID_FORMAT;
+    //     goto cleanup;
+    // }
 
     log_debug("footer: %s", footer->signature);
 

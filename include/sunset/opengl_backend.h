@@ -1,9 +1,11 @@
+#include <GLFW/glfw3.h>
+#include <cglm/types.h>
+
 #include "sunset/commands.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
 #include "sunset/shader.h"
 #include "sunset/vector.h"
-#include <GLFW/glfw3.h>
 
 struct compiled_mesh {
     uint32_t id;
@@ -37,18 +39,19 @@ enum backend_program_type {
     NUM_BACKEND_PROGRAMS,
 };
 
-struct atlas_builder {
-};
-
 struct instancing_buffer {
     uint32_t mesh_id;
     vector(mat4) transforms;
-    vector(uint32_t) required_textures;
 };
 
 struct compiled_texture {
-    uint32_t id;
-    GLuint tex;
+    uint32_t atlas_id;
+    struct rect bounds;
+};
+
+struct atlas {
+    GLuint buffer;
+    size_t current_size;
 };
 
 struct compiled_font {
@@ -69,7 +72,9 @@ struct render_context {
     struct frame_cache frame_cache;
     struct program backend_programs[NUM_BACKEND_PROGRAMS];
     vector(struct compiled_mesh) meshes;
-    vector(GLuint) textures;
+    vector(struct compiled_texture) textures;
+    vector(struct atlas) atlases;
+    GLuint texture_atlas;
 
     struct command_buffer command_buffer;
 };

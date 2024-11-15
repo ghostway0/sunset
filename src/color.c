@@ -1,8 +1,21 @@
+#include <stdint.h>
 #include <stdio.h>
 
 #include "sunset/color.h"
 
 struct color color_from_rgb(uint8_t r, uint8_t g, uint8_t b) {
+    return (struct color){r, g, b, 255};
+}
+
+struct color color_from_16bit(uint16_t color) {
+    uint8_t r = (color >> 11) & 0x1F;
+    uint8_t g = (color >> 5) & 0x3F;
+    uint8_t b = color & 0x1F;
+
+    r = (r << 3) | (r >> 2);
+    g = (g << 2) | (g >> 4);
+    b = (b << 3) | (b >> 2);
+
     return (struct color){r, g, b, 255};
 }
 

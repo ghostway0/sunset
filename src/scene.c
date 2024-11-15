@@ -3,7 +3,6 @@
 
 #include "cglm/affine.h"
 #include "cglm/types.h"
-#include "log.h"
 #include "sunset/commands.h"
 #include "sunset/scene.h"
 #include "sunset/utils.h"
@@ -20,7 +19,7 @@ static bool should_split(struct oct_tree *tree, struct oct_node *node) {
 
 static void *split(struct oct_tree *, void *data, struct box bounds) {
     struct chunk *chunk = (struct chunk *)data;
-    struct chunk *new_chunk = malloc(sizeof(struct chunk));
+    struct chunk *new_chunk = sunset_malloc(sizeof(struct chunk));
 
     *new_chunk = *chunk;
     new_chunk->bounds = bounds;
@@ -132,7 +131,8 @@ void object_scale_velocity(struct object *object, float factor) {
 }
 
 void object_add_velocity(struct object *object, vec3 acceleration) {
-    glm_vec3_add(object->physics.velocity, acceleration, object->physics.velocity);
+    glm_vec3_add(
+            object->physics.velocity, acceleration, object->physics.velocity);
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_add_velocity(object->children[i], acceleration);

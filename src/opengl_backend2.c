@@ -7,6 +7,7 @@
 #include <cglm/types.h>
 #include <log.h>
 
+#include "sunset/bitmap.h"
 #include "sunset/commands.h"
 #include "sunset/config.h"
 #include "sunset/errors.h"
@@ -63,6 +64,8 @@ char const *textured_fragment_shader_source =
 char const *instanced_vertex_shader_source =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
+        "layout (location = 1) in vec2 aTexCoords;\n"
+        "out vec2 TexCoords;\n"
         "uniform mat4 transforms[128];\n"
         "uniform mat4 view;\n"
         "uniform mat4 projection;\n"
@@ -70,6 +73,7 @@ char const *instanced_vertex_shader_source =
         "    mat4 transform = transforms[gl_InstanceID];\n"
         "    gl_Position = projection * view * transform * vec4(aPos, "
         "1.0);\n"
+        "    TexCoords = aTexCoords;\n"
         "}\n";
 
 char const *text_vertex_shader_source =
@@ -196,67 +200,6 @@ uint32_t backend_register_mesh(
     return vector_size(context->meshes) - 1;
 }
 
-/*
- * Commands:
-    COMMAND_NOP,
-    COMMAND_LINE,
-    COMMAND_RECT,
-    COMMAND_FILLED_RECT,
-    COMMAND_ARC,
-    COMMAND_FILLED_ARC,
-    COMMAND_TEXT,
-    COMMAND_IMAGE, (where; tiled?)
-    COMMAND_MESH,  (instanced, mesh_id, texture_id)
-    COMMAND_CUSTOM (struct program)
-
-enum backend_program_type {
-    PROGRAM_DRAW_INSTANCED_MESH,
-    PROGRAM_DRAW_MESH,
-    PROGRAM_DRAW_DIRECT_LIGHT,
-    NUM_BACKEND_PROGRAMS,
-};
-
-struct render_context {
-    ...
-
-    struct program backend_programs[NUM_BACKEND_PROGRAMS];
-    vector(struct compiled_mesh) meshes;
-    vector(struct compiled_texture) textures;
-};
-
- * struct instancing_buffer {
- *     uint32_t mesh_id;
- *     vector(mat4) transforms;
- *     vector(uint32_t) required_textures;
- *     GLuint textures_buffer;
- *     GLuint transforms_buffer;
- * }
- *
- * struct frame_cache {
- *    struct instancing_buffer *current_instancing_buffer;
- *    // mesh_id->instancing_buffer
- *    map(struct instancing_buffer) instancing_buffers;
- * }
- *
- * command mesh pseudo-code (instanced, mesh_id, texture_id, transform):
- *   if current_instancing_buffer:
- *     if current_instancing_buffer.mesh_id != mesh_id:
- *       upload_instancing_buffer(current_instancing_buffer);
- *       use_program(context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH]);
- *       draw instanced
- *       resetup
- *     append transform to transform buffer
- *     (?) append texture to texture buffer
- *   elif not instanced:
- *     current_instancing_buffer = NULL;
- *     draw immediately:
- *     use_program(context->backend_programs[PROGRAM_DRAW_MESH]);
- *   else:
- *     if not cache . instance_cache:
- *       allocate in instancing cache (a small transform buffer)
- *     current_instancing_buffer = &cache . instancing_buffers[mesh_id]
- * */
-
 static int setup_default_shaders(struct render_context *context) {
     struct program program;
     if (backend_create_program(&program)) {
@@ -339,7 +282,6 @@ int backend_setup(struct render_context *context, struct render_config config) {
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     char const *title = "Sunset";
     if (config.window_title) {
@@ -382,20 +324,55 @@ failure:
     return retval;
 }
 
-static GLuint compile_texture(struct image const *texture) {
-    GLuint tex;
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
+// static struct rect get_atlas_region(
+//         struct atlas *atlas, size_t width, size_t height) {
+//     // resize to the max of w and h
+//
+//     // return offset into atlas
+// }
+//
+// int compile_texture_into(struct image const *texture, struct atlas *atlas) {
+//     ptrdiff_t offset = get_atlas_region(atlas, texture->h, texture->w);
+//
+//     // write into atlas at offset
+//
+// }
 
+int backend_register_texture(
+        struct render_context *context, struct image const *texture) {
+    unused(context);
+    unused(texture);
+
+    todo();
+}
+
+/// first_id_out gets set the id of the first texture that has been registered
+/// in this atlas. the ids are guaranteed to be in-order.
+int backend_register_texture_atlas(struct render_context *context,
+        struct image const *atlas_image,
+        struct rect *bounds,
+        size_t num_textures,
+        uint32_t *first_id_out) {
+    if (vector_size(context->textures) >= (uint32_t)-1) {
+        return ERROR_BACKEND_UNKNOWN;
+    }
+
+    // TODO: check for opengl errors
+
+    GLuint atlas;
+    glGenTextures(1, &atlas);
+    glBindTexture(GL_TEXTURE_2D, atlas);
+
+    // TODO: support non-rgba images
     glTexImage2D(GL_TEXTURE_2D,
             0,
             GL_RGBA,
-            texture->w,
-            texture->h,
+            atlas_image->w,
+            atlas_image->h,
             0,
             GL_RGBA,
             GL_UNSIGNED_BYTE,
-            texture->pixels);
+            atlas_image->pixels);
 
     GLint swizzleMask[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
     glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
@@ -407,54 +384,56 @@ static GLuint compile_texture(struct image const *texture) {
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    return tex;
-}
+    vector_append(context->atlases, (struct atlas){.buffer = atlas});
 
+    uint32_t atlas_id = vector_size(context->atlases) - 1;
+    *first_id_out = vector_size(context->textures);
 
-int backend_register_texture(
-        struct render_context *context, struct image const *texture) {
-    GLuint tex;
-    if ((tex = compile_texture(texture)) == 0) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
+    for (size_t i = 0; i < num_textures; i++) {
+        struct compiled_texture compiled = {
+                .atlas_id = atlas_id,
+                .bounds = bounds[i],
+        };
+
+        vector_append(context->textures, compiled);
     }
 
-    vector_append(context->textures, tex);
+    return 0;
+}
 
-    return vector_size(context->textures) - 1;
+GLint compile_texture(struct image const *atlas_image) {
+    GLuint atlas;
+    glGenTextures(1, &atlas);
+    glBindTexture(GL_TEXTURE_2D, atlas);
+
+    // TODO: support non-rgba images
+    glTexImage2D(GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            atlas_image->w,
+            atlas_image->h,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            atlas_image->pixels);
+
+    GLint swizzleMask[] = {GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA};
+    glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return atlas;
 }
 
 void backend_set_user_context(
         struct render_context *context, void *user_context) {
     glfwSetWindowUserPointer(context->window, user_context);
 }
-
-/*
- * command mesh pseudo-code (instanced, mesh_id, texture_id, transform):
- *   if current_instancing_buffer:
- *     if current_instancing_buffer.mesh_id != mesh_id:
- *       upload_instancing_buffer(current_instancing_buffer);
- *       use_program(context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH]);
- *       draw instanced
- *       resetup
- *     append transform to transform buffer
- *     (?) append texture to texture buffer
- *   elif not instanced:
- *     current_instancing_buffer = NULL;
- *     draw immediately:
- *     use_program(context->backend_programs[PROGRAM_DRAW_MESH]);
- *   else:
- *     if not cache . instance_cache:
- *       allocate in instancing cache (a small transform buffer)
- *     current_instancing_buffer = &cache . instancing_buffers[mesh_id]
- * */
-
-// static int upload_instancing_buffer(struct instancing_buffer *buffer, struct
-// program *program) {
-//     unused(buffer);
-//     unused(program);
-//
-//     return 0;
-// }
 
 static void use_program(struct program program) {
     glUseProgram((GLuint)program.handle);
@@ -541,12 +520,7 @@ static int upload_instancing_buffer(
 static void draw_instanced_mesh(struct render_context *context,
         uint32_t mesh_id,
         mat4 const *transforms,
-        size_t num_transforms,
-        uint32_t const *required_textures,
-        size_t num_required_textures) {
-    unused(required_textures);
-    unused(num_required_textures);
-
+        size_t num_transforms) {
     const struct compiled_mesh *mesh = &context->meshes[mesh_id];
     struct program program =
             context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH];
@@ -585,20 +559,12 @@ static uint64_t instancing_buffer_mesh_id(struct instancing_buffer *buffer) {
 static void instancing_buffer_flush(
         struct render_context *context, struct instancing_buffer *buffer) {
     vector(mat4) transforms = buffer->transforms;
-    vector(uint32_t) required_textures = buffer->required_textures;
-
-    GLuint atlas_buffer;
 
     // draw instanced
-    draw_instanced_mesh(context,
-            buffer->mesh_id,
-            transforms,
-            vector_size(transforms),
-            required_textures,
-            vector_size(required_textures));
+    draw_instanced_mesh(
+            context, buffer->mesh_id, transforms, vector_size(transforms));
 
     vector_clear(transforms);
-    vector_clear(required_textures);
 }
 
 static int run_mesh_command(
@@ -632,7 +598,6 @@ static int run_mesh_command(
             struct instancing_buffer buffer;
             buffer.mesh_id = command.mesh_id;
             vector_init(buffer.transforms, mat4);
-            vector_init(buffer.required_textures, uint32_t);
 
             map_insert(cache->instancing_buffers,
                     buffer,
@@ -795,7 +760,6 @@ void backend_draw(struct render_context *context,
                 break;
             case COMMAND_SET_ZINDEX:
                 size_t zindex = command.data.set_zindex.zindex;
-                // TODO: emulate z-index in opengl
                 float depth_offset = zindex * 0.1;
                 glDepthRange(0.0 + depth_offset, 1.0 - depth_offset);
 

@@ -83,6 +83,7 @@ sunset_lib = static_library(
 
 sunset_dep = declare_dependency(
   link_with: sunset_lib,
+  include_directories: [sunset_inc],
 )
 
 executable(

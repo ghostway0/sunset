@@ -141,7 +141,8 @@ static void fix_combined_velocities(struct object *a, struct object *b) {
     vec3 collision_normal;
     glm_vec3_dot(a_attr->velocity, b_attr->velocity) > 0
             ? glm_vec3_sub(b_attr->velocity, a_attr->velocity, collision_normal)
-            : glm_vec3_sub(a_attr->velocity, b_attr->velocity, collision_normal);
+            : glm_vec3_sub(
+                      a_attr->velocity, b_attr->velocity, collision_normal);
     glm_vec3_normalize(collision_normal);
 
     if (a_attr->should_fix && b_attr->should_fix) {

@@ -7,6 +7,7 @@
 #include "sunset/color.h"
 #include "sunset/errors.h"
 #include "sunset/geometry.h"
+#include "sunset/utils.h"
 
 #include "sunset/fonts.h"
 
@@ -39,7 +40,7 @@ struct psf2_header {
 
 static void flip_image(struct image *image) {
     struct color *flipped_pixels =
-            malloc(image->w * image->h * sizeof(struct color));
+            sunset_malloc(image->w * image->h * sizeof(struct color));
 
     for (size_t y = 0; y < image->h; y++) {
         for (size_t x = 0; x < image->w; x++) {
@@ -54,15 +55,15 @@ static void flip_image(struct image *image) {
 
 static int load_glyphs(
         FILE *file, struct psf2_header const *header, struct font *font_out) {
-    uint8_t *bitmap = malloc(header->height * header->width);
+    uint8_t *bitmap = sunset_malloc(header->height * header->width);
     uint8_t row_size = (header->width + 7) / 8;
 
     for (size_t i = 0; i < font_out->num_glyphs; ++i) {
         font_out->glyph_map[i] = i;
         font_out->glyphs[i].image.w = header->width;
         font_out->glyphs[i].image.h = header->height;
-        font_out->glyphs[i].image.pixels =
-                calloc(header->width * header->height, sizeof(struct color));
+        font_out->glyphs[i].image.pixels = sunset_calloc(
+                header->width * header->height, sizeof(struct color));
 
         font_out->glyphs[i].bounds = (struct rect){
                 .x = 0,
@@ -142,8 +143,9 @@ int load_font_psf2(char const *path, struct font *font_out) {
     }
 
     font_out->num_glyphs = header.length;
-    font_out->glyphs = malloc(sizeof(struct glyph) * font_out->num_glyphs);
-    font_out->glyph_map = calloc(0x10FFFF, sizeof(uint32_t));
+    font_out->glyphs =
+            sunset_malloc(sizeof(struct glyph) * font_out->num_glyphs);
+    font_out->glyph_map = sunset_calloc(0x10FFFF, sizeof(uint32_t));
 
     if ((retval = load_glyphs(file, &header, font_out))) {
         goto cleanup;

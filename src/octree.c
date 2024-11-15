@@ -4,6 +4,7 @@
 
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
+#include "sunset/utils.h"
 
 // split node into 8 octants recursively
 static void split_node(struct oct_tree *tree, struct oct_node *node) {
@@ -16,7 +17,7 @@ static void split_node(struct oct_tree *tree, struct oct_node *node) {
 
     for (size_t i = 0; i < 8; ++i) {
         struct box bounds = box_subdivide_i(node->bounds, i, 8);
-        node->children[i] = malloc(sizeof(struct oct_node));
+        node->children[i] = sunset_malloc(sizeof(struct oct_node));
 
         void *data = tree->split_i(tree, node->data, bounds);
 
@@ -50,7 +51,7 @@ void oct_tree_create(size_t max_depth,
     tree_out->split_i = split;
     tree_out->destroy_data = destroy_data;
 
-    tree_out->root = malloc(sizeof(struct oct_node));
+    tree_out->root = sunset_malloc(sizeof(struct oct_node));
     oct_node_init(tree_out->root, 0, node_data, NULL, root_bounds);
 
     if (tree_out->should_split(tree_out, tree_out->root)) {

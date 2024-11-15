@@ -15,9 +15,11 @@ struct color {
 
 struct color color_from_rgb(uint8_t r, uint8_t g, uint8_t b);
 
-struct color color_from_hex(char const *hex_str);
+struct color color_from_16bit(uint16_t color);
 
 struct color color_from_grayscale(uint8_t value);
+
+struct color color_from_hex(char const *hex_str);
 
 bool colors_equal(struct color a, struct color b);
 
