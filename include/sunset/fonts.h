@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "sunset/geometry.h"
+#include "sunset/images.h"
 
 struct glyph {
     struct image image;

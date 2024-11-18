@@ -4,12 +4,12 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
-#include "cglm/util.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/physics.h"
 #include "sunset/scene.h"
 #include "sunset/vector.h"
+#include "sunset/map.h"
 
 void physics_init(struct physics *physics) {
     vector_init(physics->objects);
@@ -275,6 +275,9 @@ void physics_step(struct physics const *physics,
                 continue;
             }
 
+            // TODO: somehow filter out collisions of objects that
+            // have constraints between them.
+
             if (box_collide(&path_box, &other->bounding_box)) {
                 struct event event = {
                         .type_id = SYSTEM_EVENT_COLLISION,
@@ -308,11 +311,11 @@ void physics_step(struct physics const *physics,
                 glm_vec3_scale(mtv, scale, mtv);
 
                 if (other->physics.should_fix) {
-                    object_move(other, mtv);
+                    object_move_with_parent(other, mtv);
                 }
 
                 if (object->physics.should_fix) {
-                    object_move(object, mtv);
+                    object_move_with_parent(object, mtv);
                 }
             }
 
@@ -322,7 +325,7 @@ void physics_step(struct physics const *physics,
         }
 
         if (!found_collision) {
-            object_move(object, velocity_scaled);
+            object_move_with_parent(object, velocity_scaled);
         }
     }
 }

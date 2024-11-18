@@ -45,14 +45,6 @@ struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n);
 
 bool position_within_rect(vec3 position, struct rect rect);
 
-struct image {
-    size_t w;
-    size_t h;
-    struct color *pixels;
-};
-
-void image_deinit(struct image *image);
-
 struct box {
     vec3 min;
     vec3 max;
@@ -62,18 +54,11 @@ void box_translate(struct box *box, vec3 translation);
 
 bool box_collide(struct box const *a, struct box const *b);
 
-struct texture {
-    struct image image;
-    vec2 *coords;
-    size_t num_coords;
-};
-
-struct material {
-    struct texture *textures;
-    size_t num_textures;
-    struct program *effects;
-    size_t num_effects;
-};
+// struct material {
+//     size_t num_textures;
+//     struct program *effects;
+//     size_t num_effects;
+// };
 
 struct mesh {
     float *vertices;
@@ -85,12 +70,8 @@ struct mesh {
 struct mesh_instance {
     struct mesh *mesh;
     mat4 transform;
-    struct material material;
+    // struct material material;
 };
-
-void show_image_grayscale(struct image const *image);
-
-void show_image_grayscale_at(struct image const *image, struct point pos);
 
 struct box box_subdivide_i(struct box box, size_t i, size_t n);
 

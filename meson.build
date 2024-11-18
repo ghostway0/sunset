@@ -56,14 +56,14 @@ sunset_files = [
   'src/physics.c',
   'src/gltf.c',
   'src/quadtree.c',
-  'src/byte_stream.c',
   'src/shader.c',
   'src/base64.c',
   'src/backend.c',
   'src/octree.c',
   'src/commands.c',
-  'src/ecs.c',
   'src/tga.c',
+  'src/vfs.c',
+  'src/images.c',
   'src/utils.c',
 ]
 

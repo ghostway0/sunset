@@ -49,6 +49,8 @@ struct controller {
     };
 };
 
+typedef void (*move_callback)(struct object *, vec3 direction);
+
 struct object {
     struct physics_object physics;
     struct box bounding_box;
@@ -61,12 +63,17 @@ struct object {
 
     char const *label;
 
+    void *data;
+    move_callback move_callback;
+
     struct object *parent;
     struct object **children;
     size_t num_children;
 };
 
 void object_move(struct object *object, vec3 direction);
+
+void object_move_with_parent(struct object *object, vec3 direction);
 
 void object_rotate(struct object *object, vec3 rotation);
 

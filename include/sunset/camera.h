@@ -43,7 +43,9 @@ void camera_rotate_absolute(
 
 void camera_rotate_scaled(struct camera *camera, float x_angle, float y_angle);
 
-void camera_move(struct camera *camera, vec3 direction);
+void camera_move_absolute(struct camera *camera, vec3 direction);
+
+void camera_move_scaled(struct camera *camera, vec3 direction);
 
 void camera_recalculate_vectors(struct camera *camera);
 

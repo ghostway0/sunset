@@ -81,13 +81,26 @@ void scene_destroy(struct scene *scene) {
     vector_free(scene->cameras);
 }
 
+void object_move_with_parent(struct object *object, vec3 direction) {
+    object_move(object, direction);
+
+    // FIXME: consistency
+    if (object->parent) {
+        object_move(object->parent, direction);
+    }
+}
+
 void object_move(struct object *object, vec3 direction) {
     glm_vec3_add(
             object->transform.position, direction, object->transform.position);
-    box_translate(&object->bounding_box, direction);
+    box_translate(&object->bounding_box, direction); // FIXME: this is not the same as the camera
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_move(object->children[i], direction);
+    }
+
+    if (object->move_callback) {
+        object->move_callback(object, direction);
     }
 }
 
@@ -168,7 +181,8 @@ static int render_object(
     mat4 model_matrix;
     object_calculate_model_matrix(object, model_matrix);
 
-    command_buffer_add_mesh(command_buffer, object->mesh_id, object->texture_id, model_matrix);
+    command_buffer_add_mesh(
+            command_buffer, object->mesh_id, object->texture_id, model_matrix);
 
     return 0;
 }
@@ -201,7 +215,7 @@ int scene_render(struct scene *scene, struct render_context *render_context) {
 
 void scene_move_camera(
         struct scene *scene, size_t camera_index, vec3 direction) {
-    camera_move(&scene->cameras[camera_index], direction);
+    camera_move_absolute(&scene->cameras[camera_index], direction);
 }
 
 void scene_rotate_camera(struct scene *scene,

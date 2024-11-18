@@ -2,13 +2,11 @@
 
 #include <cglm/cam.h>
 #include <cglm/vec3.h>
+#include <cglm/quat.h>
+#include <cglm/types.h>
 
-#include "cglm/quat.h"
-#include "cglm/types.h"
-#include "log.h"
 #include "sunset/camera.h"
 #include "sunset/math.h"
-#include "sunset/utils.h"
 
 // world->camera transformation matrix
 static void calculate_view_matrix(struct camera *camera, mat4 dest) {
@@ -110,13 +108,17 @@ void camera_vec_to_world(struct camera *camera, vec3 direction) {
     glm_vec3_rotate(direction, camera->pitch, camera->right);
 }
 
-void camera_move(struct camera *camera, vec3 direction) {
-    glm_vec3_scale(direction, camera->speed, direction);
+void camera_move_absolute(struct camera *camera, vec3 direction) {
     camera_vec_to_world(camera, direction);
 
     glm_vec3_add(camera->position, direction, camera->position);
 
     calculate_view_matrix(camera, camera->view_matrix);
+}
+
+void camera_move_scaled(struct camera *camera, vec3 direction) {
+    glm_vec3_scale(direction, camera->speed, direction);
+    camera_move_absolute(camera, direction);
 }
 
 void camera_recalculate_vectors(struct camera *camera) {

@@ -10,23 +10,24 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cglm/mat4.h>
-#include <cglm/util.h>
 #include <log.h>
 #include <sys/mman.h>
 
 #include "sunset/backend.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
+#include "sunset/errors.h"
 #include "sunset/events.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
+#include "sunset/images.h"
 #include "sunset/math.h"
 #include "sunset/physics.h"
 #include "sunset/render.h"
 #include "sunset/scene.h"
-#include "sunset/tga.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
+#include "sunset/vfs.h"
 
 void context_init(struct context *context,
         struct command_buffer_options command_buffer_options,
@@ -51,8 +52,7 @@ struct mesh create_test_mesh() {
     struct mesh test_mesh;
 
     test_mesh.num_vertices = 3;
-    test_mesh.vertices =
-            malloc(test_mesh.num_vertices * 5 * sizeof(float));
+    test_mesh.vertices = malloc(test_mesh.num_vertices * 5 * sizeof(float));
 
     // clang-format off
     float vertices[] = {
@@ -78,15 +78,15 @@ struct mesh create_test_mesh() {
 void create_test_ground_mesh(struct mesh *mesh) {
     // just a plane
     mesh->num_vertices = 4;
-    mesh->vertices = malloc(mesh->num_vertices * 5 * sizeof(float));
+    mesh->vertices = sunset_calloc(mesh->num_vertices, 5 * sizeof(float));
 
     // clang-format off
     float vertices[] = {
         // positions            // texture coords
         -100.0f, 0.0f, -100.0f,  1.0f, 1.0f,  // vertex 0
         -100.0f, 0.0f,  100.0f,  1.0f, 0.0f,  // vertex 1
+         100.0f, 0.0f, -100.0f,  0.0f, 1.0f,   // vertex 3
          100.0f, 0.0f,  100.0f,  0.0f, 0.0f,  // vertex 2
-         100.0f, 0.0f, -100.0f,  0.0f, 1.0f   // vertex 3
     };
     // clang-format on
 
@@ -129,6 +129,18 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     context->mouse.y = ypos;
 }
 
+struct camera_object {
+    size_t camera_idx;
+    struct scene *scene;
+};
+
+void camera_move_callback(struct object *object, vec3 direction) {
+    struct camera_object *camera_object = (struct camera_object *)object->data;
+
+    scene_move_camera(
+            camera_object->scene, camera_object->camera_idx, direction);
+}
+
 int main() {
     int retval = 0;
 
@@ -143,20 +155,8 @@ int main() {
         return -1;
     }
 
-    FILE *f = fopen("./utc16.tga", "r");
-
-    fseek(f, 0, SEEK_END);
-    size_t file_size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    void *data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fileno(f), 0);
-    if (data == MAP_FAILED) {
-        perror("mmap");
-        return 2;
-    }
-
     struct image image;
-    if ((retval = load_tga_image(data, &image))) {
+    if ((retval = load_image_file("./utc16.tga", &image))) {
         return retval;
     }
 
@@ -171,7 +171,6 @@ int main() {
     backend_register_texture_atlas(
             &render_context, &image, &bounds, 1, &texture_id);
 
-    munmap(data, file_size);
     image_deinit(&image);
 
     camera_init(
@@ -185,7 +184,7 @@ int main() {
             (struct camera_options){
                     .fov = glm_rad(45.0f),
                     .sensitivity = 0.01f,
-                    .speed = 0.1f,
+                    .speed = 1.0f,
                     .aspect_ratio = 1920.0 / 1080.0,
             },
             &camera);
@@ -235,6 +234,86 @@ int main() {
     };
 
     box_translate(&object.bounding_box, object.transform.position);
+
+    struct object player = {
+            .physics =
+                    (struct physics_object){
+                            .velocity = {0.0f, 0.0f, 0.0f},
+                            .acceleration = {0.0f, 0.0f, 0.0f},
+                            .mass = 1.0f,
+                            .damping = 0.0f,
+                            .should_fix = true,
+                            .material = {.restitution = 0.9},
+                    },
+            .bounding_box =
+                    (struct box){
+                            {-0.5f, 0.0f, 0.0f},
+                            {0.5f, 1.0f, 0.01f},
+                    },
+            .transform =
+                    (struct transform){
+                            .position = {0.0f, 0.0f, 0.0f},
+                            .rotation = {0.0f, 0.0f, 0.0f},
+                            .scale = 1.0f,
+                    },
+            .mesh_id = triangle_mesh_id,
+            .texture_id = texture_id,
+
+            .materials = NULL,
+            .num_materials = 0,
+            .controller = {},
+            .parent = NULL,
+            .children = NULL,
+            .num_children = 0,
+            .label = "player",
+    };
+
+    struct camera_object camera_object_data = {
+            .camera_idx = 0,
+            .scene = &scene,
+    };
+
+    struct object camera_object = {
+            .physics =
+                    (struct physics_object){
+                            .velocity = {0.0f, 0.0f, 0.0f},
+                            .acceleration = {0.0f, 0.0f, 0.0f},
+                            .mass = 1.0f,
+                            .damping = 0.0f,
+                            .should_fix = false,
+                            .material = {.restitution = 0.9},
+                    },
+            .bounding_box =
+                    (struct box){
+                            {-0.5f, 0.0f, 0.0f},
+                            {0.5f, 1.0f, 0.01f},
+                    },
+            .transform =
+                    (struct transform){
+                            .position = {0.0f, 0.0f, 0.0f},
+                            .rotation = {0.0f, 0.0f, 0.0f},
+                            .scale = 1.0f,
+                    },
+            .mesh_id = triangle_mesh_id,
+            .texture_id = texture_id,
+
+            .materials = NULL,
+            .num_materials = 0,
+            .controller = {},
+            .parent = &player,
+            .children = NULL,
+            .num_children = 0,
+            .data = &camera_object_data,
+            .move_callback = camera_move_callback,
+            .label = "camera",
+    };
+
+    box_translate(&player.bounding_box, player.transform.position);
+    box_translate(&player.bounding_box, camera_object.transform.position);
+
+    player.children = malloc(sizeof(struct object *));
+    player.children[0] = &camera_object;
+    player.num_children = 1;
 
     struct object object2 = {
             .physics =
@@ -353,6 +432,8 @@ int main() {
     physics_add_object(&physics, &object);
     physics_add_object(&physics, &object2);
     physics_add_object(&physics, &ground_object);
+    physics_add_object(&physics, &player);
+    physics_add_constraint(&physics, &player, &camera_object, 10.0f);
 
     struct event_queue event_queue;
     event_queue_init(&event_queue);
@@ -387,19 +468,19 @@ int main() {
         struct timespec frame_start = get_time();
 
         if (glfwGetKey(render_context.window, GLFW_KEY_W) == GLFW_PRESS) {
-            scene_move_camera(&scene, 0, (vec3){0.0f, 0.0f, -1.0f});
+            object_move(&player, (vec3){0.0, 0.0, -1.0});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_S) == GLFW_PRESS) {
-            scene_move_camera(&scene, 0, (vec3){0.0f, 0.0f, 1.0f});
+            object_move(&player, (vec3){0.0, 0.0, 1.0});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_A) == GLFW_PRESS) {
-            scene_move_camera(&scene, 0, (vec3){-1.0f, 0.0f, 0.0f});
+            object_move(&player, (vec3){-1.0, 0.0, 0.0});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_D) == GLFW_PRESS) {
-            scene_move_camera(&scene, 0, (vec3){1.0f, 0.0f, 0.0f});
+            object_move(&player, (vec3){1.0, 0.0, 0.0});
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {

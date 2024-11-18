@@ -1,13 +1,13 @@
 #pragma once
 
 #include <stdint.h>
-#include <string.h>
 
 #include <cglm/types.h>
 
-#include "color.h"
-#include "geometry.h"
-#include "ring_buffer.h"
+#include "sunset/color.h"
+#include "sunset/geometry.h"
+#include "sunset/ring_buffer.h"
+#include "sunset/images.h"
 
 enum command_type : uint8_t {
     COMMAND_NOP,

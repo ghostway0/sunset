@@ -1,5 +1,7 @@
-#include "sunset/commands.h"
+#include <string.h>
+
 #include "cglm/mat4.h"
+#include "sunset/commands.h"
 
 void command_nop_init(struct command *command) {
     command->type = COMMAND_NOP;

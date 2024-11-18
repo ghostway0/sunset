@@ -308,6 +308,8 @@ int backend_setup(struct render_context *context, struct render_config config) {
 
     glfwMakeContextCurrent(context->window);
 
+    glfwSwapInterval(1);
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 
@@ -750,15 +752,6 @@ static int run_text_command(
 
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
-
-    return 0;
-}
-
-[[maybe_unused]]
-int backend_regsiter_texture(
-        struct render_context *context, struct texture const *texture) {
-    unused(context);
-    unused(texture);
 
     return 0;
 }
