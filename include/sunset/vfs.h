@@ -2,14 +2,17 @@
 
 #include <stddef.h>
 
-#include <fcntl.h>
-#include <sys/fcntl.h>
-#include <sys/mman.h>
-#include <unistd.h>
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 
 struct vfs_file {
     int fd;
 };
+
+#else
+
+#error "unsupported system"
+
+#endif
 
 enum vfs_open_mode {
     VFS_OPEN_MODE_WRITE = 1 << 0,

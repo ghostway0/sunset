@@ -16,7 +16,6 @@
 #include "sunset/backend.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
-#include "sunset/errors.h"
 #include "sunset/events.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
@@ -27,7 +26,6 @@
 #include "sunset/scene.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
-#include "sunset/vfs.h"
 
 void context_init(struct context *context,
         struct command_buffer_options command_buffer_options,
@@ -75,31 +73,34 @@ struct mesh create_test_mesh() {
     return test_mesh;
 }
 
-void create_test_ground_mesh(struct mesh *mesh) {
-    // just a plane
-    mesh->num_vertices = 4;
-    mesh->vertices = sunset_calloc(mesh->num_vertices, 5 * sizeof(float));
+void create_test_ground_mesh(struct mesh *mesh_out) {
+  mesh_out->num_vertices = 4;
+  mesh_out->vertices =
+      malloc(mesh_out->num_vertices * 5 * sizeof(float));
 
-    // clang-format off
-    float vertices[] = {
-        // positions            // texture coords
-        -100.0f, 0.0f, -100.0f,  1.0f, 1.0f,  // vertex 0
-        -100.0f, 0.0f,  100.0f,  1.0f, 0.0f,  // vertex 1
-         100.0f, 0.0f, -100.0f,  0.0f, 1.0f,   // vertex 3
-         100.0f, 0.0f,  100.0f,  0.0f, 0.0f,  // vertex 2
-    };
-    // clang-format on
+  // clang-format off
+  float vertices[] = {
+      // positions         // texture coords
+       50.0f, -0.5f,  50.0f,   1.0f, 1.0f, // top right
+       50.0f, -0.5f, -50.0f,   1.0f, 0.0f, // bottom right
+      -50.0f, -0.5f, -50.0f,   0.0f, 0.0f, // bottom left
+      -50.0f, -0.5f,  50.0f,   0.0f, 1.0f, // top left 
+  };
+  // clang-format on
 
-    memcpy(mesh->vertices, vertices, sizeof(vertices));
+  memcpy(mesh_out->vertices, vertices, sizeof(vertices));
 
-    mesh->num_indices = 6;
-    mesh->indices = (uint32_t *)malloc(mesh->num_indices * sizeof(uint32_t));
-    mesh->indices[0] = 0;
-    mesh->indices[1] = 1;
-    mesh->indices[2] = 2;
-    mesh->indices[3] = 2;
-    mesh->indices[4] = 3;
-    mesh->indices[5] = 0;
+  mesh_out->num_indices = 6;
+  mesh_out->indices =
+      (uint32_t *)malloc(mesh_out->num_indices * sizeof(uint32_t));
+  // first triangle
+  mesh_out->indices[0] = 0;
+  mesh_out->indices[1] = 1;
+  mesh_out->indices[2] = 3;
+  // second triangle
+  mesh_out->indices[3] = 1;
+  mesh_out->indices[4] = 2;
+  mesh_out->indices[5] = 3;
 }
 
 static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
@@ -468,19 +469,28 @@ int main() {
         struct timespec frame_start = get_time();
 
         if (glfwGetKey(render_context.window, GLFW_KEY_W) == GLFW_PRESS) {
-            object_move(&player, (vec3){0.0, 0.0, -1.0});
+            vec3 direction = {0.0, 0.0, -1.0};
+            // TODO: find a way to abstract this away (controllers?)
+            camera_vec_to_world(&scene.cameras[0], direction);
+            object_move(&player, direction);
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_S) == GLFW_PRESS) {
-            object_move(&player, (vec3){0.0, 0.0, 1.0});
+            vec3 direction = {0.0, 0.0, 1.0};
+            camera_vec_to_world(&scene.cameras[0], direction);
+            object_move(&player, direction);
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_A) == GLFW_PRESS) {
-            object_move(&player, (vec3){-1.0, 0.0, 0.0});
+            vec3 direction = {-1.0, 0.0, 0.0};
+            camera_vec_to_world(&scene.cameras[0], direction);
+            object_move(&player, direction);
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_D) == GLFW_PRESS) {
-            object_move(&player, (vec3){1.0, 0.0, 0.0});
+            vec3 direction = {1.0, 0.0, 0.0};
+            camera_vec_to_world(&scene.cameras[0], direction);
+            object_move(&player, direction);
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {

@@ -62,7 +62,7 @@ sunset_files = [
   'src/octree.c',
   'src/commands.c',
   'src/tga.c',
-  'src/vfs.c',
+  'src/filesystem.c',
   'src/images.c',
   'src/utils.c',
 ]

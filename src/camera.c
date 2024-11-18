@@ -109,8 +109,6 @@ void camera_vec_to_world(struct camera *camera, vec3 direction) {
 }
 
 void camera_move_absolute(struct camera *camera, vec3 direction) {
-    camera_vec_to_world(camera, direction);
-
     glm_vec3_add(camera->position, direction, camera->position);
 
     calculate_view_matrix(camera, camera->view_matrix);

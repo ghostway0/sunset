@@ -1,4 +1,9 @@
 #include <string.h>
+#include <stddef.h>
+#include <fcntl.h>
+#include <sys/fcntl.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #include "sunset/errors.h"
 #include "sunset/vfs.h"
@@ -83,7 +88,6 @@ int vfs_file_write(struct vfs_file *file, void const *buf, size_t count) {
     ssize_t bytes_written = write(file->fd, buf, count);
 
     if (bytes_written == -1) {
-        error_print("vfs_write", ERROR_IO);
         return -ERROR_IO;
     }
 
@@ -106,11 +110,4 @@ int vfs_map_file(struct vfs_file *file,
 
     *addr_out = addr;
     return 0;
-}
-
-char const *get_filename_extesnion(char const *filename) {
-    char const *dot = strrchr(filename, '.');
-    if (!dot || dot == filename)
-        return "";
-    return dot + 1;
 }

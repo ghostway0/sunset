@@ -93,7 +93,7 @@ void object_move_with_parent(struct object *object, vec3 direction) {
 void object_move(struct object *object, vec3 direction) {
     glm_vec3_add(
             object->transform.position, direction, object->transform.position);
-    box_translate(&object->bounding_box, direction); // FIXME: this is not the same as the camera
+    box_translate(&object->bounding_box, direction);
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_move(object->children[i], direction);
