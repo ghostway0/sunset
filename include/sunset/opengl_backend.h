@@ -36,6 +36,7 @@ enum backend_program_type {
     PROGRAM_DRAW_MESH,
     PROGRAM_DRAW_DIRECT_LIGHT,
     PROGRAM_DRAW_TEXT,
+    PROGRAM_DRAW_DIRECT,
     NUM_BACKEND_PROGRAMS,
 };
 
@@ -66,9 +67,11 @@ struct compiled_font {
 
 // backend-specific data
 struct render_context {
-    size_t width, height;
+    size_t screen_width, screen_height;
     GLFWwindow *window;
     GLFWcursor *cursor;
+
+    mat4 ortho_projection;
 
     struct frame_cache frame_cache;
     struct program backend_programs[NUM_BACKEND_PROGRAMS];

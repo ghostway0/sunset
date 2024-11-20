@@ -24,11 +24,11 @@
 #define container_of(p, T, a)                                                  \
     ((T *)((uintptr_t)(p) - (uintptr_t)(&((T *)(0))->a)))
 
-struct timespec get_time();
+struct timespec get_time(void);
 
-uint64_t get_time_ms();
+uint64_t get_time_ms(void);
 
-uint64_t get_time_us();
+uint64_t get_time_us(void);
 
 uint64_t time_since_ms(struct timespec start);
 
@@ -39,6 +39,8 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 }
 
 #define stringify(x) #x
+
+#define forward(x) x
 
 #define todo() assert(false && "This is not implemented yet")
 
@@ -60,3 +62,5 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 #define sunset_calloc(num, size) sunset_memory(calloc, num, size);
 
 #define sunset_realloc(ptr, size) sunset_memory(realloc, ptr, size);
+
+#define SIZE_FAIL ((size_t) - 1)

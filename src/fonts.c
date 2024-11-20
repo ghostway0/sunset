@@ -2,14 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <log.h>
-
 #include "sunset/color.h"
 #include "sunset/errors.h"
+#include "sunset/filesystem.h"
+#include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/utils.h"
-
-#include "sunset/fonts.h"
+#include "sunset/vfs.h"
 
 #define PSF2_MAGIC 0x864AB572
 
@@ -53,8 +52,9 @@ static void flip_image(struct image *image) {
     image->pixels = flipped_pixels;
 }
 
-static int load_glyphs(
-        FILE *file, struct psf2_header const *header, struct font *font_out) {
+static int load_glyphs(struct vfs_file *file,
+        struct psf2_header const *header,
+        struct font *font_out) {
     uint8_t *bitmap = sunset_malloc(header->height * header->width);
     uint8_t row_size = (header->width + 7) / 8;
 
@@ -74,7 +74,7 @@ static int load_glyphs(
 
         font_out->glyphs[i].advance_x = header->width;
 
-        fread(bitmap, header->height * row_size, 1, file);
+        vfs_file_read(file, bitmap, header->height * row_size);
 
         for (size_t y = 0; y < header->height; y++) {
             for (size_t x = 0; x < header->width; x++) {
@@ -87,20 +87,22 @@ static int load_glyphs(
 
         flip_image(&font_out->glyphs[i].image);
 
-        fseek(file, header->charsize - header->height * row_size, SEEK_CUR);
+        vfs_file_seek(file,
+                VFS_SEEK_CUR,
+                header->charsize - header->height * row_size);
     }
 
     free(bitmap);
     return 0;
 }
 
-static int correct_glyph_table(FILE *file, struct font *font_out) {
+static int correct_glyph_table(struct vfs_file *file, struct font *font_out) {
     for (size_t glyph_index = 0; glyph_index < font_out->num_glyphs;
             glyph_index++) {
         uint8_t length;
-        fread(&length, 1, 1, file);
+        vfs_file_read(file, &length, 1);
 
-        if (feof(file)) {
+        if (vfs_is_eof(file)) {
             break;
         }
 
@@ -110,7 +112,8 @@ static int correct_glyph_table(FILE *file, struct font *font_out) {
 
         for (uint8_t i = 0; i < length; ++i) {
             uint32_t unicode_code_point;
-            if (fread(&unicode_code_point, sizeof(uint32_t), 1, file) != 1) {
+            if (vfs_file_read(file, &unicode_code_point, sizeof(uint32_t))
+                    != 1) {
                 break;
             }
 
@@ -129,13 +132,11 @@ static int correct_glyph_table(FILE *file, struct font *font_out) {
 int load_font_psf2(char const *path, struct font *font_out) {
     int retval = 0;
 
-    FILE *file = fopen(path, "rb");
-    if (!file) {
-        return -ERROR_IO;
-    }
+    struct vfs_file file;
+    vfs_open(path, VFS_OPEN_MODE_READ, &file);
 
     struct psf2_header header;
-    fread(&header, sizeof(header), 1, file);
+    vfs_file_read(&file, &header, sizeof(header));
 
     if (*(uint32_t *)header.magic != PSF2_MAGIC) {
         retval = -ERROR_INVALID_FORMAT;
@@ -147,20 +148,20 @@ int load_font_psf2(char const *path, struct font *font_out) {
             sunset_malloc(sizeof(struct glyph) * font_out->num_glyphs);
     font_out->glyph_map = sunset_calloc(0x10FFFF, sizeof(uint32_t));
 
-    if ((retval = load_glyphs(file, &header, font_out))) {
+    if ((retval = load_glyphs(&file, &header, font_out))) {
         goto cleanup;
     }
 
-    fseek(file,
+    vfs_file_seek(&file,
             font_out->num_glyphs * header.charsize + header.headersize,
-            SEEK_SET);
+            VFS_SEEK_SET);
 
     if (header.flags & PSF2_HAS_UNICODE_TABLE) {
-        retval = correct_glyph_table(file, font_out);
+        retval = correct_glyph_table(&file, font_out);
     }
 
 cleanup:
-    fclose(file);
+    vfs_close(&file);
     return retval;
 }
 

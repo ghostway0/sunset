@@ -27,6 +27,12 @@ enum vfs_map_prot {
     VFS_MAP_PROT_EXEC = 1 << 2,
 };
 
+enum vfs_seek_mode {
+    VFS_SEEK_SET,
+    VFS_SEEK_END,
+    VFS_SEEK_CUR,
+};
+
 enum vfs_map_flags {
     VFS_MAP_SHARED = 1 << 0,
     VFS_MAP_PRIVATE = 1 << 1,
@@ -49,4 +55,9 @@ int vfs_map_file(struct vfs_file *file,
         enum vfs_map_flags flags,
         void **addr_out);
 
-char const *get_filename_extesnion(char const *filename);
+bool vfs_is_eof(struct vfs_file *file);
+
+size_t vfs_file_seek(
+        struct vfs_file *file, enum vfs_seek_mode seek_mode, size_t offset);
+
+size_t vfs_file_get_offset(struct vfs_file *file);

@@ -472,25 +472,25 @@ int main() {
             vec3 direction = {0.0, 0.0, -1.0};
             // TODO: find a way to abstract this away (controllers?)
             camera_vec_to_world(&scene.cameras[0], direction);
-            object_move(&player, direction);
+            physics_move_object(&scene, &player, direction, &event_queue);
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_S) == GLFW_PRESS) {
             vec3 direction = {0.0, 0.0, 1.0};
             camera_vec_to_world(&scene.cameras[0], direction);
-            object_move(&player, direction);
+            physics_move_object(&scene, &player, direction, &event_queue);
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_A) == GLFW_PRESS) {
             vec3 direction = {-1.0, 0.0, 0.0};
             camera_vec_to_world(&scene.cameras[0], direction);
-            object_move(&player, direction);
+            physics_move_object(&scene, &player, direction, &event_queue);
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_D) == GLFW_PRESS) {
             vec3 direction = {1.0, 0.0, 0.0};
             camera_vec_to_world(&scene.cameras[0], direction);
-            object_move(&player, direction);
+            physics_move_object(&scene, &player, direction, &event_queue);
         }
 
         if (glfwGetKey(render_context.window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {

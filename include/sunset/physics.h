@@ -60,3 +60,8 @@ void physics_step(struct physics const *physics,
         struct scene const *scene,
         struct event_queue *event_queue,
         float dt);
+
+void physics_move_object(struct scene const *scene,
+        struct object *object,
+        vec3 direction,
+        struct event_queue *event_queue);

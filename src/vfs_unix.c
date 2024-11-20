@@ -1,11 +1,12 @@
-#include <string.h>
-#include <stddef.h>
 #include <fcntl.h>
+#include <stddef.h>
+#include <string.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 #include "sunset/errors.h"
+#include "sunset/utils.h"
 #include "sunset/vfs.h"
 
 static int vfs_get_open_mode_oflag(enum vfs_open_mode mode) {
@@ -47,6 +48,19 @@ static int vfs_map_flags_to_sys(enum vfs_map_flags flags) {
         sys_flags |= MAP_ANONYMOUS;
     }
     return sys_flags;
+}
+
+static int vfs_seek_mode_to_sys(enum vfs_seek_mode seek_mode) {
+    switch (seek_mode) {
+        case VFS_SEEK_SET:
+            return SEEK_SET;
+        case VFS_SEEK_END:
+            return SEEK_END;
+        case VFS_SEEK_CUR:
+            return SEEK_CUR;
+        default:
+            unreachable();
+    }
 }
 
 size_t vfs_file_size(struct vfs_file const *file) {
@@ -110,4 +124,22 @@ int vfs_map_file(struct vfs_file *file,
 
     *addr_out = addr;
     return 0;
+}
+
+size_t vfs_file_seek(
+        struct vfs_file *file, enum vfs_seek_mode seek_mode, size_t offset) {
+    return lseek(file->fd, offset, vfs_seek_mode_to_sys(seek_mode));
+}
+
+size_t vfs_file_get_offset(struct vfs_file *file) {
+    return vfs_file_seek(file, VFS_SEEK_CUR, 0);
+}
+
+bool vfs_is_eof(struct vfs_file *file) {
+    size_t current_offset = vfs_file_get_offset(file);
+    if (current_offset == SIZE_FAIL) {
+        return false;
+    }
+
+    return current_offset == vfs_file_size(file);
 }

@@ -55,7 +55,6 @@ sunset_files = [
   'src/json.c',
   'src/physics.c',
   'src/gltf.c',
-  'src/quadtree.c',
   'src/shader.c',
   'src/base64.c',
   'src/backend.c',

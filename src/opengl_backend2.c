@@ -22,7 +22,12 @@
 
 #define SUNSET_MAX_NUM_INSTANCED 128
 
-char const *default_vertex_shader_source =
+struct program_config {
+    char const *vertex;
+    char const *fragment;
+};
+
+char const default_vertex_shader_source[] =
         "#version 330 core\n"
         "layout (location = 0) in vec3 aPos;\n"
         "layout (location = 1) in vec2 aTexCoords;\n"
@@ -32,26 +37,31 @@ char const *default_vertex_shader_source =
         "uniform mat4 projection;\n"
         "void main() {\n"
         "    TexCoords = aTexCoords;\n"
-        "    gl_Position = projection * view * model * vec4(aPos, 1.0);\n"
+        "    gl_Position = projection * view * model * vec4(aPos, "
+        "1.0);\n"
         "}\n";
 
-char const *default_fragment_shader_source =
-        "#version 330 core\n"
-        "out vec4 FragColor;\n"
-        "void main() {\n"
-        "    float ndc = (2.0 * gl_FragCoord.z - gl_DepthRange.near - "
-        "gl_DepthRange.far) / (gl_DepthRange.far - gl_DepthRange.near);\n"
-        "    float clip = ndc / gl_FragCoord.w;\n"
-        "    float depth = (clip * 0.5) + 0.5;\n"
-        "\n"
-        "    float r = sin(depth * 3.1415 * 4.0) * 0.5 + 0.5;\n"
-        "    float g = cos(depth * 3.1415 * 4.0) * 0.5 + 0.5;\n"
-        "    float b = sin(depth * 3.1415 * 2.0) * 0.5 + 0.5;\n"
-        "\n"
-        "    FragColor = vec4(r, g, b, 1.0);\n"
-        "}\n";
+const struct program_config default_program_config = {
+        .vertex = default_vertex_shader_source,
+        .fragment =
+                "#version 330 core\n"
+                "out vec4 FragColor;\n"
+                "void main() {\n"
+                "    float ndc = (2.0 * gl_FragCoord.z - gl_DepthRange.near - "
+                "gl_DepthRange.far) / (gl_DepthRange.far - "
+                "gl_DepthRange.near);\n"
+                "    float clip = ndc / gl_FragCoord.w;\n"
+                "    float depth = (clip * 0.5) + 0.5;\n"
+                "\n"
+                "    float r = sin(depth * 3.1415 * 4.0) * 0.5 + 0.5;\n"
+                "    float g = cos(depth * 3.1415 * 4.0) * 0.5 + 0.5;\n"
+                "    float b = sin(depth * 3.1415 * 2.0) * 0.5 + 0.5;\n"
+                "\n"
+                "    FragColor = vec4(r, g, b, 1.0);\n"
+                "}\n",
+};
 
-char const *textured_fragment_shader_source =
+char const textured_fragment_shader_source[] =
         "#version 330 core\n"
         "in vec2 TexCoords;\n"
         "out vec4 FragColor;\n"
@@ -60,40 +70,67 @@ char const *textured_fragment_shader_source =
         "    FragColor = texture(sampler, TexCoords);\n"
         "}\n";
 
-char const *instanced_vertex_shader_source =
-        "#version 330 core\n"
-        "layout (location = 0) in vec3 aPos;\n"
-        "layout (location = 1) in vec2 aTexCoords;\n"
-        "out vec2 TexCoords;\n"
-        "uniform mat4 transforms[128];\n"
-        "uniform mat4 view;\n"
-        "uniform mat4 projection;\n"
-        "void main() {\n"
-        "    mat4 transform = transforms[gl_InstanceID];\n"
-        "    gl_Position = projection * view * transform * vec4(aPos, "
-        "1.0);\n"
-        "    TexCoords = aTexCoords;\n"
-        "}\n";
+const struct program_config textured_program_config = {
+        .vertex = default_vertex_shader_source,
+        .fragment = textured_fragment_shader_source,
+};
 
-char const *text_vertex_shader_source =
-        "#version 330 core\n"
-        "layout (location = 0) in vec4 aPos;\n"
-        "out vec2 TexCoords;\n"
-        "uniform mat4 projection;\n"
-        "void main() {\n"
-        "    gl_Position = projection * vec4(aPos.xy, 0.0, 1.0);\n"
-        "    TexCoords = aPos.zw;\n"
-        "}\n";
+const struct program_config instanced_textured_program_config = {
+        .vertex =
+            "#version 330 core\n"
+            "layout (location = 0) in vec3 aPos;\n"
+            "layout (location = 1) in vec2 aTexCoords;\n"
+            "out vec2 TexCoords;\n"
+            "uniform mat4 transforms[128];\n"
+            "uniform mat4 view;\n"
+            "uniform mat4 projection;\n"
+            "void main() {\n"
+            "    mat4 transform = transforms[gl_InstanceID];\n"
+            "    gl_Position = projection * view * transform * vec4(aPos, "
+            "1.0);\n"
+            "    TexCoords = aTexCoords;\n"
+            "}\n",
+        .fragment = textured_fragment_shader_source,
+};
 
-char const *text_fragment_shader_source =
-        "#version 330 core\n"
-        "in vec2 TexCoords;\n"
-        "out vec4 color;\n"
-        "uniform sampler2D text;\n"
-        "void main() {\n"
-        "    float sampled = texture(text, TexCoords).r;\n"
-        "    color = vec4(sampled, sampled, sampled, 1.0);\n"
-        "}\n";
+const struct program_config text_program_config = {
+        .vertex =
+                "#version 330 core\n"
+                "layout (location = 0) in vec4 aPos;\n"
+                "out vec2 TexCoords;\n"
+                "uniform mat4 projection;\n"
+                "void main() {\n"
+                "    gl_Position = projection * vec4(aPos.xy, 0.0, 1.0);\n"
+                "    TexCoords = aPos.zw;\n"
+                "}\n",
+
+        .fragment =
+                "#version 330 core\n"
+                "in vec2 TexCoords;\n"
+                "out vec4 color;\n"
+                "uniform sampler2D text;\n"
+                "void main() {\n"
+                "    float sampled = texture(text, TexCoords).r;\n"
+                "    color = vec4(sampled, sampled, sampled, 1.0);\n"
+                "}\n",
+};
+
+const struct program_config direct_program_config = {
+        .vertex =
+                "#version 330 core\n"
+                "layout (location = 0) in vec3 aPos;\n"
+                "void main() {\n"
+                "   gl_Position = vec4(aPos, 1.0);\n"
+                "}\n",
+
+        .fragment =
+                "#version 330 core\n"
+                "uniform vec4 color;\n"
+                "out vec4 FragColor;\n"
+                "void main() {\n"
+                "   FragColor = color;\n"
+                "}\n",
+};
 
 static int compile_shader_into(GLuint shader, char const *source) {
     glShaderSource(shader, 1, &source, NULL);
@@ -209,73 +246,52 @@ uint32_t backend_register_mesh(
     return vector_size(context->meshes) - 1;
 }
 
+static int add_preconfigured_shader(
+
+        struct program_config config, struct program *program_out) {
+    if (backend_create_program(program_out)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    if (backend_program_add_shader(
+                program_out, config.vertex, GL_VERTEX_SHADER)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    if (backend_program_add_shader(
+                program_out, config.fragment, GL_FRAGMENT_SHADER)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    if (backend_link_program(program_out)) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    return 0;
+}
+
 static int setup_default_shaders(struct render_context *context) {
-    struct program program;
-    if (backend_create_program(&program)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
+    int retval = 0;
+
+    if ((retval = add_preconfigured_shader(textured_program_config,
+                 &context->backend_programs[PROGRAM_DRAW_MESH]))) {
+        return retval;
     }
 
-    if (backend_program_add_shader(
-                &program, default_vertex_shader_source, GL_VERTEX_SHADER)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
+    if ((retval = add_preconfigured_shader(instanced_textured_program_config,
+                 &context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH]))) {
+        return retval;
     }
 
-    if (backend_program_add_shader(&program,
-                textured_fragment_shader_source,
-                GL_FRAGMENT_SHADER)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
+    if ((retval = add_preconfigured_shader(text_program_config,
+                 &context->backend_programs[PROGRAM_DRAW_TEXT]))) {
+        return retval;
     }
 
-    if (backend_link_program(&program)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
+    if ((retval = add_preconfigured_shader(direct_program_config,
+                 &context->backend_programs[PROGRAM_DRAW_DIRECT]))) {
+        return retval;
     }
-
-    context->backend_programs[PROGRAM_DRAW_MESH] = program;
-
-    struct program instanced_program;
-    if (backend_create_program(&instanced_program)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
-    }
-
-    if (backend_program_add_shader(&instanced_program,
-                instanced_vertex_shader_source,
-                GL_VERTEX_SHADER)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
-    }
-
-    if (backend_program_add_shader(&instanced_program,
-                textured_fragment_shader_source,
-                GL_FRAGMENT_SHADER)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
-    }
-
-    if (backend_link_program(&instanced_program)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
-    }
-
-    context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH] = instanced_program;
-
-    struct program text_program;
-    if (backend_create_program(&text_program)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
-    }
-
-    if (backend_program_add_shader(
-                &text_program, text_vertex_shader_source, GL_VERTEX_SHADER)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
-    }
-
-    if (backend_program_add_shader(&text_program,
-                text_fragment_shader_source,
-                GL_FRAGMENT_SHADER)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
-    }
-
-    if (backend_link_program(&text_program)) {
-        return -ERROR_SHADER_COMPILATION_FAILED;
-    }
-
-    context->backend_programs[PROGRAM_DRAW_TEXT] = text_program;
 
     return 0;
 }
@@ -287,8 +303,8 @@ int backend_setup(struct render_context *context, struct render_config config) {
         return -ERROR_IO;
     }
 
-    context->width = config.window_width;
-    context->height = config.window_height;
+    context->screen_width = config.window_width;
+    context->screen_height = config.window_height;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -326,6 +342,14 @@ int backend_setup(struct render_context *context, struct render_config config) {
     vector_init(context->frame_cache.instancing_buffers);
     vector_init(context->textures);
     vector_init(context->atlases);
+
+    glm_ortho(0.0f,
+            context->screen_width,
+            0.0f,
+            context->screen_height,
+            -1.0f,
+            1.0f,
+            context->ortho_projection);
 
     glDepthFunc(GL_LESS);
 
@@ -505,6 +529,18 @@ static int program_set_uniform_vec3(
     return 0;
 }
 
+static int program_set_uniform_vec4(
+        struct program program, char const *name, vec4 const *value) {
+    GLint loc = glGetUniformLocation((GLuint)program.handle, name);
+    if (loc == -1) {
+        return -ERROR_SHADER_COMPILATION_FAILED;
+    }
+
+    glUniform4fv(loc, 1, (GLfloat *)value);
+
+    return 0;
+}
+
 static void upload_default_uniforms(
         struct render_context *context, struct program program) {
     program_set_uniform_mat4(
@@ -668,22 +704,15 @@ int backend_flush(struct render_context *context) {
     return 0;
 }
 
+// HACK:
 static int run_text_command(
         struct render_context *context, struct command_text command) {
     struct program program = context->backend_programs[PROGRAM_DRAW_TEXT];
 
     use_program(program);
 
-    mat4 ortho_projection;
-    glm_ortho(0.0f,
-            context->width,
-            0.0f,
-            context->height,
-            -1.0f,
-            1.0f,
-            ortho_projection);
-
-    program_set_uniform_mat4(program, "projection", &ortho_projection, 1);
+    program_set_uniform_mat4(
+            program, "projection", &context->ortho_projection, 1);
 
     GLuint vao, vbo;
     glGenVertexArrays(1, &vao);
@@ -699,7 +728,7 @@ static int run_text_command(
 
     float y = command.alignment == WINDOW_POINT_TOP_LEFT
                     || command.alignment == WINDOW_POINT_TOP_RIGHT
-            ? context->height - command.start.y
+            ? context->screen_height - command.start.y
             : command.start.y;
 
     float current_x = command.start.x;
@@ -756,6 +785,56 @@ static int run_text_command(
     return 0;
 }
 
+static void run_fill_rect_command(struct render_context *context,
+        struct command_filled_rect filled_rect) {
+    struct rect rect = filled_rect.rect;
+    struct color color = filled_rect.color;
+
+    float r = color.r / 255.0f;
+    float g = color.g / 255.0f;
+    float b = color.b / 255.0f;
+    float a = color.a / 255.0f;
+
+    float x1 = ((float)rect.x / (float)context->screen_width) * 2.0f - 1.0f;
+    float y1 = ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
+    float x2 =
+            ((float)(rect.x + rect.width) / (float)context->screen_width) * 2.0f
+            - 1.0f;
+    float y2 = ((float)(rect.y + rect.height) / (float)context->screen_height)
+                    * 2.0f
+            - 1.0f;
+
+    struct program program = context->backend_programs[PROGRAM_DRAW_DIRECT];
+    use_program(program);
+
+    float vertices[4][3] = {
+            {x1, y1, 0.0f},
+            {x2, y1, 0.0f},
+            {x2, y2, 0.0f},
+            {x1, y2, 0.0f},
+    };
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    program_set_uniform_vec4(program, "color", &(vec4){r, g, b, a});
+
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+}
+
 void backend_draw(struct render_context *context,
         struct command_buffer *command_buffer,
         mat4 view,
@@ -776,6 +855,11 @@ void backend_draw(struct render_context *context,
         }
 
         switch (command.type) {
+            case COMMAND_NOP:
+                break;
+            case COMMAND_FILLED_RECT:
+                run_fill_rect_command(context, command.data.filled_rect);
+                break;
             case COMMAND_MESH:
                 run_mesh_command(context, command.data.mesh);
                 break;
