@@ -13,9 +13,10 @@ void command_line_init(
     command->data.line = (struct command_line){from, to};
 }
 
-void command_rect_init(struct command *command, struct rect rect) {
+void command_rect_init(
+        struct command *command, struct rect rect, struct color color) {
     command->type = COMMAND_RECT;
-    command->data.rect = (struct command_rect){rect};
+    command->data.rect = (struct command_rect){rect, color};
 }
 
 void command_filled_rect_init(
@@ -98,10 +99,11 @@ void command_buffer_add_line(struct command_buffer *command_buffer,
     command_buffer_append(command_buffer, &command);
 }
 
-void command_buffer_add_rect(
-        struct command_buffer *command_buffer, struct rect rect) {
+void command_buffer_add_rect(struct command_buffer *command_buffer,
+        struct rect rect,
+        struct color color) {
     struct command command;
-    command_rect_init(&command, rect);
+    command_rect_init(&command, rect, color);
     command_buffer_append(command_buffer, &command);
 }
 

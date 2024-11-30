@@ -57,10 +57,45 @@ static inline int compare_uint64_t(void const *a, void const *b) {
         __new_ptr;                                                             \
     })
 
+#define swap_if(predicate, a, b)                                               \
+    a = predicate ? b : a;                                                     \
+    b = predicate ? a : b;
+
 #define sunset_malloc(size) sunset_memory(malloc, size);
 
 #define sunset_calloc(num, size) sunset_memory(calloc, num, size);
 
 #define sunset_realloc(ptr, size) sunset_memory(realloc, ptr, size);
 
-#define SIZE_FAIL ((size_t) - 1)
+#define SIZE_FAIL ((size_t)-1)
+
+#define one_matches(value, ...)                                                \
+    _one_matches(value,                                                        \
+            (int[]){__VA_ARGS__},                                              \
+            sizeof((int[]){__VA_ARGS__}) / sizeof(int))
+
+#define all_match(...)                                                         \
+    _match((int[]){__VA_ARGS__}, sizeof((int[]){__VA_ARGS__}) / sizeof(int))
+
+static inline bool _one_matches(int value, int arr[], size_t len) {
+    for (size_t i = 0; i < len; i++) {
+        if (value == arr[i]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static inline bool _match(int arr[], size_t len) {
+    if (len < 2) {
+        return false;
+    }
+
+    for (size_t i = 1; i < len; i++) {
+        if (arr[0] != arr[i]) {
+            return false;
+        }
+    }
+    return true;
+}

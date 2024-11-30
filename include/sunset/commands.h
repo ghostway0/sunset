@@ -6,8 +6,8 @@
 
 #include "sunset/color.h"
 #include "sunset/geometry.h"
-#include "sunset/ring_buffer.h"
 #include "sunset/images.h"
+#include "sunset/ring_buffer.h"
 
 enum command_type : uint8_t {
     COMMAND_NOP,
@@ -32,7 +32,8 @@ struct command_line {
 };
 
 struct command_rect {
-    struct rect rect;
+    struct rect bounds;
+    struct color color;
 };
 
 struct command_filled_rect {
@@ -107,7 +108,8 @@ void command_nop_init(struct command *command);
 void command_line_init(
         struct command *command, struct point from, struct point to);
 
-void command_rect_init(struct command *command, struct rect rect);
+void command_rect_init(
+        struct command *command, struct rect rect, struct color color);
 
 void command_filled_rect_init(
         struct command *command, struct rect rect, struct color color);
@@ -148,9 +150,7 @@ struct command_buffer_options {
 };
 
 #define COMMAND_BUFFER_DEFAULT                                                 \
-    (struct command_buffer_options) {                                          \
-        .buffer_size = 1024                                                    \
-    }
+    (struct command_buffer_options){.buffer_size = 1024}
 
 struct command_buffer {
     struct ring_buffer ring_buffer;
@@ -175,8 +175,9 @@ void command_buffer_add_line(struct command_buffer *command_buffer,
         struct point from,
         struct point to);
 
-void command_buffer_add_rect(
-        struct command_buffer *command_buffer, struct rect rect);
+void command_buffer_add_rect(struct command_buffer *command_buffer,
+        struct rect rect,
+        struct color color);
 
 void command_buffer_add_filled_rect(struct command_buffer *command_buffer,
         struct rect rect,

@@ -21,11 +21,19 @@ struct mouse_move_event {
     float y;
 };
 
+enum collision_type {
+    COLLISION_ENTER_COLLIDER,
+    COLLISION_EXIT_COLLIDER,
+    COLLISION_REGULAR,
+};
+
 struct collision_event {
     vec3 a_velocity;
     struct object *a;
     vec3 b_velocity;
     struct object *b;
+
+    enum collision_type type;
 };
 
 struct event {

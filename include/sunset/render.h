@@ -38,8 +38,3 @@ struct context {
     struct mouse mouse;
     struct event_queue *event_queue;
 };
-//
-//
-// int render(struct render_context *ctx,
-//         struct object *scene,
-//         struct camera *camera);

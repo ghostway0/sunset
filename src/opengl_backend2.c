@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stddef.h>
 
 #include <GL/glew.h>
@@ -14,6 +15,7 @@
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
+#include "sunset/math.h"
 #include "sunset/opengl_backend.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
@@ -41,6 +43,15 @@ char const default_vertex_shader_source[] =
         "1.0);\n"
         "}\n";
 
+char const textured_fragment_shader_source[] =
+        "#version 330 core\n"
+        "in vec2 TexCoords;\n"
+        "out vec4 FragColor;\n"
+        "uniform sampler2D sampler;\n"
+        "void main() {\n"
+        "    FragColor = texture(sampler, TexCoords);\n"
+        "}\n";
+
 const struct program_config default_program_config = {
         .vertex = default_vertex_shader_source,
         .fragment =
@@ -61,14 +72,22 @@ const struct program_config default_program_config = {
                 "}\n",
 };
 
-char const textured_fragment_shader_source[] =
-        "#version 330 core\n"
-        "in vec2 TexCoords;\n"
-        "out vec4 FragColor;\n"
-        "uniform sampler2D sampler;\n"
-        "void main() {\n"
-        "    FragColor = texture(sampler, TexCoords);\n"
-        "}\n";
+const struct program_config direct_program_config = {
+        .vertex =
+                "#version 330 core\n"
+                "layout (location = 0) in vec3 aPos;\n"
+                "void main() {\n"
+                "   gl_Position = vec4(aPos, 1.0);\n"
+                "}\n",
+
+        .fragment =
+                "#version 330 core\n"
+                "uniform vec4 color;\n"
+                "out vec4 FragColor;\n"
+                "void main() {\n"
+                "   FragColor = color;\n"
+                "}\n",
+};
 
 const struct program_config textured_program_config = {
         .vertex = default_vertex_shader_source,
@@ -77,19 +96,19 @@ const struct program_config textured_program_config = {
 
 const struct program_config instanced_textured_program_config = {
         .vertex =
-            "#version 330 core\n"
-            "layout (location = 0) in vec3 aPos;\n"
-            "layout (location = 1) in vec2 aTexCoords;\n"
-            "out vec2 TexCoords;\n"
-            "uniform mat4 transforms[128];\n"
-            "uniform mat4 view;\n"
-            "uniform mat4 projection;\n"
-            "void main() {\n"
-            "    mat4 transform = transforms[gl_InstanceID];\n"
-            "    gl_Position = projection * view * transform * vec4(aPos, "
-            "1.0);\n"
-            "    TexCoords = aTexCoords;\n"
-            "}\n",
+                "#version 330 core\n"
+                "layout (location = 0) in vec3 aPos;\n"
+                "layout (location = 1) in vec2 aTexCoords;\n"
+                "out vec2 TexCoords;\n"
+                "uniform mat4 transforms[128];\n"
+                "uniform mat4 view;\n"
+                "uniform mat4 projection;\n"
+                "void main() {\n"
+                "    mat4 transform = transforms[gl_InstanceID];\n"
+                "    gl_Position = projection * view * transform * vec4(aPos, "
+                "1.0);\n"
+                "    TexCoords = aTexCoords;\n"
+                "}\n",
         .fragment = textured_fragment_shader_source,
 };
 
@@ -112,23 +131,6 @@ const struct program_config text_program_config = {
                 "void main() {\n"
                 "    float sampled = texture(text, TexCoords).r;\n"
                 "    color = vec4(sampled, sampled, sampled, 1.0);\n"
-                "}\n",
-};
-
-const struct program_config direct_program_config = {
-        .vertex =
-                "#version 330 core\n"
-                "layout (location = 0) in vec3 aPos;\n"
-                "void main() {\n"
-                "   gl_Position = vec4(aPos, 1.0);\n"
-                "}\n",
-
-        .fragment =
-                "#version 330 core\n"
-                "uniform vec4 color;\n"
-                "out vec4 FragColor;\n"
-                "void main() {\n"
-                "   FragColor = color;\n"
                 "}\n",
 };
 
@@ -490,7 +492,6 @@ static int program_set_uniform_mat4(struct program program,
     return 0;
 }
 
-[[maybe_unused]]
 static int program_set_uniform_int(
         struct program program, char const *name, int value) {
     GLint loc = glGetUniformLocation((GLuint)program.handle, name);
@@ -516,7 +517,6 @@ static int program_set_uniform_float(
     return 0;
 }
 
-[[maybe_unused]]
 static int program_set_uniform_vec3(
         struct program program, char const *name, vec3 const *value) {
     GLint loc = glGetUniformLocation((GLuint)program.handle, name);
@@ -553,19 +553,6 @@ static void upload_default_uniforms(
     // (?) bind textures
 }
 
-[[maybe_unused]]
-static int upload_instancing_buffer(
-        struct instancing_buffer *buffer, struct program program) {
-    if (program_set_uniform_mat4(program,
-                "transforms",
-                buffer->transforms,
-                vector_size(buffer->transforms))) {
-        return -ERROR_SHADER_LOADING_FAILED;
-    }
-
-    return 0;
-}
-
 static void draw_instanced_mesh(struct render_context *context,
         uint32_t mesh_id,
         uint32_t atlas_id,
@@ -583,8 +570,6 @@ static void draw_instanced_mesh(struct render_context *context,
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
 
     use_program(program);
-
-    // upload_default_uniforms(context, program);
 
     program_set_uniform_mat4(
             program, "view", &context->frame_cache.view_matrix, 1);
@@ -607,8 +592,19 @@ static void draw_instanced_mesh(struct render_context *context,
     glBindVertexArray(0);
 }
 
-static uint64_t instancing_buffer_mesh_id(struct instancing_buffer *buffer) {
-    return buffer->mesh_id;
+static enum order compare_instancing_buffers(void const *a, void const *b) {
+    struct instancing_buffer *a_data = (struct instancing_buffer *)a;
+    struct instancing_buffer *b_data = (struct instancing_buffer *)b;
+
+    if (a_data->mesh_id > b_data->mesh_id) {
+        return ORDER_GREATER_THAN;
+    }
+
+    if (a_data->mesh_id < b_data->mesh_id) {
+        return ORDER_LESS_THAN;
+    }
+
+    return ORDER_EQUAL;
 }
 
 static void instancing_buffer_flush(
@@ -650,16 +646,15 @@ static int run_mesh_command(
 
         glBindVertexArray(0);
     } else {
-#ifndef NDEBUG
         if (command.texture_id >= vector_size(context->textures)) {
             return ERROR_OUT_OF_BOUNDS;
         }
-#endif
+
         struct compiled_texture texture = context->textures[command.texture_id];
 
         if (!map_get(cache->instancing_buffers,
                     command.mesh_id,
-                    instancing_buffer_mesh_id)) {
+                    compare_instancing_buffers)) {
             struct instancing_buffer buffer;
             buffer.mesh_id = command.mesh_id;
             buffer.atlas_id = texture.atlas_id;
@@ -667,12 +662,12 @@ static int run_mesh_command(
 
             map_insert(cache->instancing_buffers,
                     buffer,
-                    instancing_buffer_mesh_id);
+                    compare_instancing_buffers);
         }
 
         struct instancing_buffer *buffer = map_get(cache->instancing_buffers,
                 command.mesh_id,
-                instancing_buffer_mesh_id);
+                compare_instancing_buffers);
 
         // NOTE: it is currently required that anything that gets instanced
         // together is stored within a single atlas.
@@ -785,6 +780,61 @@ static int run_text_command(
     return 0;
 }
 
+static void run_rect_command(
+        struct render_context *context, struct command_rect command) {
+    struct color color = command.color;
+    struct rect rect = command.bounds;
+
+    float r = color.r / 255.0f;
+    float g = color.g / 255.0f;
+    float b = color.b / 255.0f;
+    float a = color.a / 255.0f;
+
+    float x1 = ((float)rect.x / (float)context->screen_width) * 2.0f - 1.0f;
+    float y1 = ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
+    float x2 =
+            ((float)(rect.x + rect.width) / (float)context->screen_width) * 2.0f
+            - 1.0f;
+    float y2 = ((float)(rect.y + rect.height) / (float)context->screen_height)
+                    * 2.0f
+            - 1.0f;
+
+    struct program program = context->backend_programs[PROGRAM_DRAW_DIRECT];
+    use_program(program);
+
+    float vertices[8][3] = {
+            {x1, y1, 0.0f},
+            {x2, y1, 0.0f},
+            {x2, y1, 0.0f},
+            {x2, y2, 0.0f},
+            {x2, y2, 0.0f},
+            {x1, y2, 0.0f},
+            {x1, y2, 0.0f},
+            {x1, y1, 0.0f},
+    };
+
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // TODO: this should be automated somehow
+    glVertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    program_set_uniform_vec4(program, "color", &(vec4){r, g, b, a});
+
+    glDrawArrays(GL_LINES, 0, 8);
+
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+}
+
 static void run_fill_rect_command(struct render_context *context,
         struct command_filled_rect filled_rect) {
     struct rect rect = filled_rect.rect;
@@ -807,11 +857,13 @@ static void run_fill_rect_command(struct render_context *context,
     struct program program = context->backend_programs[PROGRAM_DRAW_DIRECT];
     use_program(program);
 
-    float vertices[4][3] = {
+    float vertices[6][3] = {
             {x1, y1, 0.0f},
             {x2, y1, 0.0f},
-            {x2, y2, 0.0f},
             {x1, y2, 0.0f},
+            {x1, y2, 0.0f},
+            {x2, y1, 0.0f},
+            {x2, y2, 0.0f},
     };
 
     GLuint vao;
@@ -829,7 +881,7 @@ static void run_fill_rect_command(struct render_context *context,
 
     program_set_uniform_vec4(program, "color", &(vec4){r, g, b, a});
 
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
@@ -859,6 +911,9 @@ void backend_draw(struct render_context *context,
                 break;
             case COMMAND_FILLED_RECT:
                 run_fill_rect_command(context, command.data.filled_rect);
+                break;
+            case COMMAND_RECT:
+                run_rect_command(context, command.data.rect);
                 break;
             case COMMAND_MESH:
                 run_mesh_command(context, command.data.mesh);

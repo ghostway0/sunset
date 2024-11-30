@@ -24,22 +24,40 @@ struct physics_material {
     float friction;
 };
 
+enum physics_object_type {
+    /// doesn't affect other objects, just checks for collisions
+    PHYSICS_OBJECT_COLLIDER,
+    /// objects that don't get fixed after a collision, but do affect other objects
+    PHYSICS_OBJECT_INFINITE,
+    /// regular objects
+    PHYSICS_OBJECT_REGULAR,
+};
+
 struct physics_object {
+    enum physics_object_type type;
+
     vec3 velocity;
     vec3 acceleration;
-    float mass;
     float damping;
-    bool should_fix;
+    float mass;
 
     struct physics_material material;
 };
 
+// FIXME: weird here
 static_assert(
         sizeof(struct collision_event) <= 60, "collision_event too large");
+
+// weird that this is public.
+struct collision_pair {
+    struct object *a;
+    struct object *b;
+};
 
 struct physics {
     vector(struct object *) objects;
     vector(struct constraint) constraints;
+    vector(struct collision_pair) collision_pairs;
 };
 
 void physics_init(struct physics *physics);
@@ -56,12 +74,12 @@ void physics_add_constraint(struct physics *physics,
 
 struct scene;
 
-void physics_step(struct physics const *physics,
+void physics_step(struct physics *physics,
         struct scene const *scene,
         struct event_queue *event_queue,
         float dt);
 
-void physics_move_object(struct scene const *scene,
+bool physics_move_object(struct scene const *scene,
         struct object *object,
         vec3 direction,
         struct event_queue *event_queue);

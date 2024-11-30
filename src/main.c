@@ -74,33 +74,32 @@ struct mesh create_test_mesh() {
 }
 
 void create_test_ground_mesh(struct mesh *mesh_out) {
-  mesh_out->num_vertices = 4;
-  mesh_out->vertices =
-      malloc(mesh_out->num_vertices * 5 * sizeof(float));
+    mesh_out->num_vertices = 4;
+    mesh_out->vertices = malloc(mesh_out->num_vertices * 5 * sizeof(float));
 
-  // clang-format off
-  float vertices[] = {
-      // positions         // texture coords
-       50.0f, -0.5f,  50.0f,   1.0f, 1.0f, // top right
-       50.0f, -0.5f, -50.0f,   1.0f, 0.0f, // bottom right
-      -50.0f, -0.5f, -50.0f,   0.0f, 0.0f, // bottom left
-      -50.0f, -0.5f,  50.0f,   0.0f, 1.0f, // top left 
-  };
-  // clang-format on
+    // clang-format off
+    float vertices[] = {
+        // positions         // texture coords
+         50.0f, -0.5f,  50.0f,   1.0f, 1.0f, // top right
+         50.0f, -0.5f, -50.0f,   1.0f, 0.0f, // bottom right
+        -50.0f, -0.5f, -50.0f,   0.0f, 0.0f, // bottom left
+        -50.0f, -0.5f,  50.0f,   0.0f, 1.0f, // top left 
+    };
+    // clang-format on
 
-  memcpy(mesh_out->vertices, vertices, sizeof(vertices));
+    memcpy(mesh_out->vertices, vertices, sizeof(vertices));
 
-  mesh_out->num_indices = 6;
-  mesh_out->indices =
-      (uint32_t *)malloc(mesh_out->num_indices * sizeof(uint32_t));
-  // first triangle
-  mesh_out->indices[0] = 0;
-  mesh_out->indices[1] = 1;
-  mesh_out->indices[2] = 3;
-  // second triangle
-  mesh_out->indices[3] = 1;
-  mesh_out->indices[4] = 2;
-  mesh_out->indices[5] = 3;
+    mesh_out->num_indices = 6;
+    mesh_out->indices =
+            (uint32_t *)malloc(mesh_out->num_indices * sizeof(uint32_t));
+    // first triangle
+    mesh_out->indices[0] = 0;
+    mesh_out->indices[1] = 1;
+    mesh_out->indices[2] = 3;
+    // second triangle
+    mesh_out->indices[3] = 1;
+    mesh_out->indices[4] = 2;
+    mesh_out->indices[5] = 3;
 }
 
 static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
@@ -148,10 +147,18 @@ int main() {
     struct scene scene;
     struct camera camera;
 
+    sleep(1);
+
+    struct render_config render_config = {
+        .window_height = 1920,
+        .window_width = 1080,
+    };
+    // if ((retval = build_render_config(&render_config))) {
+    //     return retval;
+    // }
+
     struct render_context render_context;
-    if (backend_setup(&render_context,
-                (struct render_config){
-                        .window_width = 1920, .window_height = 1080})) {
+    if (backend_setup(&render_context, render_config)) {
         log_debug("wtf");
         return -1;
     }
@@ -182,12 +189,11 @@ int main() {
                     0.0f,
 
             },
-            (struct camera_options){
-                    .fov = glm_rad(45.0f),
+            (struct camera_options){.fov = glm_rad(45.0f),
                     .sensitivity = 0.01f,
                     .speed = 1.0f,
-                    .aspect_ratio = 1920.0 / 1080.0,
-            },
+                    .aspect_ratio = (float)render_config.window_height
+                            / (float)render_config.window_width},
             &camera);
 
     uint32_t triangle_mesh_id =
@@ -205,7 +211,7 @@ int main() {
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
                             .damping = 0.0f,
-                            .should_fix = true,
+                            .type = PHYSICS_OBJECT_REGULAR,
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
@@ -215,7 +221,7 @@ int main() {
                     },
             .transform =
                     (struct transform){
-                            .position = {0.0f, 0.0f, 0.0f},
+                            .position = {10.0f, 0.0f, 0.0f},
                             .rotation = {0.0f, 0.0f, 0.0f},
                             .scale = 1.0f,
                     },
@@ -243,7 +249,7 @@ int main() {
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
                             .damping = 0.0f,
-                            .should_fix = true,
+                            .type = PHYSICS_OBJECT_REGULAR,
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
@@ -281,7 +287,7 @@ int main() {
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
                             .damping = 0.0f,
-                            .should_fix = false,
+                            .type = PHYSICS_OBJECT_INFINITE,
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
@@ -323,7 +329,7 @@ int main() {
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = 1.0f,
                             .damping = 0.0f,
-                            .should_fix = true,
+                            .type = PHYSICS_OBJECT_REGULAR,
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
@@ -361,7 +367,7 @@ int main() {
                             .acceleration = {0.0f, 0.0f, 0.0f},
                             .mass = INFINITY,
                             .damping = 0.0f,
-                            .should_fix = false,
+                            .type = PHYSICS_OBJECT_INFINITE,
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
@@ -508,9 +514,9 @@ int main() {
             switch (event.type_id) {
                 case SYSTEM_EVENT_COLLISION: {
                     struct collision_event collision = event.data.collision;
-                    log_debug("collision between %p and %p",
-                            collision.a,
-                            collision.b);
+                    log_debug("collision between %s and %s",
+                            collision.a->label,
+                            collision.b->label);
                     break;
                 }
                 case SYSTEM_EVENT_MOUSE: {

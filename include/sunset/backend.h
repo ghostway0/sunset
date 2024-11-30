@@ -58,3 +58,5 @@ int backend_register_texture_atlas(struct render_context *context,
         struct rect *bounds,
         size_t num_textures,
         uint32_t *first_id_out);
+
+struct render_config backend_build_render_config(char const *title);
