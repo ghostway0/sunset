@@ -1,17 +1,17 @@
 #include <stddef.h>
-#include <stdio.h>
-#include <string.h>
 
 // clang-format off
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <cmocka.h>
+#include <unistd.h>
 // clang-format on
 
 #include "sunset/errors.h"
 #include "sunset/json.h"
 #include "sunset/utils.h"
+#include "sunset/vfs.h"
 
 void test_json_parse_simple_object(void **state) {
     unused(state);
@@ -207,26 +207,30 @@ void test_json_parse_empty_object(void **state) {
 void test_json_value_print(void **state) {
     unused(state);
 
+    int err;
+
     char const *json = "{\"key\": {\"key2\": \"value2\"}}";
-    char test_buffer[strlen(json) + 1] = {};
+
+    char test_buffer[strlen(json) + 1];
+    memset(test_buffer, 0, sizeof(test_buffer));
 
     struct json_value value;
-    int err = json_parse(json, strlen(json), &value);
+    err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, 0);
 
-    FILE *temp_file = tmpfile();
+    struct vfs_file temp_file;
+    err = vfs_create_tempfile(&temp_file);
+    assert_int_equal(err, 0);
 
-    json_value_print(&value, temp_file, -1);
+    json_value_print(&value, &temp_file, -1);
+    vfs_file_seek(&temp_file, VFS_SEEK_SET, 0);
 
-    fseek(temp_file, 0, SEEK_END);
-    size_t file_size = ftell(temp_file);
-    assert_int_equal(file_size, strlen(json));
+    assert_int_equal(vfs_file_size(&temp_file), strlen(json));
+    assert_int_equal(vfs_file_read(&temp_file, test_buffer, strlen(json)), strlen(json));
 
-    fseek(temp_file, 0, SEEK_SET);
-    fread(test_buffer, strlen(json), 1, temp_file);
     assert_string_equal(test_buffer, "{\"key\": {\"key2\": \"value2\"}}");
 
-    fclose(temp_file);
+    vfs_close(&temp_file);
     json_value_destroy(&value);
 }
 

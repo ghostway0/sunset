@@ -5,9 +5,16 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "log.h"
 #include "sunset/errors.h"
 #include "sunset/utils.h"
 #include "sunset/vfs.h"
+
+#ifdef __linux__
+
+#include <linux/limits.h>
+
+#endif
 
 static int vfs_get_open_mode_oflag(enum vfs_open_mode mode) {
     switch (mode) {
@@ -85,6 +92,9 @@ int vfs_close(struct vfs_file *file) {
     if (close(file->fd) == -1) {
         return -ERROR_IO;
     }
+
+    file->fd = -1;
+
     return 0;
 }
 
@@ -142,4 +152,16 @@ bool vfs_is_eof(struct vfs_file *file) {
     }
 
     return current_offset == vfs_file_size(file);
+}
+
+int vfs_create_tempfile(struct vfs_file *file_out) {
+    char filename[] = "/tmp/sunset-temp.XXXXXX";
+    int fd = mkstemp(filename);
+    if (fd == -1) {
+        return -ERROR_IO;
+    }
+
+    file_out->fd = fd;
+
+    return 0;
 }

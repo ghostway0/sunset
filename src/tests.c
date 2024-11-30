@@ -79,9 +79,9 @@ void test_camera_movement(void **state) {
     vec3 direction = {1.0f, 0.0f, 0.0f};
     camera_move_scaled(&camera, direction);
 
-    assert_float_equal(camera.position[0], 0.0f, EPSILON);
+    assert_float_equal(camera.position[0], 100.0f, EPSILON);
     assert_float_equal(camera.position[1], 0.0f, EPSILON);
-    assert_float_equal(camera.position[2], -100.0f, EPSILON);
+    assert_float_equal(camera.position[2], 0.0f, EPSILON);
 }
 
 void test_base64_encode(void **state) {

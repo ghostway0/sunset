@@ -8,6 +8,9 @@ struct vfs_file {
     int fd;
 };
 
+#define vfs_file_print(file, fmt) dprintf(file->fd, fmt)
+#define vfs_file_printf(file, fmt, ...) dprintf(file->fd, fmt, __VA_ARGS__)
+
 #else
 
 #error "unsupported system"
@@ -61,3 +64,5 @@ size_t vfs_file_seek(
         struct vfs_file *file, enum vfs_seek_mode seek_mode, size_t offset);
 
 size_t vfs_file_get_offset(struct vfs_file *file);
+
+int vfs_create_tempfile(struct vfs_file *file_out);

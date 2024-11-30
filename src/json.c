@@ -4,10 +4,9 @@
 
 #include "sunset/errors.h"
 #include "sunset/vector.h"
+#include "sunset/vfs.h"
 
 #include "sunset/json.h"
-
-#define MAX_JSON_SIZE 4096
 
 #define bump(p)                                                                \
     ({                                                                         \
@@ -57,8 +56,8 @@ static int parse_string(struct parser *p, struct json_value *value_out) {
 
     bump(p);
 
-    for (; bump(p) != '"';)
-        ;
+    while (p->cursor < p->json_size && bump(p) != '"') {
+    }
 
     value_out->type = JSON_STRING;
     value_out->data.string = sunset_malloc(p->cursor - start);
@@ -67,7 +66,7 @@ static int parse_string(struct parser *p, struct json_value *value_out) {
             p->buffer + start,
             p->cursor - start - 1);
 
-    ((char *)value_out->data.string)[p->cursor - start - 1] = '\0';
+    value_out->data.string[p->cursor - start - 1] = '\0';
 
     return 0;
 }
@@ -101,7 +100,7 @@ static int parse_number(struct parser *p, struct json_value *value_out) {
 }
 
 static int parse_object(struct parser *p, struct json_value *value_out) {
-    int retval;
+    int retval = 0;
 
     value_out->type = JSON_OBJECT;
 
@@ -130,14 +129,18 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
         skip_whitespace(p);
 
         if (p->buffer[p->cursor] != ':') {
-            return -ERROR_INVALID_FORMAT;
+            free(key.data.string);
+            retval = -ERROR_INVALID_FORMAT;
+            goto cleanup;
         }
 
         bump(p);
 
         struct json_value value;
         if ((retval = parse_value(p, &value))) {
-            return retval;
+            free(key.data.string);
+            retval = -ERROR_INVALID_FORMAT;
+            goto cleanup;
         }
 
         struct key_value kv = {
@@ -161,7 +164,12 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
         bump(p);
     }
 
-    return 0;
+cleanup:
+    if (retval != 0) {
+        vector_destroy(value_out->data.object);
+    }
+
+    return retval;
 }
 
 static int parse_array(struct parser *p, struct json_value *value_out) {
@@ -269,7 +277,6 @@ void json_value_destroy(struct json_value *json) {
         }
 
         vector_destroy(json->data.object);
-
         return;
     }
 
@@ -278,7 +285,7 @@ void json_value_destroy(struct json_value *json) {
             json_value_destroy(&json->data.array[i]);
         }
 
-        vector_destroy(json->data.object);
+        vector_destroy(json->data.array);
         return;
     }
 
@@ -287,72 +294,73 @@ void json_value_destroy(struct json_value *json) {
     }
 }
 
-static void print_indent(FILE *file, size_t indent) {
+static void print_indent(struct vfs_file *file, size_t indent) {
     if (indent != (size_t)-1) {
         for (size_t i = 0; i < indent; i++) {
-            fputc(' ', file);
+            vfs_file_print(file, " ");
         }
     }
 }
 
-void json_value_print(struct json_value *json, FILE *file, size_t indent) {
+void json_value_print(
+        struct json_value *json, struct vfs_file *file, size_t indent) {
     switch (json->type) {
         case JSON_STRING:
-            fprintf(file, "\"%s\"", json->data.string);
+            vfs_file_printf(file, "\"%s\"", json->data.string);
             break;
         case JSON_WHOLE_NUMBER:
-            fprintf(file, "%zu", json->data.whole_number);
+            vfs_file_printf(file, "\"%zu\"", json->data.whole_number);
             break;
         case JSON_NUMBER:
-            fprintf(file, "%f", json->data.number);
+            vfs_file_printf(file, "\"%f\"", json->data.number);
             break;
         case JSON_BOOLEAN:
-            fprintf(file, json->data.boolean ? "true" : "false");
+            vfs_file_print(file, json->data.boolean ? "true" : "false");
             break;
         case JSON_NULL:
-            fprintf(file, "null");
+            vfs_file_print(file, "null");
             break;
         case JSON_OBJECT: {
-            fprintf(file, "{");
+            vfs_file_print(file, "{");
             for (size_t i = 0; i < vector_size(json->data.object); i++) {
                 if (indent != (size_t)-1) {
-                    fprintf(file, "\n");
+                    vfs_file_print(file, "\n");
                     print_indent(file, indent + 2);
                 }
-                fprintf(file, "\"%s\": ", json->data.object[i].key);
+                vfs_file_printf(file, "\"%s\": ", json->data.object[i].key);
                 json_value_print(&json->data.object[i].value,
                         file,
                         indent != (size_t)-1 ? indent + 2 : indent);
                 if (i != vector_size(json->data.object) - 1) {
-                    fprintf(file, indent != (size_t)-1 ? "," : ", ");
+                    vfs_file_print(file, indent != (size_t)-1 ? "," : ", ");
                 }
             }
             if (indent != (size_t)-1) {
-                fprintf(file, "\n");
+                vfs_file_print(file, "\n");
                 print_indent(file, indent);
             }
-            fprintf(file, "}");
+            vfs_file_print(file, "}");
             break;
         }
         case JSON_ARRAY: {
-            fprintf(file, "[");
+            vfs_file_print(file, "[");
             for (size_t i = 0; i < vector_size(json->data.array); i++) {
                 if (indent != (size_t)-1) {
-                    fprintf(file, "\n");
+                    vfs_file_print(file, "\n");
                     print_indent(file, indent + 2);
                 }
                 json_value_print(&json->data.array[i],
                         file,
                         indent != (size_t)-1 ? indent + 2 : indent);
                 if (i != vector_size(json->data.array) - 1) {
-                    fprintf(file, indent != (size_t)-1 ? "," : ", ");
+                    vfs_file_print(file, indent != (size_t)-1 ? "," : ", ");
                 }
             }
             if (indent != (size_t)-1) {
-                fprintf(file, "\n");
+                vfs_file_print(file, "\n");
                 print_indent(file, indent);
             }
-            fprintf(file, "]");
+            vfs_file_print(file, "]");
             break;
         }
         default:

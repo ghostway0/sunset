@@ -58,8 +58,8 @@ static inline int compare_uint64_t(void const *a, void const *b) {
     })
 
 #define swap_if(predicate, a, b)                                               \
-    a = predicate ? b : a;                                                     \
-    b = predicate ? a : b;
+    a = (predicate) ? (b) : (a);                                               \
+    b = (predicate) ? (a) : (b);
 
 #define sunset_malloc(size) sunset_memory(malloc, size);
 
@@ -67,7 +67,7 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 
 #define sunset_realloc(ptr, size) sunset_memory(realloc, ptr, size);
 
-#define SIZE_FAIL ((size_t) - 1)
+#define SIZE_FAIL ((size_t)-1)
 
 #define one_matches(value, ...)                                                \
     _one_matches(value,                                                        \

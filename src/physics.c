@@ -18,7 +18,11 @@ enum order compare_collisions(void const *a, void const *b) {
     const struct collision_pair *col_a = (const struct collision_pair *)a;
     const struct collision_pair *col_b = (const struct collision_pair *)b;
 
-    // not UB because of how scene is structured, but not the best
+    // FIXME:
+    // this is quite an annoying way of ensuring map is consistent between frames.
+    // 1. a has priority for no reason, and
+    // 2. only technically not UB because of how scene is structured
+
     if (col_a->a < col_b->a) {
         return ORDER_LESS_THAN;
     }

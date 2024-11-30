@@ -20,7 +20,6 @@ struct vector_metadata {
         struct vector_metadata *meta =                                         \
                 (struct vector_metadata *)sunset_malloc(                       \
                         sizeof(struct vector_metadata) + sizeof(*v) * 16);     \
-        assert(meta);                                                          \
         meta->size = 0;                                                        \
         meta->capacity = 16;                                                   \
         v = (void *)(meta + 1);                                                \

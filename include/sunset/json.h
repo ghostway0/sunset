@@ -45,5 +45,7 @@ int json_parse(
 
 void json_value_destroy(struct json_value *json);
 
+struct vfs_file;
+
 // -1 for not pretty
-void json_value_print(struct json_value *json, FILE *file, size_t indent);
+void json_value_print(struct json_value *json, struct vfs_file *file, size_t indent);
