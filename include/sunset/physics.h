@@ -44,11 +44,6 @@ struct physics_object {
     struct physics_material material;
 };
 
-// FIXME: weird here
-static_assert(
-        sizeof(struct collision_event) <= 60, "collision_event too large");
-
-// weird that this is public.
 struct collision_pair {
     struct object *a;
     struct object *b;
@@ -62,8 +57,7 @@ struct physics {
 
 void physics_init(struct physics *physics);
 
-// FIXME: consistent naming
-void physics_free(struct physics *physics);
+void physics_destroy(struct physics *physics);
 
 void physics_add_object(struct physics *physics, struct object *object);
 

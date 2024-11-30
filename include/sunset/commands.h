@@ -159,7 +159,7 @@ struct command_buffer {
 void command_buffer_init(struct command_buffer *command_buffer,
         struct command_buffer_options options);
 
-void command_buffer_free(struct command_buffer *command_buffer);
+void command_buffer_destroy(struct command_buffer *command_buffer);
 
 void command_buffer_append(
         struct command_buffer *command_buffer, struct command const *command);

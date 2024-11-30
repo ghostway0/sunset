@@ -22,7 +22,7 @@ void ring_buffer_init(struct ring_buffer *ring_buffer,
         size_t buffer_size,
         size_t element_size);
 
-void ring_buffer_free(struct ring_buffer *ring_buffer);
+void ring_buffer_destroy(struct ring_buffer *ring_buffer);
 
 void ring_buffer_clear(struct ring_buffer *ring_buffer);
 

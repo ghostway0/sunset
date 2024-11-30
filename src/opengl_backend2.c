@@ -232,7 +232,7 @@ int backend_link_program(struct program *program) {
     return 0;
 }
 
-void backend_free_program(struct program *program) {
+void backend_destroy_program(struct program *program) {
     glDeleteProgram((GLuint)program->handle);
 }
 

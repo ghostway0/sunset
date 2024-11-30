@@ -43,7 +43,7 @@ struct key_value {
 int json_parse(
         char const *input, size_t input_size, struct json_value *value_out);
 
-void json_value_free(struct json_value *json);
+void json_value_destroy(struct json_value *json);
 
 // -1 for not pretty
 void json_value_print(struct json_value *json, FILE *file, size_t indent);

@@ -93,8 +93,8 @@ void backend_draw(struct render_context *context,
         mat4 view,
         mat4 projection);
 
-void backend_free(struct render_context *context);
+void backend_destroy(struct render_context *context);
 
-void backend_free_program(struct program *program);
+void backend_destroy_program(struct program *program);
 
 void compiled_mesh_destroy(struct compiled_mesh *mesh);

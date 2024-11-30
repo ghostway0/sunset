@@ -42,8 +42,8 @@ void context_init(struct context *context,
     context->mouse.first_mouse = true;
 }
 
-void context_free(struct context *context) {
-    command_buffer_free(&context->command_buffer);
+void context_destroy(struct context *context) {
+    command_buffer_destroy(&context->command_buffer);
 }
 
 struct mesh create_test_mesh() {
@@ -179,7 +179,7 @@ int main() {
     backend_register_texture_atlas(
             &render_context, &image, &bounds, 1, &texture_id);
 
-    image_deinit(&image);
+    image_destroy(&image);
 
     camera_init(
             (struct camera_state){

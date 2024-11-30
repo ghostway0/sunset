@@ -18,14 +18,14 @@ void event_queue_init(struct event_queue *queue) {
     pthread_mutex_init(queue->lock, &mutex_attr);
 }
 
-void event_queue_free(struct event_queue *queue) {
-    vector_free(queue->events);
+void event_queue_destroy(struct event_queue *queue) {
+    vector_destroy(queue->events);
 
     for (size_t i = 0; i < vector_size(queue->handlers); i++) {
-        vector_free(queue->handlers[i]);
+        vector_destroy(queue->handlers[i]);
     }
 
-    vector_free(queue->handlers);
+    vector_destroy(queue->handlers);
 
     pthread_mutex_destroy(queue->lock);
     free(queue->lock);

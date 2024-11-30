@@ -36,7 +36,7 @@ static void test_ring_buffer(void **state) {
     assert_int_equal(e.x, e_out.x);
     assert_int_equal(e.y, e_out.y);
 
-    ring_buffer_free(&ring_buffer);
+    ring_buffer_destroy(&ring_buffer);
 }
 
 void test_color_from_hex(void **state) {
@@ -97,7 +97,7 @@ void test_base64_encode(void **state) {
 
     assert_string_equal(encoded, "SGVsbG8sIFdvcmxkIQ==");
 
-    vector_free(encoded);
+    vector_destroy(encoded);
 }
 
 void test_base64_decode(void **state) {
@@ -111,7 +111,7 @@ void test_base64_decode(void **state) {
 
     assert_memory_equal(decoded, "Hello, World!", 13);
 
-    vector_free(decoded);
+    vector_destroy(decoded);
 }
 
 void test_base64_invalid_input(void **state) {
@@ -123,7 +123,7 @@ void test_base64_invalid_input(void **state) {
     int err = base64_decode("SGVsbG8sIFdvcmxkIQ=", 19, &decoded);
     assert_int_equal(err, -1);
 
-    vector_free(decoded);
+    vector_destroy(decoded);
 }
 
 // bool should_split(struct quad_tree *tree, struct quad_node *node) {

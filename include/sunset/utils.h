@@ -47,7 +47,7 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 #define sunset_memory(f, ...)                                                  \
     ({                                                                         \
         void *__new_ptr = f(__VA_ARGS__);                                      \
-        if (__new_ptr == NULL) {                                               \
+        if (!__new_ptr) {                                               \
             fprintf(stderr,                                                    \
                     "%s:%d out of memory... exiting",                          \
                     __FILE__,                                                  \

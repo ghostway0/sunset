@@ -67,8 +67,8 @@ void command_buffer_init(struct command_buffer *command_buffer,
             sizeof(struct command));
 }
 
-void command_buffer_free(struct command_buffer *command_buffer) {
-    ring_buffer_free(&command_buffer->ring_buffer);
+void command_buffer_destroy(struct command_buffer *command_buffer) {
+    ring_buffer_destroy(&command_buffer->ring_buffer);
 }
 
 void command_buffer_append(

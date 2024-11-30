@@ -21,111 +21,21 @@ enum order compare_collisions(void const *a, void const *b) {
     // not UB because of how scene is structured, but not the best
     if (col_a->a < col_b->a) {
         return ORDER_LESS_THAN;
-    } else if (col_a->a > col_b->a) {
+    }
+
+    if (col_a->a > col_b->a) {
         return ORDER_GREATER_THAN;
-    } else {
-        if (col_a->b < col_b->b) {
-            return ORDER_LESS_THAN;
-        } else if (col_a->b > col_b->b) {
-            return ORDER_GREATER_THAN;
-        } else {
-            return ORDER_EQUAL;
-        }
     }
-}
 
-void physics_init(struct physics *physics) {
-    vector_init(physics->objects);
-    vector_init(physics->constraints);
-    vector_init(physics->collision_pairs);
-}
-
-// FIXME: consistent namings
-void physics_free(struct physics *physics) {
-    vector_free(physics->objects);
-    vector_free(physics->constraints);
-    vector_free(physics->collision_pairs);
-}
-
-void physics_add_object(struct physics *physics, struct object *object) {
-    vector_append(physics->objects, object);
-
-    if (object->physics.type == PHYSICS_OBJECT_REGULAR) {
-        glm_vec3_sub(object->physics.acceleration,
-                (vec3){0.0f, 0.01f, 0.0f},
-                object->physics.acceleration);
+    if (col_a->b < col_b->b) {
+        return ORDER_LESS_THAN;
     }
-}
 
-void physics_add_constraint(struct physics *physics,
-        struct object *a,
-        struct object *b,
-        float distance) {
-    vector_append(physics->constraints, ((struct constraint){a, b, distance}));
-}
-
-// NOTE: this is not the most accurate. you can see that when two objects
-// are constrained they are moving at slightly different speeds than if
-// they were not constrained together.
-static void apply_constraint_forces(struct physics const *physics, float dt) {
-    for (size_t i = 0; i < vector_size(physics->constraints); i++) {
-        struct constraint constraint = physics->constraints[i];
-        struct object *a = constraint.a;
-        struct object *b = constraint.b;
-
-        vec3 direction;
-        glm_vec3_sub(b->transform.position, a->transform.position, direction);
-
-        float current_distance = glm_vec3_norm(direction);
-        float diff = current_distance - constraint.distance;
-        float correction = diff / 2.0f;
-
-        vec3 correction_vector;
-        glm_vec3_scale(direction, correction, correction_vector);
-
-        glm_vec3_add(a->transform.position,
-                correction_vector,
-                a->transform.position);
-        glm_vec3_sub(b->transform.position,
-                correction_vector,
-                b->transform.position);
-
-        vec3 velocity;
-        glm_vec3_sub(b->physics.velocity, a->physics.velocity, velocity);
-
-        float velocity_diff = glm_vec3_norm(velocity);
-        float velocity_correction = velocity_diff / 2.0f;
-
-        vec3 velocity_correction_vector;
-        glm_vec3_scale(
-                velocity, velocity_correction * dt, velocity_correction_vector);
-
-        glm_vec3_add(a->physics.velocity,
-                velocity_correction_vector,
-                a->physics.velocity);
-        glm_vec3_sub(b->physics.velocity,
-                velocity_correction_vector,
-                b->physics.velocity);
-
-        vec3 acceleration;
-        glm_vec3_sub(
-                b->physics.acceleration, a->physics.acceleration, acceleration);
-
-        float acceleration_diff = glm_vec3_norm(acceleration);
-        float acceleration_correction = acceleration_diff / 2.0f;
-
-        vec3 acceleration_correction_vector;
-        glm_vec3_scale(acceleration,
-                acceleration_correction * dt,
-                acceleration_correction_vector);
-
-        glm_vec3_add(a->physics.acceleration,
-                acceleration_correction_vector,
-                a->physics.acceleration);
-        glm_vec3_sub(b->physics.acceleration,
-                acceleration_correction_vector,
-                b->physics.acceleration);
+    if (col_a->b > col_b->b) {
+        return ORDER_GREATER_THAN;
     }
+
+    return ORDER_EQUAL;
 }
 
 static void aabb_collision_normal(
@@ -198,6 +108,77 @@ static struct physics_material combine_materials(
             .friction = a.friction * b.friction,
             .restitution = a.restitution * b.restitution,
     };
+}
+
+
+void physics_init(struct physics *physics) {
+    vector_init(physics->objects);
+    vector_init(physics->constraints);
+    vector_init(physics->collision_pairs);
+}
+
+// NOTE: this is not the most accurate. you can see that when two objects
+// are constrained they are moving at slightly different speeds than if
+// they were not constrained together.
+static void apply_constraint_forces(struct physics const *physics, float dt) {
+    for (size_t i = 0; i < vector_size(physics->constraints); i++) {
+        struct constraint constraint = physics->constraints[i];
+        struct object *a = constraint.a;
+        struct object *b = constraint.b;
+
+        vec3 direction;
+        glm_vec3_sub(b->transform.position, a->transform.position, direction);
+
+        float current_distance = glm_vec3_norm(direction);
+        float diff = current_distance - constraint.distance;
+        float correction = diff / 2.0f;
+
+        vec3 correction_vector;
+        glm_vec3_scale(direction, correction, correction_vector);
+
+        glm_vec3_add(a->transform.position,
+                correction_vector,
+                a->transform.position);
+        glm_vec3_sub(b->transform.position,
+                correction_vector,
+                b->transform.position);
+
+        vec3 velocity;
+        glm_vec3_sub(b->physics.velocity, a->physics.velocity, velocity);
+
+        float velocity_diff = glm_vec3_norm(velocity);
+        float velocity_correction = velocity_diff / 2.0f;
+
+        vec3 velocity_correction_vector;
+        glm_vec3_scale(
+                velocity, velocity_correction * dt, velocity_correction_vector);
+
+        glm_vec3_add(a->physics.velocity,
+                velocity_correction_vector,
+                a->physics.velocity);
+        glm_vec3_sub(b->physics.velocity,
+                velocity_correction_vector,
+                b->physics.velocity);
+
+        vec3 acceleration;
+        glm_vec3_sub(
+                b->physics.acceleration, a->physics.acceleration, acceleration);
+
+        float acceleration_diff = glm_vec3_norm(acceleration);
+        float acceleration_correction = acceleration_diff / 2.0f;
+
+        vec3 acceleration_correction_vector;
+        glm_vec3_scale(acceleration,
+                acceleration_correction * dt,
+                acceleration_correction_vector);
+
+        glm_vec3_add(a->physics.acceleration,
+                acceleration_correction_vector,
+                a->physics.acceleration);
+        glm_vec3_sub(b->physics.acceleration,
+                acceleration_correction_vector,
+                b->physics.acceleration);
+    }
 }
 
 static void calculate_collision_normal(
@@ -430,14 +411,6 @@ static bool physics_move_object_with_collisions(struct scene const *scene,
     return found_collision;
 }
 
-bool physics_move_object(struct scene const *scene,
-        struct object *object,
-        vec3 direction,
-        struct event_queue *event_queue) {
-    return physics_move_object_with_collisions(
-            scene, object, direction, event_queue, NULL);
-}
-
 static void generate_collider_events(struct physics const *physics,
         struct event_queue *event_queue,
         map(const struct collision_pair) new_collisions) {
@@ -486,6 +459,37 @@ static void generate_collider_events(struct physics const *physics,
     }
 }
 
+void physics_destroy(struct physics *physics) {
+    vector_destroy(physics->objects);
+    vector_destroy(physics->constraints);
+    vector_destroy(physics->collision_pairs);
+}
+
+void physics_add_object(struct physics *physics, struct object *object) {
+    vector_append(physics->objects, object);
+
+    if (object->physics.type == PHYSICS_OBJECT_REGULAR) {
+        glm_vec3_sub(object->physics.acceleration,
+                (vec3){0.0f, 0.01f, 0.0f},
+                object->physics.acceleration);
+    }
+}
+
+void physics_add_constraint(struct physics *physics,
+        struct object *a,
+        struct object *b,
+        float distance) {
+    vector_append(physics->constraints, ((struct constraint){a, b, distance}));
+}
+
+bool physics_move_object(struct scene const *scene,
+        struct object *object,
+        vec3 direction,
+        struct event_queue *event_queue) {
+    return physics_move_object_with_collisions(
+            scene, object, direction, event_queue, NULL);
+}
+
 void physics_step(struct physics *physics,
         struct scene const *scene,
         struct event_queue *event_queue,
@@ -509,6 +513,6 @@ void physics_step(struct physics *physics,
 
     generate_collider_events(physics, event_queue, new_collisions);
 
-    vector_free(physics->collision_pairs);
+    vector_destroy(physics->collision_pairs);
     physics->collision_pairs = new_collisions;
 }

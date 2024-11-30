@@ -21,4 +21,4 @@ int load_font_psf2(char const *path, struct font *font_out);
 
 struct glyph const *font_get_glyph(struct font const *font, uint32_t codepoint);
 
-void font_free(struct font *font);
+void font_destroy(struct font *font);

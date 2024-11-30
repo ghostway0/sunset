@@ -26,7 +26,7 @@ struct vector_metadata {
         v = (void *)(meta + 1);                                                \
     })
 
-#define vector_free(v)                                                         \
+#define vector_destroy(v)                                                         \
     do {                                                                       \
         free(vector_metadata(v));                                              \
         v = NULL;                                                              \

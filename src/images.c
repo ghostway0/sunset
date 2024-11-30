@@ -54,6 +54,6 @@ void show_image_grayscale_at(struct image const *image, struct point pos) {
     printf("\033[%lu;%luH", pos.y + image->h, (size_t)1);
 }
 
-void image_deinit(struct image *image) {
+void image_destroy(struct image *image) {
     free(image->pixels);
 }

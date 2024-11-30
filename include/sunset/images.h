@@ -10,7 +10,7 @@ struct image {
     struct color *pixels;
 };
 
-void image_deinit(struct image *image);
+void image_destroy(struct image *image);
 
 int load_image_file(char const *path, struct image *image_out);
 

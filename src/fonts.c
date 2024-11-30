@@ -180,7 +180,7 @@ struct glyph const *font_get_glyph(
     return &font->glyphs[glyph_index];
 }
 
-void font_free(struct font *font) {
+void font_destroy(struct font *font) {
     for (size_t i = 0; i < font->num_glyphs; ++i) {
         free(font->glyphs[i].image.pixels);
     }

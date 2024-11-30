@@ -38,7 +38,7 @@ static void *split(struct oct_tree *, void *data, struct box bounds) {
     new_chunk->num_objects = vector_size(in_new_bounds);
     new_chunk->objects = in_new_bounds;
 
-    vector_free(in_new_bounds);
+    vector_destroy(in_new_bounds);
 
     return new_chunk;
 }
@@ -78,14 +78,13 @@ struct chunk *scene_get_chunk_for(struct scene const *scene, vec3 position) {
 
 void scene_destroy(struct scene *scene) {
     oct_tree_destroy(&scene->oct_tree);
-    vector_free(scene->cameras);
+    vector_destroy(scene->cameras);
 }
 
 void object_move_with_parent(struct object *object, vec3 direction) {
     object_move(object, direction);
 
-    // FIXME: consistency
-    if (object->parent) {
+    if (object->parent != NULL) {
         object_move(object->parent, direction);
     }
 }
@@ -99,7 +98,7 @@ void object_move(struct object *object, vec3 direction) {
         object_move(object->children[i], direction);
     }
 
-    if (object->move_callback) {
+    if (object->move_callback != NULL) {
         object->move_callback(object, direction);
     }
 }

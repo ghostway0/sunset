@@ -53,7 +53,7 @@ void ring_buffer_init(struct ring_buffer *ring_buffer,
     assert(ring_buffer->buffer != NULL);
 }
 
-void ring_buffer_free(struct ring_buffer *ring_buffer) {
+void ring_buffer_destroy(struct ring_buffer *ring_buffer) {
     free(ring_buffer->buffer);
 }
 

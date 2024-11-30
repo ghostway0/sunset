@@ -129,7 +129,7 @@ static int parse_buffers_json(
             return -ERROR_INVALID_FORMAT;
         }
 
-        if (buffer.uri == NULL) {
+        if (!buffer.uri) {
             return -ERROR_INVALID_FORMAT;
         }
 

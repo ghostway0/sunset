@@ -137,8 +137,8 @@ int entity_builder_finish(struct entity_builder *builder) {
         }
     }
 
-    vector_free(builder->components);
-    vector_free(builder->component_ids);
+    vector_destroy(builder->components);
+    vector_destroy(builder->component_ids);
 
     return 0;
 }
