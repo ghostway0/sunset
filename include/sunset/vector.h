@@ -15,18 +15,18 @@ struct vector_metadata {
 
 #define vector_metadata(v) ((struct vector_metadata *)(v) - 1)
 
-#define vector_init(v)                                                      \
+#define vector_init(v)                                                         \
     ({                                                                         \
         struct vector_metadata *meta =                                         \
                 (struct vector_metadata *)sunset_malloc(                       \
-                        sizeof(struct vector_metadata) + sizeof(*v) * 16);      \
+                        sizeof(struct vector_metadata) + sizeof(*v) * 16);     \
         assert(meta);                                                          \
         meta->size = 0;                                                        \
         meta->capacity = 16;                                                   \
         v = (void *)(meta + 1);                                                \
     })
 
-#define vector_destroy(v)                                                         \
+#define vector_destroy(v)                                                      \
     do {                                                                       \
         free(vector_metadata(v));                                              \
         v = NULL;                                                              \

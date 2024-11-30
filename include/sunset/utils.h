@@ -47,7 +47,7 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 #define sunset_memory(f, ...)                                                  \
     ({                                                                         \
         void *__new_ptr = f(__VA_ARGS__);                                      \
-        if (!__new_ptr) {                                               \
+        if (!__new_ptr) {                                                      \
             fprintf(stderr,                                                    \
                     "%s:%d out of memory... exiting",                          \
                     __FILE__,                                                  \
@@ -67,7 +67,7 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 
 #define sunset_realloc(ptr, size) sunset_memory(realloc, ptr, size);
 
-#define SIZE_FAIL ((size_t)-1)
+#define SIZE_FAIL ((size_t) - 1)
 
 #define one_matches(value, ...)                                                \
     _one_matches(value,                                                        \

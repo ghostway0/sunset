@@ -1,9 +1,9 @@
 #include <string.h>
 
 #include <cglm/cam.h>
-#include <cglm/vec3.h>
 #include <cglm/quat.h>
 #include <cglm/types.h>
+#include <cglm/vec3.h>
 
 #include "sunset/camera.h"
 #include "sunset/math.h"

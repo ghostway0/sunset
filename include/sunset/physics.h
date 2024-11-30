@@ -27,7 +27,8 @@ struct physics_material {
 enum physics_object_type {
     /// doesn't affect other objects, just checks for collisions
     PHYSICS_OBJECT_COLLIDER,
-    /// objects that don't get fixed after a collision, but do affect other objects
+    /// objects that don't get fixed after a collision, but do affect other
+    /// objects
     PHYSICS_OBJECT_INFINITE,
     /// regular objects
     PHYSICS_OBJECT_REGULAR,

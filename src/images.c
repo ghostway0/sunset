@@ -3,9 +3,9 @@
 
 #include "sunset/color.h"
 #include "sunset/errors.h"
+#include "sunset/filesystem.h"
 #include "sunset/images.h"
 #include "sunset/tga.h"
-#include "sunset/filesystem.h"
 
 int load_image_file(char const *path, struct image *image_out) {
     struct vfs_file file;

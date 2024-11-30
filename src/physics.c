@@ -110,7 +110,6 @@ static struct physics_material combine_materials(
     };
 }
 
-
 void physics_init(struct physics *physics) {
     vector_init(physics->objects);
     vector_init(physics->constraints);

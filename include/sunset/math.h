@@ -30,10 +30,10 @@ enum order {
 
 #define vectors_close(type, a, b, tolerance)                                   \
     ({                                                                         \
-        size_t _size = sizeof(type) / sizeof((a)[0]);                           \
+        size_t _size = sizeof(type) / sizeof((a)[0]);                          \
         double _sum = 0.0;                                                     \
         for (size_t i = 0; i < _size; i++) {                                   \
-            double _diff = (a)[i] - (b)[i];                      \
+            double _diff = (a)[i] - (b)[i];                                    \
             _sum += _diff * _diff;                                             \
         }                                                                      \
         sqrt(_sum) <= (tolerance);                                             \
@@ -43,7 +43,7 @@ enum order {
     ({                                                                         \
         type _zero;                                                            \
         memset(&_zero, 0, sizeof(_zero));                                      \
-        vectors_close(type, vector, _zero, tolerance);                        \
+        vectors_close(type, vector, _zero, tolerance);                         \
     })
 
 #endif // MATH_H

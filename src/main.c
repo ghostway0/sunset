@@ -150,8 +150,8 @@ int main() {
     sleep(1);
 
     struct render_config render_config = {
-        .window_height = 1920,
-        .window_width = 1080,
+            .window_height = 1920,
+            .window_width = 1080,
     };
     // if ((retval = build_render_config(&render_config))) {
     //     return retval;
