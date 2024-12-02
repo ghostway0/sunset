@@ -31,17 +31,22 @@ static int parse_face_element(
         char *str, size_t vertex_count, struct face_element *face_out) {
     char *token;
 
+    memset(face_out, 0, sizeof(struct face_element));
+
     enum {
+        FACE_PARSING_INITIAL,
         FACE_PARSING_VERTEX,
         FACE_PARSING_TEXCOORD,
         FACE_PARSING_NORMAL,
-    } stage = FACE_PARSING_VERTEX;
+    } stage = FACE_PARSING_INITIAL;
 
     while ((token = strsep(&str, "/")) != NULL) {
+        stage++;
+
+        size_t index = 0;
         size_t len = strlen(token);
 
         if (len == 0) {
-            // TODO: empty element; might have a bug here
             continue;
         }
 
@@ -54,7 +59,7 @@ static int parse_face_element(
             return ERROR_INVALID_FORMAT;
         }
 
-        size_t index = (size_t)value - 1;
+        index = (size_t)value - 1;
 
         if (index >= vertex_count) {
             log_error("face index larger than vertex count");
@@ -64,11 +69,9 @@ static int parse_face_element(
         switch (stage) {
             case FACE_PARSING_VERTEX:
                 face_out->vertex_index = index;
-                stage = FACE_PARSING_TEXCOORD;
                 break;
             case FACE_PARSING_TEXCOORD:
                 face_out->texcoord_index = index;
-                stage = FACE_PARSING_NORMAL;
                 break;
             case FACE_PARSING_NORMAL:
                 face_out->normal_index = index;
@@ -111,6 +114,9 @@ void obj_model_destroy(struct obj_model *model) {
     vector_destroy(model->vertices);
     free(model->material_lib);
     free(model->object_name);
+
+    model->material_lib = NULL;
+    model->object_name = NULL;
 }
 
 void obj_model_init(struct obj_model *model_out) {
