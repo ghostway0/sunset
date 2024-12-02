@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-static char const base64_table[] =
+static char const alphabet[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 int base64_encode(uint8_t const *in, size_t in_size, vector(char) * out) {
@@ -16,11 +16,11 @@ int base64_encode(uint8_t const *in, size_t in_size, vector(char) * out) {
                 | (i + 1 < in_size ? (uint8_t)in[i + 1] << 8 : 0)
                 | (i + 2 < in_size ? (uint8_t)in[i + 2] : 0);
 
-        vector_append(*out, base64_table[(value >> 18) & 0x3F]);
-        vector_append(*out, base64_table[(value >> 12) & 0x3F]);
+        vector_append(*out, alphabet[(value >> 18) & 0x3F]);
+        vector_append(*out, alphabet[(value >> 12) & 0x3F]);
         vector_append(*out,
-                i + 1 < in_size ? base64_table[(value >> 6) & 0x3F] : '=');
-        vector_append(*out, i + 2 < in_size ? base64_table[value & 0x3F] : '=');
+                i + 1 < in_size ? alphabet[(value >> 6) & 0x3F] : '=');
+        vector_append(*out, i + 2 < in_size ? alphabet[value & 0x3F] : '=');
     }
 
     vector_append(*out, '\0');

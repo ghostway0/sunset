@@ -147,8 +147,6 @@ int main() {
     struct scene scene;
     struct camera camera;
 
-    sleep(1);
-
     struct render_config render_config = {
             .window_height = 1920,
             .window_width = 1080,

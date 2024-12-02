@@ -57,15 +57,17 @@ static inline int compare_uint64_t(void const *a, void const *b) {
         __new_ptr;                                                             \
     })
 
-#define swap_if(predicate, a, b)                                               \
-    a = (predicate) ? (b) : (a);                                               \
-    b = (predicate) ? (a) : (b);
-
 #define sunset_malloc(size) sunset_memory(malloc, size);
 
 #define sunset_calloc(num, size) sunset_memory(calloc, num, size);
 
 #define sunset_realloc(ptr, size) sunset_memory(realloc, ptr, size);
+
+#define sunset_strdup(ptr) sunset_memory(strdup, ptr);
+
+#define swap_if(predicate, a, b)                                               \
+    a = (predicate) ? (b) : (a);                                               \
+    b = (predicate) ? (a) : (b);
 
 #define SIZE_FAIL ((size_t)-1)
 
