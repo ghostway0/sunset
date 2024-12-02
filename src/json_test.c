@@ -226,7 +226,8 @@ void test_json_value_print(void **state) {
     vfs_file_seek(&temp_file, VFS_SEEK_SET, 0);
 
     assert_int_equal(vfs_file_size(&temp_file), strlen(json));
-    assert_int_equal(vfs_file_read(&temp_file, test_buffer, strlen(json)), strlen(json));
+    assert_int_equal(
+            vfs_file_read(&temp_file, test_buffer, strlen(json)), strlen(json));
 
     assert_string_equal(test_buffer, "{\"key\": {\"key2\": \"value2\"}}");
 

@@ -19,7 +19,8 @@ enum order compare_collisions(void const *a, void const *b) {
     const struct collision_pair *col_b = (const struct collision_pair *)b;
 
     // FIXME:
-    // this is quite an annoying way of ensuring map is consistent between frames.
+    // this is quite an annoying way of ensuring map is consistent between
+    // frames.
     // 1. a has priority for no reason, and
     // 2. only technically not UB because of how scene is structured
 
