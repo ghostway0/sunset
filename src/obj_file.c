@@ -9,35 +9,22 @@
 
 #include "sunset/byte_stream.h"
 #include "sunset/errors.h"
+#include "sunset/obj_file.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
-
-struct face_element {
-    size_t vertex_index;
-    size_t texcoord_index;
-    size_t normal_index;
-};
-
-struct obj_model {
-    vector(vec3) vertices;
-    vector(vec3) normals;
-    vector(vec2) texcoords;
-    vector(vector(struct face_element)) faces;
-    char *material_lib;
-    char *object_name;
-};
 
 static int parse_face_element(
         char *str, size_t vertex_count, struct face_element *face_out) {
     char *token;
 
-    memset(face_out, 0, sizeof(struct face_element));
+    memset(face_out, 0xFFFFFFFF, sizeof(struct face_element));
 
     enum {
         FACE_PARSING_INITIAL,
         FACE_PARSING_VERTEX,
         FACE_PARSING_TEXCOORD,
         FACE_PARSING_NORMAL,
+        FACE_PARSING_INVALID,
     } stage = FACE_PARSING_INITIAL;
 
     while ((token = strsep(&str, "/")) != NULL) {
@@ -47,6 +34,10 @@ static int parse_face_element(
         size_t len = strlen(token);
 
         if (len == 0) {
+            if (stage != FACE_PARSING_TEXCOORD) {
+                return ERROR_INVALID_FORMAT;
+            }
+
             continue;
         }
 
@@ -54,12 +45,12 @@ static int parse_face_element(
         int64_t value = strtol(token, NULL, 10);
 
         // NOTE: does not support negative indices
-        if (errno == ERANGE || value <= 0) {
+        if (errno == ERANGE || value <= 0 || value > UINT32_MAX) {
             log_error("cannot take this at face value.");
             return ERROR_INVALID_FORMAT;
         }
 
-        index = (size_t)value - 1;
+        index = (uint32_t)value - 1;
 
         if (index >= vertex_count) {
             log_error("face index larger than vertex count");
@@ -84,28 +75,33 @@ static int parse_face_element(
     return ERROR_INVALID_FORMAT;
 }
 
-static int parse_face(
-        char *str, size_t vertex_count, vector(struct face_element) face_out) {
-    int err = 0;
+static int parse_face(char const *str,
+        size_t vertex_count,
+        vector(struct face_element) face_out) {
+    int retval = 0;
+    char *duped_str = sunset_strdup(str);
+    char *dup_original = duped_str;
 
     char *token;
-
-    while ((token = strsep(&str, " ")) != NULL) {
+    while ((token = strsep(&duped_str, " ")) != NULL) {
         struct face_element current_face;
 
-        if ((err = parse_face_element(token, vertex_count, &current_face))) {
-            return err;
+        if ((retval = parse_face_element(token, vertex_count, &current_face))) {
+            break;
         }
 
         vector_append(face_out, current_face);
     }
 
-    return 0;
+    free(dup_original);
+    return retval;
 }
 
 void obj_model_destroy(struct obj_model *model) {
     for (size_t i = 0; i < vector_size(model->faces); i++) {
-        vector_destroy(model->faces[i]);
+        if (model->faces[i] != NULL) {
+            vector_destroy(model->faces[i]);
+        }
     }
     vector_destroy(model->faces);
 
@@ -119,31 +115,35 @@ void obj_model_destroy(struct obj_model *model) {
     model->object_name = NULL;
 }
 
-void obj_model_init(struct obj_model *model_out) {
+static void obj_model_init(struct obj_model *model_out) {
     vector_init(model_out->vertices);
     vector_init(model_out->normals);
     vector_init(model_out->texcoords);
     vector_init(model_out->faces);
+
+    model_out->material_lib = NULL;
+    model_out->object_name = NULL;
 }
 
 /// assumptions:
 /// - the OBJ file represents a single object/mesh.
 /// - the object has a single material applied to it.
 /// - the file adheres to Blender's typical OBJ export conventions.
-int parse_obj(struct byte_stream *stream, struct obj_model *model_out) {
+int obj_model_parse(struct byte_stream *stream, struct obj_model *model_out) {
     int retval = 0;
     size_t line_number = 1;
+
+    obj_model_init(model_out);
 
     vector(uint8_t) line_buffer;
     vector_init(line_buffer);
 
-    obj_model_init(model_out);
-
     while (!byte_stream_is_eof(stream)) {
         vector_clear(line_buffer);
 
-        byte_stream_read_until(stream, '\n', line_buffer);
+        byte_stream_read_until(stream, '\n', &line_buffer);
         byte_stream_skip(stream, 1);
+
         vector_append(line_buffer, '\0');
         char *line = (char *)line_buffer;
 
@@ -192,7 +192,7 @@ int parse_obj(struct byte_stream *stream, struct obj_model *model_out) {
         } else if (strncmp(line, "mtllib ", 7) == 0) {
             assert(model_out->material_lib == NULL);
             model_out->material_lib = sunset_strdup(line + 7);
-        } else if (strncmp(line, "g ", 2) == 0) {
+        } else if (strncmp(line, "g ", 2) == 0 || strncmp(line, "o ", 2) == 0) {
             assert(model_out->object_name == NULL);
             model_out->object_name = sunset_strdup(line + 2);
         } else {

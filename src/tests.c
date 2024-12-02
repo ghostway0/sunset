@@ -10,8 +10,11 @@
 // clang-format on
 
 #include "sunset/base64.h"
+#include "sunset/byte_stream.h"
 #include "sunset/camera.h"
 #include "sunset/color.h"
+#include "sunset/errors.h"
+#include "sunset/obj_file.h"
 #include "sunset/ring_buffer.h"
 #include "sunset/utils.h"
 
@@ -211,6 +214,193 @@ void test_base64_invalid_input(void **state) {
 //     quad_tree_destroy(&tree);
 // }
 
+void test_obj_model_parse_empty(void **state) {
+    unused(state);
+
+    uint8_t const str[] = "";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(model.vertices), 0);
+    assert_int_equal(vector_size(model.normals), 0);
+    assert_int_equal(vector_size(model.texcoords), 0);
+    assert_int_equal(vector_size(model.faces), 0);
+    assert_null(model.material_lib);
+    assert_null(model.object_name);
+
+    obj_model_destroy(&model);
+}
+
+void test_obj_model_parse_vertices(void **state) {
+    unused(state);
+
+    uint8_t const str[] =
+            "v 1.0 -1.0 -1.0\n"
+            "v 1.0 -1.0 1.0\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(model.vertices), 2);
+    assert_float_equal(model.vertices[0][0], 1.0f, 0.001f);
+
+    obj_model_destroy(&model);
+}
+
+void test_obj_model_parse_normals(void **state) {
+    unused(state);
+
+    uint8_t const str[] =
+            "vn 0.0 -1.0 0.0\n"
+            "vn 0.0 1.0 0.0\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(model.normals), 2);
+    assert_float_equal(model.normals[0][1], -1.0f, 0.001f);
+
+    obj_model_destroy(&model);
+}
+
+void test_obj_model_parse_texcoords(void **state) {
+    unused(state);
+
+    uint8_t const str[] =
+            "vt 0.625 0.5\n"
+            "vt 0.875 0.5\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(model.texcoords), 2);
+    assert_float_equal(model.texcoords[0][0], 0.625f, 0.001f);
+
+    obj_model_destroy(&model);
+}
+
+void test_obj_model_parse_faces(void **state) {
+    unused(state);
+
+    uint8_t const str[] =
+            "v 1.0 -1.0 -1.0\n"
+            "v 1.0 -1.0 1.0\n"
+            "v -1.0 -1.0 1.0\n"
+            "f 1/1/1 2/2/1 3/3/1\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(model.faces), 1);
+    assert_int_equal(vector_size(model.faces[0]), 3);
+    assert_int_equal(model.faces[0][0].vertex_index, 0);
+
+    obj_model_destroy(&model);
+}
+
+void test_obj_model_parse_material_lib(void **state) {
+    unused(state);
+
+    uint8_t const str[] = "mtllib my_material.mtl\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, 0);
+
+    assert_string_equal(model.material_lib, "my_material.mtl");
+
+    obj_model_destroy(&model);
+}
+
+void test_obj_model_parse_object_name(void **state) {
+    unused(state);
+
+    uint8_t const str[] = "o MyObject\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, 0);
+
+    assert_string_equal(model.object_name, "MyObject");
+
+    obj_model_destroy(&model);
+}
+
+void test_obj_model_parse_invalid_faces(void **state) {
+    unused(state);
+    uint8_t const str[] =
+            "v 1.0 -1.0 -1.0\n"
+            "v 1.0 -1.0 1.0\n"
+            "v -1.0 -1.0 1.0\n"
+            "f 1/2 2//1 3\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, ERROR_INVALID_FORMAT);
+}
+
+void test_obj_model_parse_partial_faces(void **state) {
+    unused(state);
+    uint8_t const str[] =
+            "v 1.0 -1.0 -1.0\n"
+            "v 1.0 -1.0 1.0\n"
+            "v -1.0 -1.0 1.0\n"
+            "f 1//2 2//1 3//3\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct obj_model model;
+    int err = obj_model_parse(&stream, &model);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(model.faces), 1);
+
+    assert_int_equal(model.faces[0][0].vertex_index, 0);
+    assert_int_equal(model.faces[0][0].texcoord_index, 0xFFFFFFFF);
+    assert_int_equal(model.faces[0][0].normal_index, 1);
+
+    assert_int_equal(model.faces[0][1].vertex_index, 1);
+    assert_int_equal(model.faces[0][1].texcoord_index, 0xFFFFFFFF);
+    assert_int_equal(model.faces[0][1].normal_index, 0);
+
+    assert_int_equal(model.faces[0][2].vertex_index, 2);
+    assert_int_equal(model.faces[0][2].texcoord_index, 0xFFFFFFFF);
+    assert_int_equal(model.faces[0][2].normal_index, 2);
+
+    obj_model_destroy(&model);
+}
+
 int main(void) {
     const struct CMUnitTest general_tests[] = {
             cmocka_unit_test(test_ring_buffer),
@@ -219,6 +409,15 @@ int main(void) {
             cmocka_unit_test(test_base64_encode),
             cmocka_unit_test(test_base64_decode),
             cmocka_unit_test(test_base64_invalid_input),
+            cmocka_unit_test(test_obj_model_parse_empty),
+            cmocka_unit_test(test_obj_model_parse_vertices),
+            cmocka_unit_test(test_obj_model_parse_normals),
+            cmocka_unit_test(test_obj_model_parse_texcoords),
+            cmocka_unit_test(test_obj_model_parse_faces),
+            cmocka_unit_test(test_obj_model_parse_material_lib),
+            cmocka_unit_test(test_obj_model_parse_object_name),
+            cmocka_unit_test(test_obj_model_parse_invalid_faces),
+            cmocka_unit_test(test_obj_model_parse_partial_faces),
     };
 
     return cmocka_run_group_tests(general_tests, NULL, NULL);

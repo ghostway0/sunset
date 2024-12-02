@@ -15,7 +15,7 @@ struct byte_stream {
 };
 
 int byte_stream_read_vector(
-        struct byte_stream *stream, size_t size, vector(uint8_t) out);
+        struct byte_stream *stream, size_t size, vector(uint8_t) *out);
 
 int byte_stream_read_raw(struct byte_stream *stream, size_t size, void *out);
 
@@ -30,14 +30,14 @@ int byte_stream_read_raw(struct byte_stream *stream, size_t size, void *out);
 #define byte_stream_try_read(stream, type, out)                                \
     byte_stream_read_raw(stream, sizeof(type), out)
 
-int byte_stream_from_data(
+void byte_stream_from_data(
         uint8_t const *data, size_t size, struct byte_stream *stream_out);
 
 int byte_stream_from_file(
         struct vfs_file *file, struct byte_stream *stream_out);
 
 void byte_stream_read_until(
-        struct byte_stream *stream, uint8_t delimeter, vector(uint8_t) out);
+        struct byte_stream *stream, uint8_t delimeter, vector(uint8_t) *out);
 
 bool byte_stream_is_eof(struct byte_stream const *stream);
 

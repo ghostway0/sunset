@@ -57,11 +57,10 @@ struct vector_metadata {
             meta->capacity *= 2;                                               \
             _Pragma("GCC diagnostic push");                                    \
             _Pragma("GCC diagnostic ignored \"-Wsizeof-pointer-memaccess\"");  \
-            meta = (struct vector_metadata *)realloc(meta,                     \
+            meta = (struct vector_metadata *)sunset_realloc(meta,              \
                     sizeof(struct vector_metadata)                             \
-                            + sizeof(*(v)) * meta->capacity);                  \
+                            + meta->capacity * sizeof(*(v)));                  \
             _Pragma("GCC diagnostic pop");                                     \
-            assert(meta);                                                      \
             v = (void *)(meta + 1);                                            \
         }                                                                      \
         (v)[meta->size++] = value;                                             \

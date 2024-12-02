@@ -6,22 +6,24 @@
 #include "sunset/vfs.h"
 
 int byte_stream_read_vector(
-        struct byte_stream *stream, size_t size, vector(uint8_t) out) {
+        struct byte_stream *stream, size_t size, vector(uint8_t) *out) {
     if (stream->cursor + size >= stream->size) {
         return ERROR_OUT_OF_BOUNDS;
     }
 
     size_t initial_size = vector_size(out);
 
-    vector_resize(out, initial_size + size);
+    vector_resize(*out, initial_size + size);
     memcpy(out + initial_size, stream->data + stream->cursor, size);
+    stream->cursor += size;
 
     return 0;
 }
 
 void byte_stream_read_until(
-        struct byte_stream *stream, uint8_t delimeter, vector(uint8_t) out) {
-    // and we hope the compiler vectorizes this, but it doesn't matter much
+        struct byte_stream *stream, uint8_t delimeter, vector(uint8_t) *out) {
+    // and we hope the compiler vectorizes this (without lto
+    // it probably can't), but it doesn't matter much
     while (!byte_stream_is_eof(stream)) {
         uint8_t byte = stream->data[stream->cursor];
 
@@ -29,12 +31,14 @@ void byte_stream_read_until(
             return;
         }
 
-        vector_append(out, byte);
+        vector_append(*out, byte);
+        stream->cursor++;
     }
 }
 
 int byte_stream_skip(struct byte_stream *stream, size_t num_bytes) {
-    if (stream->cursor + num_bytes >= stream->size) {
+    // skipping the last byte is okay; after that it is not.
+    if (byte_stream_is_eof(stream)) {
         return ERROR_OUT_OF_BOUNDS;
     }
 
@@ -54,13 +58,11 @@ int byte_stream_read_raw(struct byte_stream *stream, size_t size, void *out) {
     return 0;
 }
 
-int byte_stream_from_data(
+void byte_stream_from_data(
         uint8_t const *data, size_t size, struct byte_stream *stream_out) {
     stream_out->data = data;
     stream_out->size = size;
     stream_out->cursor = 0;
-
-    return 0;
 }
 
 int byte_stream_from_file(
