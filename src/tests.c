@@ -14,6 +14,7 @@
 #include "sunset/camera.h"
 #include "sunset/color.h"
 #include "sunset/errors.h"
+#include "sunset/mtl_file.h"
 #include "sunset/obj_file.h"
 #include "sunset/ring_buffer.h"
 #include "sunset/utils.h"
@@ -400,6 +401,113 @@ void test_obj_model_parse_partial_faces(void **state) {
 
     obj_model_destroy(&model);
 }
+void test_mtl_file_parse_empty(void **state) {
+    unused(state);
+
+    uint8_t const str[] = "";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct mtl_file mtl;
+    int err = mtl_file_parse(&stream, &mtl);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(mtl.materials), 0);
+
+    mtl_file_destroy(&mtl);
+}
+
+void test_mtl_file_parse_single_material(void **state) {
+    unused(state);
+
+    uint8_t const str[] =
+            "newmtl Material1\n"
+            "Kd 0.8 0.0 0.2\n"
+            "Ks 1.0 1.0 1.0\n"
+            "Ns 100.0\n"
+            "d 1.0\n"
+            "map_Kd textures/diffuse.png\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct mtl_file mtl;
+    int err = mtl_file_parse(&stream, &mtl);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(mtl.materials), 1);
+    assert_string_equal(mtl.materials[0].name, "Material1");
+    assert_float_equal(mtl.materials[0].kd[0], 0.8f, 0.001f);
+    assert_float_equal(mtl.materials[0].kd[1], 0.0f, 0.001f);
+    assert_float_equal(mtl.materials[0].kd[2], 0.2f, 0.001f);
+    assert_float_equal(mtl.materials[0].ks[0], 1.0f, 0.001f);
+    assert_float_equal(mtl.materials[0].ns, 100.0f, 0.001f);
+    assert_float_equal(mtl.materials[0].d, 1.0f, 0.001f);
+    assert_string_equal(mtl.materials[0].map_kd, "textures/diffuse.png");
+
+    mtl_file_destroy(&mtl);
+}
+
+void test_mtl_file_parse_multiple_materials(void **state) {
+    unused(state);
+
+    uint8_t const str[] =
+            "newmtl Material1\n"
+            "Kd 0.8 0.0 0.2\n"
+            "newmtl Material2\n"
+            "Kd 0.1 0.5 0.9\n"
+            "map_Kd textures/diffuse2.jpg\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct mtl_file mtl;
+    int err = mtl_file_parse(&stream, &mtl);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(mtl.materials), 2);
+    assert_string_equal(mtl.materials[0].name, "Material1");
+    assert_string_equal(mtl.materials[1].name, "Material2");
+    assert_string_equal(mtl.materials[1].map_kd, "textures/diffuse2.jpg");
+
+    mtl_file_destroy(&mtl);
+}
+
+void test_mtl_file_parse_emission_map(void **state) {
+    unused(state);
+
+    uint8_t const str[] =
+            "newmtl Material1\n"
+            "map_Ke textures/emission.tga\n";
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct mtl_file mtl;
+    int err = mtl_file_parse(&stream, &mtl);
+    assert_int_equal(err, 0);
+
+    assert_int_equal(vector_size(mtl.materials), 1);
+    assert_string_equal(mtl.materials[0].map_ke, "textures/emission.tga");
+
+    mtl_file_destroy(&mtl);
+}
+
+void test_mtl_file_parse_invalid_format(void **state) {
+    unused(state);
+
+    uint8_t const str[] =
+            "newmtl Material1\n"
+            "Kd 0.8 0.0\n"; // missing a component in Kd
+
+    struct byte_stream stream;
+    byte_stream_from_data(str, sizeof(str) - 1, &stream);
+
+    struct mtl_file mtl;
+    int err = mtl_file_parse(&stream, &mtl);
+    assert_int_equal(err, ERROR_INVALID_FORMAT);
+}
 
 int main(void) {
     const struct CMUnitTest general_tests[] = {
@@ -418,6 +526,11 @@ int main(void) {
             cmocka_unit_test(test_obj_model_parse_object_name),
             cmocka_unit_test(test_obj_model_parse_invalid_faces),
             cmocka_unit_test(test_obj_model_parse_partial_faces),
+            cmocka_unit_test(test_mtl_file_parse_empty),
+            cmocka_unit_test(test_mtl_file_parse_single_material),
+            cmocka_unit_test(test_mtl_file_parse_multiple_materials),
+            cmocka_unit_test(test_mtl_file_parse_emission_map),
+            cmocka_unit_test(test_mtl_file_parse_invalid_format),
     };
 
     return cmocka_run_group_tests(general_tests, NULL, NULL);

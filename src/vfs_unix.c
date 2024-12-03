@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <fcntl.h>
 #include <stddef.h>
 #include <string.h>
@@ -5,7 +6,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include "log.h"
 #include "sunset/errors.h"
 #include "sunset/utils.h"
 #include "sunset/vfs.h"
@@ -121,7 +121,10 @@ int vfs_file_write(struct vfs_file *file, void const *buf, size_t count) {
 int vfs_map_file(struct vfs_file *file,
         enum vfs_map_prot prot,
         enum vfs_map_flags flags,
-        void **addr_out) {
+        void **addr_out,
+        size_t *size_out) {
+    assert(addr_out != NULL);
+
     size_t file_size = vfs_file_size(file);
 
     int sys_prot = vfs_map_prot_to_sys(prot);
@@ -130,6 +133,10 @@ int vfs_map_file(struct vfs_file *file,
     void *addr = mmap(NULL, file_size, sys_prot, sys_flags, file->fd, 0);
     if (addr == MAP_FAILED) {
         return -ERROR_IO;
+    }
+
+    if (size_out) {
+        *size_out = file_size;
     }
 
     *addr_out = addr;
@@ -164,4 +171,8 @@ int vfs_create_tempfile(struct vfs_file *file_out) {
     file_out->fd = fd;
 
     return 0;
+}
+
+void vfs_munmap(void *ptr, size_t size) {
+    munmap(ptr, size);
 }

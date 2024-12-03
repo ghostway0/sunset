@@ -56,7 +56,10 @@ int vfs_file_write(struct vfs_file *file, void const *buf, size_t count);
 int vfs_map_file(struct vfs_file *file,
         enum vfs_map_prot prot,
         enum vfs_map_flags flags,
-        void **addr_out);
+        void **addr_out,
+        size_t *size_out);
+
+void vfs_munmap(void *ptr, size_t size);
 
 bool vfs_is_eof(struct vfs_file *file);
 

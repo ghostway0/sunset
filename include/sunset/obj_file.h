@@ -23,7 +23,6 @@ struct obj_model {
     char *object_name;
 };
 
-
 void obj_model_destroy(struct obj_model *model);
 
 /// assumptions:

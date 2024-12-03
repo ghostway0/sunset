@@ -1,11 +1,13 @@
 #include <string.h>
 #include <sys/mman.h>
 
+#include "sunset/byte_stream.h"
 #include "sunset/color.h"
 #include "sunset/errors.h"
 #include "sunset/filesystem.h"
 #include "sunset/images.h"
 #include "sunset/tga.h"
+#include "sunset/vfs.h"
 
 int load_image_file(char const *path, struct image *image_out) {
     struct vfs_file file;
@@ -16,17 +18,27 @@ int load_image_file(char const *path, struct image *image_out) {
     }
 
     void *data;
-    if ((retval = vfs_map_file(
-                 &file, VFS_MAP_PROT_READ, VFS_MAP_PRIVATE, &data))) {
+    size_t file_size;
+    if ((retval = vfs_map_file(&file,
+                 VFS_MAP_PROT_READ,
+                 VFS_MAP_PRIVATE,
+                 &data,
+                 &file_size))) {
+        vfs_close(&file);
         return retval;
     }
 
+    struct byte_stream stream;
+    byte_stream_from_data(data, file_size, &stream);
+
     if (strcmp(get_filename_extesnion(path), ".tga")) {
-        retval = load_tga_image(data, image_out);
+        retval = tga_load_image(&stream, image_out);
     } else {
         retval = -ERROR_INVALID_ARGUMENTS;
     }
 
+    vfs_close(&file);
+    vfs_munmap(data, file_size);
     return retval;
 }
 

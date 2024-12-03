@@ -4,14 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "sunset/byte_stream.h"
 #include "sunset/color.h"
 #include "sunset/errors.h"
 #include "sunset/images.h"
 #include "sunset/tga.h"
 #include "sunset/utils.h"
-
-#define TGA_HEADER_SIZE 18
-#define TGA_MAGIC "\x00\x00\x02\x00"
 
 enum color_type {
     TGA_TYPE_INDEXED = 1,
@@ -95,85 +93,83 @@ static int decompress_rle(uint8_t *data,
     return 0;
 }
 
-int load_tga_image(uint8_t const *data, struct image *image_out) {
+int tga_load_image(struct byte_stream *stream, struct image *image_out) {
     int retval = 0;
 
-    assert(data != NULL);
+    assert(stream != NULL);
     assert(image_out != NULL);
 
-    if (memcmp(data, TGA_MAGIC, strlen(TGA_MAGIC)) != 0) {
+    struct tga_header header;
+    byte_stream_read(stream, &header);
+
+    if (header.bpp % 8 != 0 || header.bpp >= 32) {
         return -ERROR_INVALID_FORMAT;
     }
 
-    struct tga_header *header = (struct tga_header *)(data + strlen(TGA_MAGIC));
-
-    if (header->bpp % 8 != 0 || header->bpp >= 32) {
-        return -ERROR_INVALID_FORMAT;
-    }
-
-    size_t image_size = header->width * header->height;
-    size_t pixel_size_bytes = header->bpp / 8;
+    size_t image_size = header.width * header.height;
+    size_t pixel_size_bytes = header.bpp / 8;
 
     image_out->pixels = sunset_calloc(image_size, sizeof(struct color));
-    image_out->w = header->width;
-    image_out->h = header->height;
+    image_out->w = header.width;
+    image_out->h = header.height;
+    byte_stream_skip(stream, header.id_length);
 
-    uint8_t *pixels = (uint8_t *)(data + TGA_HEADER_SIZE);
-
-    ptrdiff_t footer_offset = strlen(TGA_MAGIC) + TGA_HEADER_SIZE
-            + header->id_length + image_size * pixel_size_bytes
-            + header->color_map_length * 2;
-
-    if (data[2] == TGA_TYPE_RLE_RGB || data[2] == TGA_TYPE_RLE_GREY) {
+    if (header.image_type == TGA_TYPE_RLE_RGB
+            || header.image_type == TGA_TYPE_RLE_GREY) {
         struct color *color_map = NULL;
-        if (header->color_map_length > 0) {
+        if (header.color_map_length > 0) {
             color_map = sunset_calloc(
-                    header->color_map_length, sizeof(struct color));
+                    header.color_map_length, sizeof(struct color));
 
-            uint8_t const *color_map_data =
-                    data + TGA_HEADER_SIZE + header->id_length;
+            // Read color map data
+            vector(uint8_t) color_map_data;
+            vector_init(color_map_data);
+            byte_stream_read_vector(stream,
+                    header.color_map_length * pixel_size_bytes,
+                    &color_map_data);
 
-            todo();
-
-            for (size_t i = 0; i < header->color_map_length; i++) {
-                color_map[i].r = color_map_data[i * pixel_size_bytes + 2];
-                color_map[i].g = color_map_data[i * pixel_size_bytes + 1];
-                color_map[i].b = color_map_data[i * pixel_size_bytes + 0];
-                color_map[i].a = pixel_size_bytes == 4
-                        ? color_map_data[i * pixel_size_bytes + 3]
-                        : 255;
+            // Fill color map (using fill_color_map function)
+            if ((retval = fill_color_map(color_map_data,
+                         pixel_size_bytes,
+                         header.color_map_length,
+                         color_map))
+                    != 0) {
+                vector_destroy(color_map_data);
+                goto cleanup;
             }
+            vector_destroy(color_map_data);
         }
 
-        if ((retval = decompress_rle(pixels,
+        // Read and decompress RLE data
+        vector(uint8_t) rle_data;
+        vector_init(rle_data);
+        byte_stream_read_vector(
+                stream, image_size * pixel_size_bytes, &rle_data);
+        if ((retval = decompress_rle(rle_data,
                      image_size * pixel_size_bytes,
                      pixel_size_bytes,
                      image_out->pixels))
                 != 0) {
+            vector_destroy(rle_data);
             goto cleanup;
         }
+        vector_destroy(rle_data);
 
         if (color_map) {
             free(color_map);
         }
     } else {
+        // Handle uncompressed data (currently only supports 16-bit)
         for (size_t i = 0; i < image_size; i++) {
+            uint16_t pixel_data;
+            byte_stream_read(stream, &pixel_data);
             if (pixel_size_bytes == 2) {
-                image_out->pixels[i] =
-                        color_from_16bit(*(uint16_t *)&pixels[2 * i]);
+                image_out->pixels[i] = color_from_16bit(pixel_data);
             } else {
                 unreachable();
             }
         }
     }
-
-    struct tga_footer *footer = (struct tga_footer *)(data + footer_offset);
-    unused(footer);
-
-    // if (footer->dot != '.') {
-    //     retval = -ERROR_INVALID_FORMAT;
-    //     goto cleanup;
-    // }
 
 cleanup:
     if (retval != 0) {

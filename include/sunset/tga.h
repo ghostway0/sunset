@@ -2,4 +2,4 @@
 
 #include "sunset/images.h"
 
-int load_tga_image(uint8_t const *data, struct image *image_out);
+int tga_load_image(struct byte_stream *stream, struct image *image_out);

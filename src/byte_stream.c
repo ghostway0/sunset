@@ -6,7 +6,7 @@
 #include "sunset/vfs.h"
 
 int byte_stream_read_vector(
-        struct byte_stream *stream, size_t size, vector(uint8_t) *out) {
+        struct byte_stream *stream, size_t size, vector(uint8_t) * out) {
     if (stream->cursor + size >= stream->size) {
         return ERROR_OUT_OF_BOUNDS;
     }
@@ -21,7 +21,7 @@ int byte_stream_read_vector(
 }
 
 void byte_stream_read_until(
-        struct byte_stream *stream, uint8_t delimeter, vector(uint8_t) *out) {
+        struct byte_stream *stream, uint8_t delimeter, vector(uint8_t) * out) {
     // and we hope the compiler vectorizes this (without lto
     // it probably can't), but it doesn't matter much
     while (!byte_stream_is_eof(stream)) {
@@ -63,23 +63,6 @@ void byte_stream_from_data(
     stream_out->data = data;
     stream_out->size = size;
     stream_out->cursor = 0;
-}
-
-int byte_stream_from_file(
-        struct vfs_file *file, struct byte_stream *stream_out) {
-    int err;
-
-    if ((err = vfs_map_file(file,
-                 VFS_MAP_PROT_READ,
-                 VFS_MAP_PRIVATE,
-                 (void **const)&stream_out->data))) {
-        return err;
-    }
-
-    stream_out->size = vfs_file_size(file);
-    stream_out->cursor = 0;
-
-    return 0;
 }
 
 bool byte_stream_is_eof(struct byte_stream const *stream) {

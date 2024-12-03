@@ -62,6 +62,7 @@ sunset_files = [
   'src/tga.c',
   'src/filesystem.c',
   'src/byte_stream.c',
+  'src/mtl_file.c',
   'src/obj_file.c',
   'src/images.c',
   'src/utils.c',
