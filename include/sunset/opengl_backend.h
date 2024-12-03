@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cglm/types.h>
 
@@ -6,6 +7,14 @@
 #include "sunset/map.h"
 #include "sunset/shader.h"
 #include "sunset/vector.h"
+
+enum shader_type {
+    SHADER_VERTEX = GL_VERTEX_SHADER,
+    SHADER_FRAGMENT = GL_FRAGMENT_SHADER,
+    SHADER_GEOMETRY = GL_GEOMETRY_SHADER,
+    SHADER_TESSELLATION_CONTROL = GL_TESS_CONTROL_SHADER,
+    SHADER_TESSELLATION_EVALUATION = GL_TESS_EVALUATION_SHADER,
+};
 
 struct compiled_mesh {
     uint32_t id;

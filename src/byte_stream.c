@@ -1,9 +1,9 @@
 #include <string.h>
+#include <stddef.h>
 
 #include "sunset/byte_stream.h"
 #include "sunset/errors.h"
 #include "sunset/vector.h"
-#include "sunset/vfs.h"
 
 int byte_stream_read_vector(
         struct byte_stream *stream, size_t size, vector(uint8_t) * out) {
@@ -20,22 +20,6 @@ int byte_stream_read_vector(
     return 0;
 }
 
-void byte_stream_read_until(
-        struct byte_stream *stream, uint8_t delimeter, vector(uint8_t) * out) {
-    // and we hope the compiler vectorizes this (without lto
-    // it probably can't), but it doesn't matter much
-    while (!byte_stream_is_eof(stream)) {
-        uint8_t byte = stream->data[stream->cursor];
-
-        if (byte == delimeter) {
-            return;
-        }
-
-        vector_append(*out, byte);
-        stream->cursor++;
-    }
-}
-
 int byte_stream_skip(struct byte_stream *stream, size_t num_bytes) {
     // skipping the last byte is okay; after that it is not.
     if (byte_stream_is_eof(stream)) {
@@ -47,16 +31,19 @@ int byte_stream_skip(struct byte_stream *stream, size_t num_bytes) {
     return 0;
 }
 
-int byte_stream_read_raw(struct byte_stream *stream, size_t size, void *out) {
-    if (stream->cursor + size >= stream->size) {
-        return ERROR_OUT_OF_BOUNDS;
+ssize_t byte_stream_read(void *ctx, size_t count, void *buf) {
+    struct byte_stream *stream = (struct byte_stream *)ctx;
+
+    if (stream->cursor + count >= stream->size) {
+        count = stream->size - stream->cursor;
     }
 
-    memcpy(out, stream->data + stream->cursor, size);
-    stream->cursor += size;
+    memcpy(buf, stream->data + stream->cursor, count);
+    stream->cursor += count;
 
-    return 0;
+    return count;
 }
+
 
 void byte_stream_from_data(
         uint8_t const *data, size_t size, struct byte_stream *stream_out) {

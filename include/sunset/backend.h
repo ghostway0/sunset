@@ -7,8 +7,6 @@
 #include "render.h"
 #include "shader.h"
 
-#include "config.h"
-
 #ifdef SUNSET_BACKEND_OPENGL
 
 #include "opengl_backend.h"

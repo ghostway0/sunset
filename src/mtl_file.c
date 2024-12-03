@@ -7,8 +7,8 @@
 #include <cglm/types.h>
 #include <log.h>
 
-#include "sunset/byte_stream.h"
 #include "sunset/errors.h"
+#include "sunset/io.h"
 #include "sunset/mtl_file.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
@@ -18,7 +18,7 @@ static void mtl_material_init(struct mtl_material *material) {
     material->d = 1.0f;
 }
 
-int mtl_file_parse(struct byte_stream *stream, struct mtl_file *mtl_out) {
+int mtl_file_parse(struct reader *reader, struct mtl_file *mtl_out) {
     int retval = 0;
     size_t line_number = 1;
 
@@ -29,13 +29,14 @@ int mtl_file_parse(struct byte_stream *stream, struct mtl_file *mtl_out) {
 
     struct mtl_material *current_material = NULL;
 
-    while (!byte_stream_is_eof(stream)) {
+    while (true) {
         vector_clear(line_buffer);
 
-        byte_stream_read_until(stream, '\n', &line_buffer);
-        byte_stream_skip(stream, 1);
+        if (reader_read_until(reader, '\n', &line_buffer) == 0) {
+            return 0;
+        }
 
-        vector_append(line_buffer, '\0');
+        line_buffer[vector_size(line_buffer) - 1] = '\0';
         char *line = (char *)line_buffer;
 
         if (line[0] == '#' || line[0] == '\0') {

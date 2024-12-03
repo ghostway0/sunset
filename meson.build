@@ -63,6 +63,7 @@ sunset_files = [
   'src/filesystem.c',
   'src/byte_stream.c',
   'src/mtl_file.c',
+  'src/io.c',
   'src/obj_file.c',
   'src/images.c',
   'src/utils.c',

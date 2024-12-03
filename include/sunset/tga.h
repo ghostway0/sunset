@@ -1,5 +1,6 @@
 #pragma once
 
-#include "sunset/images.h"
+struct reader;
+struct image;
 
-int tga_load_image(struct byte_stream *stream, struct image *image_out);
+int tga_load_image(struct reader *reader, struct image *image_out);

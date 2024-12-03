@@ -7,8 +7,8 @@
 #include <cglm/types.h>
 #include <log.h>
 
-#include "sunset/byte_stream.h"
 #include "sunset/errors.h"
+#include "sunset/io.h"
 #include "sunset/obj_file.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
@@ -129,7 +129,7 @@ static void obj_model_init(struct obj_model *model_out) {
 /// - the OBJ file represents a single object/mesh.
 /// - the object has a single material applied to it.
 /// - the file adheres to Blender's typical OBJ export conventions.
-int obj_model_parse(struct byte_stream *stream, struct obj_model *model_out) {
+int obj_model_parse(struct reader *reader, struct obj_model *model_out) {
     int retval = 0;
     size_t line_number = 1;
 
@@ -138,13 +138,14 @@ int obj_model_parse(struct byte_stream *stream, struct obj_model *model_out) {
     vector(uint8_t) line_buffer;
     vector_init(line_buffer);
 
-    while (!byte_stream_is_eof(stream)) {
+    while (true) {
         vector_clear(line_buffer);
 
-        byte_stream_read_until(stream, '\n', &line_buffer);
-        byte_stream_skip(stream, 1);
+        if (reader_read_until(reader, '\n', &line_buffer) == 0) {
+            return 0;
+        }
 
-        vector_append(line_buffer, '\0');
+        line_buffer[vector_size(line_buffer) - 1] = '\0';
         char *line = (char *)line_buffer;
 
         if (line[0] == '#' || line[0] == '\0') {

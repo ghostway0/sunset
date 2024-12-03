@@ -101,3 +101,5 @@ static inline bool _match(int arr[], size_t len) {
     }
     return true;
 }
+
+typedef intmax_t ssize_t;

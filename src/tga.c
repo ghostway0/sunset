@@ -4,10 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sunset/byte_stream.h"
+#include "log.h"
 #include "sunset/color.h"
 #include "sunset/errors.h"
 #include "sunset/images.h"
+#include "sunset/io.h"
 #include "sunset/tga.h"
 #include "sunset/utils.h"
 
@@ -93,14 +94,14 @@ static int decompress_rle(uint8_t *data,
     return 0;
 }
 
-int tga_load_image(struct byte_stream *stream, struct image *image_out) {
+int tga_load_image(struct reader *reader, struct image *image_out) {
     int retval = 0;
 
-    assert(stream != NULL);
+    assert(reader != NULL);
     assert(image_out != NULL);
 
     struct tga_header header;
-    byte_stream_read(stream, &header);
+    reader_read_type(reader, &header);
 
     if (header.bpp % 8 != 0 || header.bpp >= 32) {
         return -ERROR_INVALID_FORMAT;
@@ -112,7 +113,7 @@ int tga_load_image(struct byte_stream *stream, struct image *image_out) {
     image_out->pixels = sunset_calloc(image_size, sizeof(struct color));
     image_out->w = header.width;
     image_out->h = header.height;
-    byte_stream_skip(stream, header.id_length);
+    reader_skip(reader, header.id_length);
 
     if (header.image_type == TGA_TYPE_RLE_RGB
             || header.image_type == TGA_TYPE_RLE_GREY) {
@@ -124,7 +125,7 @@ int tga_load_image(struct byte_stream *stream, struct image *image_out) {
             // Read color map data
             vector(uint8_t) color_map_data;
             vector_init(color_map_data);
-            byte_stream_read_vector(stream,
+            reader_read_to_vec(reader,
                     header.color_map_length * pixel_size_bytes,
                     &color_map_data);
 
@@ -143,8 +144,8 @@ int tga_load_image(struct byte_stream *stream, struct image *image_out) {
         // Read and decompress RLE data
         vector(uint8_t) rle_data;
         vector_init(rle_data);
-        byte_stream_read_vector(
-                stream, image_size * pixel_size_bytes, &rle_data);
+        reader_read_to_vec(reader, image_size * pixel_size_bytes, &rle_data);
+
         if ((retval = decompress_rle(rle_data,
                      image_size * pixel_size_bytes,
                      pixel_size_bytes,
@@ -162,7 +163,8 @@ int tga_load_image(struct byte_stream *stream, struct image *image_out) {
         // Handle uncompressed data (currently only supports 16-bit)
         for (size_t i = 0; i < image_size; i++) {
             uint16_t pixel_data;
-            byte_stream_read(stream, &pixel_data);
+            reader_read_type(reader, &pixel_data);
+
             if (pixel_size_bytes == 2) {
                 image_out->pixels[i] = color_from_16bit(pixel_data);
             } else {

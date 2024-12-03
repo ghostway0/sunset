@@ -5,21 +5,23 @@
 
 #include "sunset/vector.h"
 
+struct reader;
+
 struct mtl_material {
     char *name;
-    vec3 kd; // Diffuse color
-    vec3 ks; // Specular color
-    float ns; // Specular exponent
-    float d; // Dissolve (transparency)
-    char *map_kd; // Diffuse texture map
-    char *map_ke; // Emission texture map
+    vec3 kd; // diffuse color
+    vec3 ks; // specular color
+    float ns; // specular exponent
+    float d; // dissolve (transparency)
+    char *map_kd; // diffuse texture map
+    char *map_ke; // emission texture map
 };
 
 struct mtl_file {
     vector(struct mtl_material) materials;
 };
 
-int mtl_file_parse(struct byte_stream *stream, struct mtl_file *mtl_out);
+int mtl_file_parse(struct reader *reader, struct mtl_file *mtl_out);
 void mtl_file_destroy(struct mtl_file *mtl);
 
 #endif // SUNSET_MTL_FILE_H
