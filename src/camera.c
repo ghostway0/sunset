@@ -154,10 +154,10 @@ bool camera_point_in_frustum(struct camera *camera, vec3 point) {
             && within(clip[2], -clip[3], clip[3]);
 }
 
-bool camera_box_within_frustum(struct camera *camera, struct box box) {
+bool camera_box_within_frustum(struct camera *camera, struct aabb aabb) {
     vec3 center;
-    float radius = box_get_radius(&box);
-    box_get_center(&box, center);
+    float radius = aabb_get_radius(&aabb);
+    aabb_get_center(&aabb, center);
 
     return camera_sphere_in_frustum(camera, center, radius);
 }

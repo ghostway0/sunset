@@ -39,7 +39,12 @@ void event_queue_add_handler(
         vector_resize(queue->handlers, type_id + 1);
     }
 
+    if (queue->handlers[type_id] == NULL) {
+        vector_init(queue->handlers[type_id]);
+    }
+
     vector_append(queue->handlers[type_id], handler);
+
     pthread_mutex_unlock(queue->lock);
 }
 
@@ -49,17 +54,21 @@ void event_queue_push(struct event_queue *queue, struct event const event) {
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_process(struct event_queue *queue) {
+void event_queue_process(struct context *context, struct event_queue *queue) {
     pthread_mutex_lock(queue->lock);
 
     for (size_t i = 0; i < vector_size(queue->events); i++) {
         struct event event = queue->events[i];
 
+        if (queue->handlers[event.type_id] == NULL) {
+            continue;
+        }
+
         for (size_t j = 0; j < vector_size(queue->handlers[event.type_id]);
                 j++) {
             assert(queue->handlers[event.type_id][j] != NULL);
 
-            queue->handlers[event.type_id][j](&event.data);
+            queue->handlers[event.type_id][j](context, event);
         }
     }
 

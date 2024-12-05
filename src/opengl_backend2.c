@@ -17,6 +17,7 @@
 #include "sunset/map.h"
 #include "sunset/math.h"
 #include "sunset/opengl_backend.h"
+#include "sunset/physics.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
 #include "sunset/utils.h"
@@ -298,6 +299,41 @@ static int setup_default_shaders(struct render_context *context) {
     return 0;
 }
 
+static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+    struct context *context = glfwGetWindowUserPointer(window);
+
+    if (context->mouse.first_mouse) {
+        context->mouse.x = xpos;
+        context->mouse.y = ypos;
+        context->mouse.first_mouse = false;
+        return;
+    }
+
+    float xoffset = context->mouse.x - xpos;
+    float yoffset = context->mouse.y - ypos;
+
+    event_queue_push(context->event_queue,
+            (struct event){
+                    .type_id = SYSTEM_EVENT_MOUSE,
+                    .data.mouse_move =
+                            (struct mouse_move_event){
+                                    .x = xoffset,
+                                    .y = yoffset,
+                            },
+            });
+
+    context->mouse.x = xpos;
+    context->mouse.y = ypos;
+}
+
+static int setup_mouse(struct render_context *context) {
+    glfwSetInputMode(context->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(context->window, mouse_callback);
+
+    return 0;
+}
+
+// should give struct context which owns a render_context
 int backend_setup(struct render_context *context, struct render_config config) {
     int retval = 0;
 
@@ -337,6 +373,10 @@ int backend_setup(struct render_context *context, struct render_config config) {
     }
 
     if ((retval = setup_default_shaders(context))) {
+        goto failure;
+    }
+
+    if ((retval = setup_mouse(context))) {
         goto failure;
     }
 
@@ -778,6 +818,10 @@ static int run_text_command(
     glDeleteBuffers(1, &vbo);
 
     return 0;
+}
+
+bool backend_should_stop(struct render_context *context) {
+    return glfwWindowShouldClose(context->window);
 }
 
 static void run_rect_command(

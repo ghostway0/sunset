@@ -32,12 +32,14 @@ void context_init(struct context *context,
         struct font *fonts,
         size_t num_fonts,
         void *render_context,
-        struct event_queue *event_queue) {
+        struct event_queue *event_queue,
+        struct scene *scene) {
     context->fonts = fonts;
     context->num_fonts = num_fonts;
     context->render_context = render_context;
     command_buffer_init(&context->command_buffer, command_buffer_options);
     context->event_queue = event_queue;
+    context->scene = scene;
 
     context->mouse.first_mouse = true;
 }
@@ -102,33 +104,6 @@ void create_test_ground_mesh(struct mesh *mesh_out) {
     mesh_out->indices[5] = 3;
 }
 
-static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-    struct context *context = glfwGetWindowUserPointer(window);
-
-    if (context->mouse.first_mouse) {
-        context->mouse.x = xpos;
-        context->mouse.y = ypos;
-        context->mouse.first_mouse = false;
-        return;
-    }
-
-    float xoffset = context->mouse.x - xpos;
-    float yoffset = context->mouse.y - ypos;
-
-    event_queue_push(context->event_queue,
-            (struct event){
-                    .type_id = SYSTEM_EVENT_MOUSE,
-                    .data.mouse_move =
-                            (struct mouse_move_event){
-                                    .x = xoffset,
-                                    .y = yoffset,
-                            },
-            });
-
-    context->mouse.x = xpos;
-    context->mouse.y = ypos;
-}
-
 struct camera_object {
     size_t camera_idx;
     struct scene *scene;
@@ -141,6 +116,11 @@ void camera_move_callback(struct object *object, vec3 direction) {
             camera_object->scene, camera_object->camera_idx, direction);
 }
 
+void mouse_event_handler(struct context *context, struct event event) {
+    struct mouse_move_event mouse_move = event.data.mouse_move;
+    scene_rotate_camera(context->scene, 0, mouse_move.x, mouse_move.y);
+}
+
 int main() {
     int retval = 0;
 
@@ -148,9 +128,10 @@ int main() {
     struct camera camera;
 
     struct render_config render_config = {
-            .window_height = 1920,
-            .window_width = 1080,
+            .window_width = 1920,
+            .window_height = 1080,
     };
+
     // if ((retval = build_render_config(&render_config))) {
     //     return retval;
     // }
@@ -213,7 +194,7 @@ int main() {
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
-                    (struct box){
+                    (struct aabb){
                             {-0.5f, 0.0f, 0.0f},
                             {0.5f, 1.0f, 0.01f},
                     },
@@ -238,7 +219,7 @@ int main() {
             .label = "triangle1",
     };
 
-    box_translate(&object.bounding_box, object.transform.position);
+    aabb_translate(&object.bounding_box, object.transform.position);
 
     struct object player = {
             .physics =
@@ -251,7 +232,7 @@ int main() {
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
-                    (struct box){
+                    (struct aabb){
                             {-0.5f, 0.0f, 0.0f},
                             {0.5f, 1.0f, 0.01f},
                     },
@@ -289,7 +270,7 @@ int main() {
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
-                    (struct box){
+                    (struct aabb){
                             {-0.5f, 0.0f, 0.0f},
                             {0.5f, 1.0f, 0.01f},
                     },
@@ -313,8 +294,8 @@ int main() {
             .label = "camera",
     };
 
-    box_translate(&player.bounding_box, player.transform.position);
-    box_translate(&player.bounding_box, camera_object.transform.position);
+    aabb_translate(&player.bounding_box, player.transform.position);
+    aabb_translate(&player.bounding_box, camera_object.transform.position);
 
     player.children = malloc(sizeof(struct object *));
     player.children[0] = &camera_object;
@@ -331,7 +312,7 @@ int main() {
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
-                    (struct box){
+                    (struct aabb){
                             {-0.5f, 0.0f, 0.0f},
                             {0.5f, 1.0f, 0.01f},
                     },
@@ -356,7 +337,7 @@ int main() {
             .label = "triangle2",
     };
 
-    box_translate(&object2.bounding_box, object2.transform.position);
+    aabb_translate(&object2.bounding_box, object2.transform.position);
 
     struct object ground_object = {
             .physics =
@@ -369,7 +350,7 @@ int main() {
                             .material = {.restitution = 0.9},
                     },
             .bounding_box =
-                    (struct box){
+                    (struct aabb){
                             {-100.0f, 0.0, -100.0f},
                             {100.0f, 0.0, 100.0f},
                     },
@@ -394,7 +375,7 @@ int main() {
             .label = "ground",
     };
 
-    box_translate(
+    aabb_translate(
             &ground_object.bounding_box, ground_object.transform.position);
 
     struct object **objects = malloc(sizeof(struct object *) * 3);
@@ -460,16 +441,17 @@ int main() {
             &font,
             1,
             &render_context,
-            &event_queue);
+            &event_queue,
+            &scene);
 
     backend_set_user_context(&render_context, &context);
 
+    event_queue_add_handler(
+            &event_queue, SYSTEM_EVENT_MOUSE, mouse_event_handler);
+
     char fps_text_buffer[256];
 
-    glfwSetInputMode(render_context.window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(render_context.window, mouse_callback);
-
-    while (!glfwWindowShouldClose(render_context.window)) {
+    while (!backend_should_stop(&render_context)) {
         struct timespec frame_start = get_time();
 
         if (glfwGetKey(render_context.window, GLFW_KEY_W) == GLFW_PRESS) {
@@ -503,29 +485,7 @@ int main() {
 
         physics_step(&physics, &scene, &event_queue, 1.0f / 60.0f);
 
-        for (;;) {
-            struct event event;
-            if (event_queue_pop(&event_queue, &event)) {
-                break;
-            }
-
-            switch (event.type_id) {
-                case SYSTEM_EVENT_COLLISION: {
-                    struct collision_event collision = event.data.collision;
-                    log_debug("collision between %s and %s",
-                            collision.a->label,
-                            collision.b->label);
-                    break;
-                }
-                case SYSTEM_EVENT_MOUSE: {
-                    struct mouse_move_event mouse_move = event.data.mouse_move;
-                    scene_rotate_camera(&scene, 0, mouse_move.x, mouse_move.y);
-                    break;
-                }
-                default:
-                    unreachable();
-            }
-        }
+        event_queue_process(&context, &event_queue);
 
         snprintf(fps_text_buffer,
                 sizeof(fps_text_buffer),

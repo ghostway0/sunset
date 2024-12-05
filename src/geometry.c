@@ -41,24 +41,24 @@ struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n) {
     };
 }
 
-struct box box_subdivide_i(struct box box, size_t i, size_t n) {
+struct aabb aabb_subdivide_i(struct aabb aabb, size_t i, size_t n) {
     assert(i < n);
     assert(n > 0);
 
-    struct box result = box;
+    struct aabb result = aabb;
 
     for (size_t j = 0; j < 3; j++) {
-        float w = (box.max[j] - box.min[j]) / n;
-        result.min[j] = box.min[j] + (i % n) * w;
-        result.max[j] = box.min[j] + (i % n + 1) * w;
+        float w = (aabb.max[j] - aabb.min[j]) / n;
+        result.min[j] = aabb.min[j] + (i % n) * w;
+        result.max[j] = aabb.min[j] + (i % n + 1) * w;
     }
 
     return result;
 }
 
-bool box_contains_point(struct box box, vec3 point) {
+bool aabb_contains_point(struct aabb aabb, vec3 point) {
     for (size_t i = 0; i < 3; i++) {
-        if (point[i] < box.min[i] || point[i] > box.max[i]) {
+        if (point[i] < aabb.min[i] || point[i] > aabb.max[i]) {
             return false;
         }
     }
@@ -66,8 +66,8 @@ bool box_contains_point(struct box box, vec3 point) {
     return true;
 }
 
-struct box from_rect(struct rect rect) {
-    return (struct box){{rect.x, rect.y, 0.0f},
+struct aabb from_rect(struct rect rect) {
+    return (struct aabb){{rect.x, rect.y, 0.0f},
             {rect.x + rect.width, rect.y + rect.height, 0.0f}};
 }
 
@@ -76,10 +76,10 @@ bool position_within_rect(vec3 position, struct rect rect) {
             && position[1] >= rect.y && position[1] <= rect.y + rect.height;
 }
 
-bool position_within_box(vec3 position, struct box box) {
-    return position[0] >= box.min[0] && position[0] <= box.max[0]
-            && position[1] >= box.min[1] && position[1] <= box.max[1]
-            && position[2] >= box.min[2] && position[2] <= box.max[2];
+bool position_within_aabb(vec3 position, struct aabb aabb) {
+    return position[0] >= aabb.min[0] && position[0] <= aabb.max[0]
+            && position[1] >= aabb.min[1] && position[1] <= aabb.max[1]
+            && position[2] >= aabb.min[2] && position[2] <= aabb.max[2];
 }
 
 float rect_distance_to_camera(vec3 camera_position, struct rect rect) {
@@ -90,7 +90,7 @@ float rect_distance_to_camera(vec3 camera_position, struct rect rect) {
     return glm_vec3_distance(camera_position, center);
 }
 
-bool box_collide(struct box const *a, struct box const *b) {
+bool aabb_collide(struct aabb const *a, struct aabb const *b) {
     for (size_t i = 0; i < 3; i++) {
         if (a->max[i] < b->min[i] || a->min[i] > b->max[i]) {
             return false;
@@ -100,33 +100,33 @@ bool box_collide(struct box const *a, struct box const *b) {
     return true;
 }
 
-void box_translate(struct box *box, vec3 translation) {
-    glm_vec3_add(box->min, translation, box->min);
-    glm_vec3_add(box->max, translation, box->max);
+void aabb_translate(struct aabb *aabb, vec3 translation) {
+    glm_vec3_add(aabb->min, translation, aabb->min);
+    glm_vec3_add(aabb->max, translation, aabb->max);
 }
 
-float box_get_radius(struct box *box) {
+float aabb_get_radius(struct aabb *aabb) {
     vec3 height_2;
-    glm_vec3_sub(box->max, box->min, height_2);
+    glm_vec3_sub(aabb->max, aabb->min, height_2);
     glm_vec3_scale(height_2, sqrt(2) / 2, height_2);
 
     return glm_vec3_norm(height_2);
 }
 
-void box_get_center(struct box *box, vec3 center_out) {
-    glm_vec3_add(box->min, box->max, center_out);
+void aabb_get_center(struct aabb *aabb, vec3 center_out) {
+    glm_vec3_add(aabb->min, aabb->max, center_out);
     glm_vec3_scale(center_out, 0.5, center_out);
 }
 
-void box_extend_to(struct box *box, vec3 point) {
+void aabb_extend_to(struct aabb *aabb, vec3 point) {
     for (size_t i = 0; i < 3; i++) {
-        box->min[i] = min(box->min[i], point[i]);
-        box->max[i] = max(box->max[i], point[i]);
+        aabb->min[i] = min(aabb->min[i], point[i]);
+        aabb->max[i] = max(aabb->max[i], point[i]);
     }
 }
 
-void box_closest_point(struct box const *box, vec3 point, vec3 closest_out) {
+void aabb_closest_point(struct aabb const *aabb, vec3 point, vec3 closest_out) {
     for (size_t i = 0; i < 3; i++) {
-        closest_out[i] = fmax(box->min[i], fmin(point[i], box->max[i]));
+        closest_out[i] = fmax(aabb->min[i], fmin(point[i], aabb->max[i]));
     }
 }

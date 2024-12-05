@@ -3,7 +3,10 @@
 #include <stddef.h>
 
 #include "sunset/commands.h"
-#include "sunset/events.h"
+
+struct scene;
+struct font;
+struct event_queue;
 
 struct active_animation {
     float start_time;
@@ -34,6 +37,7 @@ struct context {
     struct font *fonts;
     size_t num_fonts;
     void *render_context;
+    struct scene *scene;
 
     struct mouse mouse;
     struct event_queue *event_queue;

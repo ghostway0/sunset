@@ -53,7 +53,7 @@ typedef void (*move_callback)(struct object *, vec3 direction);
 
 struct object {
     struct physics_object physics;
-    struct box bounding_box;
+    struct aabb bounding_box;
     struct transform transform;
     uint32_t mesh_id;
     uint32_t texture_id;
@@ -105,7 +105,7 @@ struct light {
 };
 
 struct chunk {
-    struct box bounds;
+    struct aabb bounds;
     struct object **objects;
     size_t num_objects;
     struct light *lights;
@@ -128,11 +128,9 @@ void scene_init(struct camera *cameras,
         struct image skybox,
         struct effect *effects,
         size_t num_effects,
-        struct box bounds,
+        struct aabb bounds,
         struct chunk *root_chunk,
         struct scene *scene_out);
-
-bool position_within_box(vec3 position, struct box box);
 
 struct chunk *get_chunk_for(struct scene const *scene, vec3 position);
 

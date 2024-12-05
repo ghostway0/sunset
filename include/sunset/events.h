@@ -3,10 +3,14 @@
 #include <pthread.h>
 #include <stdint.h>
 
-#include "cglm/types.h"
-#include "vector.h"
+#include <cglm/types.h>
 
-typedef void (*event_handler)(void *data);
+#include "sunset/vector.h"
+
+struct context;
+struct event;
+
+typedef void (*event_handler)(struct context *context, struct event event);
 
 struct event_queue {
     vector(struct event) events;
@@ -57,7 +61,7 @@ void event_queue_add_handler(
 
 void event_queue_push(struct event_queue *queue, struct event const event);
 
-void event_queue_process(struct event_queue *queue);
+void event_queue_process(struct context *context, struct event_queue *queue);
 
 int event_queue_pop(struct event_queue *queue, struct event *event);
 

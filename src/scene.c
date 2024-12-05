@@ -17,7 +17,7 @@ static bool should_split(struct oct_tree *tree, struct oct_node *node) {
     return chunk->num_objects > 5;
 }
 
-static void *split(struct oct_tree *, void *data, struct box bounds) {
+static void *split(struct oct_tree *, void *data, struct aabb bounds) {
     struct chunk *chunk = (struct chunk *)data;
     struct chunk *new_chunk = sunset_malloc(sizeof(struct chunk));
 
@@ -30,7 +30,7 @@ static void *split(struct oct_tree *, void *data, struct box bounds) {
     for (size_t i = 0; i < chunk->num_objects; ++i) {
         struct object *object = chunk->objects[i];
 
-        if (position_within_box(object->transform.position, bounds)) {
+        if (position_within_aabb(object->transform.position, bounds)) {
             vector_append(in_new_bounds, object);
         }
     }
@@ -54,7 +54,7 @@ void scene_init(struct camera *cameras,
         struct image skybox,
         struct effect *effects,
         size_t num_effects,
-        struct box bounds,
+        struct aabb bounds,
         struct chunk *root_chunk,
         struct scene *scene_out) {
     vector_init(scene_out->cameras);
@@ -92,7 +92,7 @@ void object_move_with_parent(struct object *object, vec3 direction) {
 void object_move(struct object *object, vec3 direction) {
     glm_vec3_add(
             object->transform.position, direction, object->transform.position);
-    box_translate(&object->bounding_box, direction);
+    aabb_translate(&object->bounding_box, direction);
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_move(object->children[i], direction);
@@ -195,7 +195,7 @@ int scene_render(struct scene *scene, struct render_context *render_context) {
                 oct_tree_query(&scene->oct_tree, camera->position);
 
         for (size_t i = 0; i < chunk->num_objects; ++i) {
-            struct box object_bounds = chunk->objects[i]->bounding_box;
+            struct aabb object_bounds = chunk->objects[i]->bounding_box;
 
             if (camera_box_within_frustum(camera, object_bounds)) {
                 render_object(

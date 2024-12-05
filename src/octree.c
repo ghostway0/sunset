@@ -16,7 +16,7 @@ static void split_node(struct oct_tree *tree, struct oct_node *node) {
     }
 
     for (size_t i = 0; i < 8; ++i) {
-        struct box bounds = box_subdivide_i(node->bounds, i, 8);
+        struct aabb bounds = aabb_subdivide_i(node->bounds, i, 8);
         node->children[i] = sunset_malloc(sizeof(struct oct_node));
 
         void *data = tree->split_i(tree, node->data, bounds);
@@ -37,10 +37,10 @@ static void split_node(struct oct_tree *tree, struct oct_node *node) {
 
 void oct_tree_create(size_t max_depth,
         bool (*should_split)(struct oct_tree *, struct oct_node *),
-        void *(*split)(struct oct_tree *, void *, struct box bounds),
+        void *(*split)(struct oct_tree *, void *, struct aabb bounds),
         void (*destroy_data)(void *),
         void *node_data,
-        struct box root_bounds,
+        struct aabb root_bounds,
         struct oct_tree *tree_out) {
     assert(should_split != NULL);
     assert(split != NULL);
@@ -63,7 +63,7 @@ void oct_node_init(struct oct_node *node,
         size_t depth,
         void *data,
         struct oct_node *parent,
-        struct box bounds) {
+        struct aabb bounds) {
     assert(node != NULL);
 
     node->depth = depth;
@@ -104,7 +104,7 @@ void *oct_tree_query(struct oct_tree const *tree, vec3 position) {
 
         for (size_t i = 0; i < 8; ++i) {
             if (current->children[i] != NULL
-                    && box_contains_point(
+                    && aabb_contains_point(
                             current->children[i]->bounds, position)) {
                 next = current->children[i];
                 break;

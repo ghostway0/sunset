@@ -44,20 +44,20 @@ enum order compare_collisions(void const *a, void const *b) {
 }
 
 static void aabb_collision_normal(
-        struct box box, vec3 direction, vec3 normal_out) {
+        struct aabb aabb, vec3 direction, vec3 normal_out) {
     vec3 center, inv_dir;
-    box_get_center(&box, center);
+    aabb_get_center(&aabb, center);
 
     inv_dir[0] = 1.0f / direction[0];
     inv_dir[1] = 1.0f / direction[1];
     inv_dir[2] = 1.0f / direction[2];
 
-    float tmin = (box.min[0] - center[0]) * inv_dir[0];
-    float tmax = (box.max[0] - center[0]) * inv_dir[0];
+    float tmin = (aabb.min[0] - center[0]) * inv_dir[0];
+    float tmax = (aabb.max[0] - center[0]) * inv_dir[0];
 
     size_t axis = 0;
-    float tmin_temp = (box.min[1] - center[1]) * inv_dir[1];
-    float tmax_temp = (box.max[1] - center[1]) * inv_dir[1];
+    float tmin_temp = (aabb.min[1] - center[1]) * inv_dir[1];
+    float tmax_temp = (aabb.max[1] - center[1]) * inv_dir[1];
 
     if (tmin_temp > tmin) {
         tmin = tmin_temp;
@@ -68,8 +68,8 @@ static void aabb_collision_normal(
         axis = 1;
     }
 
-    tmin_temp = (box.min[2] - center[2]) * inv_dir[2];
-    tmax_temp = (box.max[2] - center[2]) * inv_dir[2];
+    tmin_temp = (aabb.min[2] - center[2]) * inv_dir[2];
+    tmax_temp = (aabb.max[2] - center[2]) * inv_dir[2];
 
     if (tmin_temp > tmin) {
         tmin = tmin_temp;
@@ -84,10 +84,10 @@ static void aabb_collision_normal(
     normal_out[axis] = (tmin < tmax) ? 1.0 : -1.0;
 }
 
-static void calculate_mtv(struct box a, struct box b, vec3 mtv_out) {
+static void calculate_mtv(struct aabb a, struct aabb b, vec3 mtv_out) {
     vec3 overlap_min, overlap_max;
 
-    assert(box_collide(&a, &b));
+    assert(aabb_collide(&a, &b));
 
     glm_vec3_zero(mtv_out);
 
@@ -370,8 +370,8 @@ static bool physics_move_object_with_collisions(struct scene const *scene,
     vec3 moved;
     glm_vec3_add(object->transform.position, direction, moved);
 
-    struct box path_box = object->bounding_box;
-    box_extend_to(&path_box, moved);
+    struct aabb path_box = object->bounding_box;
+    aabb_extend_to(&path_box, moved);
 
     struct chunk *chunk = scene_get_chunk_for(scene, moved);
 
@@ -385,7 +385,7 @@ static bool physics_move_object_with_collisions(struct scene const *scene,
             continue;
         }
 
-        if (box_collide(&path_box, &other->bounding_box)) {
+        if (aabb_collide(&path_box, &other->bounding_box)) {
             handle_object_collision(
                     object, other, direction, event_queue, new_direction);
 
@@ -405,7 +405,7 @@ static bool physics_move_object_with_collisions(struct scene const *scene,
             found_collision = true;
         }
 
-        if (box_collide(&object->bounding_box, &other->bounding_box)) {
+        if (aabb_collide(&object->bounding_box, &other->bounding_box)) {
             resolve_object_overlap(object, other);
         }
     }

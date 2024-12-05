@@ -1,6 +1,5 @@
 #pragma once
 
-#include "sunset/shader.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -43,45 +42,35 @@ struct point rect_size(struct rect rect);
 // subdivide and get the ith quadrant
 struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n);
 
-bool position_within_rect(vec3 position, struct rect rect);
-
-struct box {
+struct aabb {
     vec3 min;
     vec3 max;
 };
 
-void box_translate(struct box *box, vec3 translation);
+void aabb_translate(struct aabb *aabb, vec3 translation);
 
-bool box_collide(struct box const *a, struct box const *b);
-
-// struct material {
-//     size_t num_textures;
-//     struct program *effects;
-//     size_t num_effects;
-// };
+bool aabb_collide(struct aabb const *a, struct aabb const *b);
 
 struct mesh {
     float *vertices;
     size_t num_vertices;
     uint32_t *indices;
     size_t num_indices;
+    float *normals;
+    size_t num_normals;
+    float *texcoords;
+    size_t num_texcoords;
 };
 
-struct mesh_instance {
-    struct mesh *mesh;
-    mat4 transform;
-    // struct material material;
-};
+struct aabb aabb_subdivide_i(struct aabb aabb, size_t i, size_t n);
 
-struct box box_subdivide_i(struct box box, size_t i, size_t n);
+bool aabb_contains_point(struct aabb aabb, vec3 point);
 
-bool box_contains_point(struct box box, vec3 point);
-
-struct box from_rect(struct rect rect);
+struct aabb from_rect(struct rect rect);
 
 bool position_within_rect(vec3 position, struct rect rect);
 
-bool position_within_box(vec3 position, struct box box);
+bool position_within_aabb(vec3 position, struct aabb aabb);
 
 float rect_distance_to_camera(vec3 camera_position, struct rect rect);
 
@@ -92,13 +81,13 @@ enum window_point {
     WINDOW_POINT_BOTTOM_RIGHT,
 };
 
-float box_get_radius(struct box *box);
+float aabb_get_radius(struct aabb *aabb);
 
-void box_get_center(struct box *box, vec3 center_out);
+void aabb_get_center(struct aabb *aabb, vec3 center_out);
 
-void box_extend_to(struct box *box, vec3 point);
+void aabb_extend_to(struct aabb *aabb, vec3 point);
 
-#define box_format "box(min: " vec3_format ", max: " vec3_format ")"
-#define box_args(b) vec3_args(b.min), vec3_args(b.max)
+#define aabb_format "aabb(min: " vec3_format ", max: " vec3_format ")"
+#define aabb_args(b) vec3_args(b.min), vec3_args(b.max)
 
-void box_closest_point(struct box const *box, vec3 point, vec3 closest_out);
+void aabb_closest_point(struct aabb const *aabb, vec3 point, vec3 closest_out);
