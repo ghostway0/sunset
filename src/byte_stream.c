@@ -6,7 +6,7 @@
 #include "sunset/vector.h"
 
 int byte_stream_read_vector(
-        struct byte_stream *stream, size_t size, vector(uint8_t) * out) {
+        struct byte_stream *stream, size_t size, Vector(uint8_t) * out) {
     if (stream->cursor + size >= stream->size) {
         return ERROR_OUT_OF_BOUNDS;
     }

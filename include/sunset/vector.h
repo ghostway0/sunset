@@ -11,7 +11,7 @@ struct vector_metadata {
     size_t capacity;
 };
 
-#define vector(T) T *
+#define Vector(T) T *
 
 #define vector_metadata(v) ((struct vector_metadata *)(v) - 1)
 

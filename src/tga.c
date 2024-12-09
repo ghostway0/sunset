@@ -11,6 +11,7 @@
 #include "sunset/io.h"
 #include "sunset/tga.h"
 #include "sunset/utils.h"
+#include "sunset/vector.h"
 
 enum color_type {
     TGA_TYPE_INDEXED = 1,
@@ -123,7 +124,7 @@ int tga_load_image(struct reader *reader, struct image *image_out) {
                     header.color_map_length, sizeof(struct color));
 
             // Read color map data
-            vector(uint8_t) color_map_data;
+            Vector(uint8_t) color_map_data;
             vector_init(color_map_data);
             reader_read_to_vec(reader,
                     header.color_map_length * pixel_size_bytes,
@@ -142,7 +143,7 @@ int tga_load_image(struct reader *reader, struct image *image_out) {
         }
 
         // Read and decompress RLE data
-        vector(uint8_t) rle_data;
+        Vector(uint8_t) rle_data;
         vector_init(rle_data);
         reader_read_to_vec(reader, image_size * pixel_size_bytes, &rle_data);
 

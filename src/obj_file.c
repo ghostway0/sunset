@@ -77,7 +77,7 @@ static int parse_face_element(
 
 static int parse_face(char const *str,
         size_t vertex_count,
-        vector(struct face_element) face_out) {
+        Vector(struct face_element) face_out) {
     int retval = 0;
     char *duped_str = sunset_strdup(str);
     char *dup_original = duped_str;
@@ -135,7 +135,7 @@ int obj_model_parse(struct reader *reader, struct obj_model *model_out) {
 
     obj_model_init(model_out);
 
-    vector(uint8_t) line_buffer;
+    Vector(uint8_t) line_buffer;
     vector_init(line_buffer);
 
     while (true) {

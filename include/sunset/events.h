@@ -5,6 +5,7 @@
 
 #include <cglm/types.h>
 
+#include "sunset/geometry.h"
 #include "sunset/vector.h"
 
 struct context;
@@ -12,18 +13,13 @@ struct event;
 
 typedef void (*event_handler)(struct context *context, struct event event);
 
-struct event_queue {
-    vector(struct event) events;
-    /// maps event type to a vector of event handlers
-    vector(vector(event_handler)) handlers;
+struct EventQueue {
+    Vector(struct event) events;
+    /// maps event type to a Vector of event handlers
+    Vector(Vector(event_handler)) handlers;
 
     pthread_mutex_t *lock;
-};
-
-struct mouse_move_event {
-    float x;
-    float y;
-};
+} typedef EventQueue;
 
 enum collision_type {
     COLLISION_ENTER_COLLIDER,
@@ -47,22 +43,26 @@ struct event {
     uint32_t type_id;
     union {
         struct collision_event collision;
-        struct mouse_move_event mouse_move;
+        struct point mouse_move;
         uint8_t other[60];
     } data;
 };
 
-void event_queue_init(struct event_queue *queue);
+void event_queue_init(EventQueue *queue);
 
-void event_queue_destroy(struct event_queue *queue);
+void event_queue_destroy(EventQueue *queue);
 
 void event_queue_add_handler(
-        struct event_queue *queue, uint32_t type_id, event_handler handler);
+        EventQueue *queue, uint32_t type_id, event_handler handler);
 
-void event_queue_push(struct event_queue *queue, struct event const event);
+void event_queue_push(EventQueue *queue, struct event const event);
 
-void event_queue_process(struct context *context, struct event_queue *queue);
+void event_queue_process(struct context *context, EventQueue *queue);
 
-int event_queue_pop(struct event_queue *queue, struct event *event);
+void event_queue_process_one(struct context *context,
+        EventQueue *queue,
+        struct event const event);
 
-size_t event_queue_remaining(struct event_queue const *queue);
+int event_queue_pop(EventQueue *queue, struct event *event);
+
+size_t event_queue_remaining(EventQueue const *queue);

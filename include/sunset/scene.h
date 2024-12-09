@@ -117,7 +117,7 @@ struct scene {
     struct object *live_objects;
     size_t num_objects;
     struct oct_tree oct_tree;
-    vector(struct camera) cameras;
+    Vector(struct camera) cameras;
     struct image skybox;
     struct effect *effects;
     size_t num_effects;

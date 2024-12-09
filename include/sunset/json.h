@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "vector.h"
+#include "sunset/vector.h"
 
 #define json_assert_type(value, T)                                             \
     do {                                                                       \
@@ -28,8 +28,8 @@ struct json_value {
     union {
         char *string;
         double number;
-        vector(struct key_value) object;
-        vector(struct json_value) array;
+        Vector(struct key_value) object;
+        Vector(struct json_value) array;
         size_t whole_number;
         bool boolean;
     } data;

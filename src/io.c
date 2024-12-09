@@ -6,7 +6,7 @@
 #include "sunset/utils.h"
 
 ssize_t reader_read_until(
-        struct reader *reader, uint8_t delimiter, vector(uint8_t) * out) {
+        struct reader *reader, uint8_t delimiter, Vector(uint8_t) * out) {
     ssize_t total_read = 0;
     ssize_t bytes_read;
 
@@ -51,7 +51,7 @@ void reader_skip(struct reader *reader, size_t num_bytes) {
 }
 
 ssize_t reader_read_to_vec(
-        struct reader *reader, size_t count, vector(uint8_t) * out) {
+        struct reader *reader, size_t count, Vector(uint8_t) * out) {
     size_t initial_size = vector_size(out);
 
     vector_resize(*out, initial_size + count);

@@ -24,7 +24,7 @@ static void *split(struct oct_tree *, void *data, struct aabb bounds) {
     *new_chunk = *chunk;
     new_chunk->bounds = bounds;
 
-    vector(struct object *) in_new_bounds;
+    Vector(struct object *) in_new_bounds;
     vector_init(in_new_bounds);
 
     for (size_t i = 0; i < chunk->num_objects; ++i) {

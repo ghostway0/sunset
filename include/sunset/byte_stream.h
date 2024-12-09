@@ -13,7 +13,7 @@ struct byte_stream {
 };
 
 int byte_stream_read_vector(
-        struct byte_stream *stream, size_t size, vector(uint8_t) * out);
+        struct byte_stream *stream, size_t size, Vector(uint8_t) * out);
 
 ssize_t byte_stream_read(void *ctx, size_t count, void *out);
 

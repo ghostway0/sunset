@@ -68,7 +68,7 @@ bool aabb_contains_point(struct aabb aabb, vec3 point);
 
 struct aabb from_rect(struct rect rect);
 
-bool position_within_rect(vec3 position, struct rect rect);
+bool point_within_rect(struct point position, struct rect rect);
 
 bool position_within_aabb(vec3 position, struct aabb aabb);
 

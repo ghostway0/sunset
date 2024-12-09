@@ -18,7 +18,7 @@ struct mtl_material {
 };
 
 struct mtl_file {
-    vector(struct mtl_material) materials;
+    Vector(struct mtl_material) materials;
 };
 
 int mtl_file_parse(struct reader *reader, struct mtl_file *mtl_out);

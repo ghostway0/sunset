@@ -28,16 +28,15 @@
 #include "sunset/vector.h"
 
 void context_init(struct context *context,
-        struct command_buffer_options command_buffer_options,
         struct font *fonts,
         size_t num_fonts,
         void *render_context,
-        struct event_queue *event_queue,
+        EventQueue *event_queue,
         struct scene *scene) {
     context->fonts = fonts;
     context->num_fonts = num_fonts;
     context->render_context = render_context;
-    command_buffer_init(&context->command_buffer, command_buffer_options);
+    command_buffer_init(&context->command_buffer, COMMAND_BUFFER_DEFAULT);
     context->event_queue = event_queue;
     context->scene = scene;
 
@@ -116,8 +115,9 @@ void camera_move_callback(struct object *object, vec3 direction) {
             camera_object->scene, camera_object->camera_idx, direction);
 }
 
+// should be in engine
 void mouse_event_handler(struct context *context, struct event event) {
-    struct mouse_move_event mouse_move = event.data.mouse_move;
+    struct point mouse_move = event.data.mouse_move;
     scene_rotate_camera(context->scene, 0, mouse_move.x, mouse_move.y);
 }
 
@@ -421,7 +421,7 @@ int main() {
     physics_add_object(&physics, &player);
     physics_add_constraint(&physics, &player, &camera_object, 10.0f);
 
-    struct event_queue event_queue;
+    EventQueue event_queue;
     event_queue_init(&event_queue);
 
     command_buffer_init(&render_context.command_buffer, COMMAND_BUFFER_DEFAULT);
@@ -431,18 +431,12 @@ int main() {
 
     uint64_t avg_frame_time = 0;
 
-    vector(uint64_t) frame_time_window;
+    Vector(uint64_t) frame_time_window;
     vector_init(frame_time_window);
     vector_reserve(frame_time_window, 100);
 
     struct context context;
-    context_init(&context,
-            COMMAND_BUFFER_DEFAULT,
-            &font,
-            1,
-            &render_context,
-            &event_queue,
-            &scene);
+    context_init(&context, &font, 1, &render_context, &event_queue, &scene);
 
     backend_set_user_context(&render_context, &context);
 

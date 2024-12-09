@@ -71,9 +71,9 @@ struct aabb from_rect(struct rect rect) {
             {rect.x + rect.width, rect.y + rect.height, 0.0f}};
 }
 
-bool position_within_rect(vec3 position, struct rect rect) {
-    return position[0] >= rect.x && position[0] <= rect.x + rect.width
-            && position[1] >= rect.y && position[1] <= rect.y + rect.height;
+bool point_within_rect(struct point position, struct rect rect) {
+    return position.x >= rect.x && position.x <= rect.x + rect.width
+            && position.y >= rect.y && position.y <= rect.y + rect.height;
 }
 
 bool position_within_aabb(vec3 position, struct aabb aabb) {

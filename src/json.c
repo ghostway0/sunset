@@ -181,7 +181,7 @@ static int parse_array(struct parser *p, struct json_value *value_out) {
 
     bump(p);
 
-    vector(struct json_value) array;
+    Vector(struct json_value) array;
     vector_init(array);
 
     for (;;) {

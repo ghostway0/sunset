@@ -3,10 +3,14 @@
 #include <stddef.h>
 
 #include "sunset/commands.h"
+#include "sunset/geometry.h"
+#include "sunset/physics.h"
+#include "sunset/ui.h"
 
+typedef struct EventQueue EventQueue;
+struct button;
 struct scene;
 struct font;
-struct event_queue;
 
 struct active_animation {
     float start_time;
@@ -27,18 +31,24 @@ struct render_config {
 };
 
 struct mouse {
-    float x;
-    float y;
+    struct point where;
     bool first_mouse;
 };
 
+// should this structure be split into user_context and engine_context? (also
+// maybe a struct ui) user_context would be given to callbacks and such.
 struct context {
     struct command_buffer command_buffer;
+    // the backend should handle these
     struct font *fonts;
     size_t num_fonts;
+
     void *render_context;
     struct scene *scene;
 
+    Vector(struct ui_context) ui_contexts;
+    struct ui_context *active_ui;
+
     struct mouse mouse;
-    struct event_queue *event_queue;
+    EventQueue *event_queue;
 };

@@ -17,7 +17,6 @@
 #include "sunset/map.h"
 #include "sunset/math.h"
 #include "sunset/opengl_backend.h"
-#include "sunset/physics.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
 #include "sunset/utils.h"
@@ -303,27 +302,27 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     struct context *context = glfwGetWindowUserPointer(window);
 
     if (context->mouse.first_mouse) {
-        context->mouse.x = xpos;
-        context->mouse.y = ypos;
+        context->mouse.where.x = xpos;
+        context->mouse.where.y = ypos;
         context->mouse.first_mouse = false;
         return;
     }
 
-    float xoffset = context->mouse.x - xpos;
-    float yoffset = context->mouse.y - ypos;
+    float xoffset = context->mouse.where.x - xpos;
+    float yoffset = context->mouse.where.y - ypos;
 
     event_queue_push(context->event_queue,
             (struct event){
                     .type_id = SYSTEM_EVENT_MOUSE,
                     .data.mouse_move =
-                            (struct mouse_move_event){
+                            (struct point){
                                     .x = xoffset,
                                     .y = yoffset,
                             },
             });
 
-    context->mouse.x = xpos;
-    context->mouse.y = ypos;
+    context->mouse.where.x = xpos;
+    context->mouse.where.y = ypos;
 }
 
 static int setup_mouse(struct render_context *context) {
@@ -649,7 +648,7 @@ static enum order compare_instancing_buffers(void const *a, void const *b) {
 
 static void instancing_buffer_flush(
         struct render_context *context, struct instancing_buffer *buffer) {
-    vector(mat4) transforms = buffer->transforms;
+    Vector(mat4) transforms = buffer->transforms;
 
     // draw instanced
     draw_instanced_mesh(context,
