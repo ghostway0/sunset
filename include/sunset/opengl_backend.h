@@ -52,7 +52,7 @@ enum backend_program_type {
 struct instancing_buffer {
     uint32_t mesh_id;
     uint32_t atlas_id;
-    Vector(mat4) transforms;
+    vector(mat4) transforms;
 };
 
 struct compiled_texture {
@@ -84,9 +84,9 @@ struct render_context {
 
     struct frame_cache frame_cache;
     struct program backend_programs[NUM_BACKEND_PROGRAMS];
-    Vector(struct compiled_mesh) meshes;
-    Vector(struct compiled_texture) textures;
-    Vector(struct atlas) atlases;
+    vector(struct compiled_mesh) meshes;
+    vector(struct compiled_texture) textures;
+    vector(struct atlas) atlases;
     GLuint texture_atlas;
 
     struct command_buffer command_buffer;

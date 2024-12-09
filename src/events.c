@@ -5,7 +5,7 @@
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
-void event_queue_init(EventQueue *queue) {
+void event_queue_init(struct event_queue *queue) {
     vector_init(queue->events);
     vector_init(queue->handlers);
 
@@ -18,7 +18,7 @@ void event_queue_init(EventQueue *queue) {
     pthread_mutex_init(queue->lock, &mutex_attr);
 }
 
-void event_queue_destroy(EventQueue *queue) {
+void event_queue_destroy(struct event_queue *queue) {
     vector_destroy(queue->events);
 
     for (size_t i = 0; i < vector_size(queue->handlers); i++) {
@@ -32,7 +32,7 @@ void event_queue_destroy(EventQueue *queue) {
 }
 
 void event_queue_add_handler(
-        EventQueue *queue, uint32_t type_id, event_handler handler) {
+        struct event_queue *queue, uint32_t type_id, event_handler handler) {
     pthread_mutex_lock(queue->lock);
 
     if (type_id >= vector_size(queue->handlers)) {
@@ -48,13 +48,13 @@ void event_queue_add_handler(
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_push(EventQueue *queue, struct event const event) {
+void event_queue_push(struct event_queue *queue, struct event const event) {
     pthread_mutex_lock(queue->lock);
     vector_append_copy(queue->events, event);
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_process(struct context *context, EventQueue *queue) {
+void event_queue_process(struct context *context, struct event_queue *queue) {
     pthread_mutex_lock(queue->lock);
 
     for (size_t i = 0; i < vector_size(queue->events); i++) {
@@ -67,7 +67,7 @@ void event_queue_process(struct context *context, EventQueue *queue) {
 }
 
 void event_queue_process_one(struct context *context,
-        EventQueue *queue,
+        struct event_queue *queue,
         struct event const event) {
     if (queue->handlers[event.type_id] == NULL) {
         return;
@@ -80,7 +80,7 @@ void event_queue_process_one(struct context *context,
     }
 }
 
-int event_queue_pop(EventQueue *queue, struct event *event) {
+int event_queue_pop(struct event_queue *queue, struct event *event) {
     pthread_mutex_lock(queue->lock);
 
     if (event_queue_remaining(queue) == 0) {
@@ -95,7 +95,7 @@ int event_queue_pop(EventQueue *queue, struct event *event) {
     return 0;
 }
 
-size_t event_queue_remaining(EventQueue const *queue) {
+size_t event_queue_remaining(struct event_queue const *queue) {
     pthread_mutex_lock(queue->lock);
 
     size_t remaining = vector_size(queue->events);

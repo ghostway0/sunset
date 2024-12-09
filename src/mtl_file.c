@@ -24,7 +24,7 @@ int mtl_file_parse(struct reader *reader, struct mtl_file *mtl_out) {
 
     vector_init(mtl_out->materials);
 
-    Vector(uint8_t) line_buffer;
+    vector(uint8_t) line_buffer;
     vector_init(line_buffer);
 
     struct mtl_material *current_material = NULL;

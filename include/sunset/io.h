@@ -17,7 +17,7 @@ void reader_init(struct reader *reader, void *ctx, read_fn read);
 ssize_t reader_read(struct reader *reader, size_t count, void *out);
 
 ssize_t reader_read_until(
-        struct reader *reader, uint8_t delimiter, Vector(uint8_t) * out);
+        struct reader *reader, uint8_t delimiter, vector(uint8_t) * out);
 
 #define reader_read_type(stream, out)                                          \
     do {                                                                       \
@@ -30,4 +30,4 @@ ssize_t reader_read_until(
 void reader_skip(struct reader *reader, size_t num_bytes);
 
 ssize_t reader_read_to_vec(
-        struct reader *reader, size_t count, Vector(uint8_t) * out);
+        struct reader *reader, size_t count, vector(uint8_t) * out);

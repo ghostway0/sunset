@@ -648,7 +648,7 @@ static enum order compare_instancing_buffers(void const *a, void const *b) {
 
 static void instancing_buffer_flush(
         struct render_context *context, struct instancing_buffer *buffer) {
-    Vector(mat4) transforms = buffer->transforms;
+    vector(mat4) transforms = buffer->transforms;
 
     // draw instanced
     draw_instanced_mesh(context,

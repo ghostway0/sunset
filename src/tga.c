@@ -124,7 +124,7 @@ int tga_load_image(struct reader *reader, struct image *image_out) {
                     header.color_map_length, sizeof(struct color));
 
             // Read color map data
-            Vector(uint8_t) color_map_data;
+            vector(uint8_t) color_map_data;
             vector_init(color_map_data);
             reader_read_to_vec(reader,
                     header.color_map_length * pixel_size_bytes,
@@ -143,7 +143,7 @@ int tga_load_image(struct reader *reader, struct image *image_out) {
         }
 
         // Read and decompress RLE data
-        Vector(uint8_t) rle_data;
+        vector(uint8_t) rle_data;
         vector_init(rle_data);
         reader_read_to_vec(reader, image_size * pixel_size_bytes, &rle_data);
 

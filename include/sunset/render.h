@@ -7,10 +7,10 @@
 #include "sunset/physics.h"
 #include "sunset/ui.h"
 
-typedef struct EventQueue EventQueue;
-struct button;
-struct scene;
+struct event_queue;
 struct font;
+struct scene;
+struct button;
 
 struct active_animation {
     float start_time;
@@ -46,9 +46,9 @@ struct context {
     void *render_context;
     struct scene *scene;
 
-    Vector(struct ui_context) ui_contexts;
+    vector(struct ui_context) ui_contexts;
     struct ui_context *active_ui;
 
     struct mouse mouse;
-    EventQueue *event_queue;
+    struct event_queue *event_queue;
 };

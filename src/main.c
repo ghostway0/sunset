@@ -31,7 +31,7 @@ void context_init(struct context *context,
         struct font *fonts,
         size_t num_fonts,
         void *render_context,
-        EventQueue *event_queue,
+        struct event_queue *event_queue,
         struct scene *scene) {
     context->fonts = fonts;
     context->num_fonts = num_fonts;
@@ -403,14 +403,7 @@ int main() {
             .id = 0,
     };
 
-    scene_init(&camera,
-            1,
-            skybox,
-            NULL,
-            0,
-            root_chunk->bounds,
-            root_chunk,
-            &scene);
+    scene_init(&camera, 1, skybox, root_chunk->bounds, root_chunk, &scene);
 
     struct physics physics;
     physics_init(&physics);
@@ -421,7 +414,7 @@ int main() {
     physics_add_object(&physics, &player);
     physics_add_constraint(&physics, &player, &camera_object, 10.0f);
 
-    EventQueue event_queue;
+    struct event_queue event_queue;
     event_queue_init(&event_queue);
 
     command_buffer_init(&render_context.command_buffer, COMMAND_BUFFER_DEFAULT);
@@ -431,7 +424,7 @@ int main() {
 
     uint64_t avg_frame_time = 0;
 
-    Vector(uint64_t) frame_time_window;
+    vector(uint64_t) frame_time_window;
     vector_init(frame_time_window);
     vector_reserve(frame_time_window, 100);
 

@@ -24,7 +24,7 @@ static void *split(struct oct_tree *, void *data, struct aabb bounds) {
     *new_chunk = *chunk;
     new_chunk->bounds = bounds;
 
-    Vector(struct object *) in_new_bounds;
+    vector(struct object *) in_new_bounds;
     vector_init(in_new_bounds);
 
     for (size_t i = 0; i < chunk->num_objects; ++i) {
@@ -52,16 +52,12 @@ static void destroy_chunk(void *data) {
 void scene_init(struct camera *cameras,
         size_t num_cameras,
         struct image skybox,
-        struct effect *effects,
-        size_t num_effects,
         struct aabb bounds,
         struct chunk *root_chunk,
         struct scene *scene_out) {
     vector_init(scene_out->cameras);
     vector_append_multiple(scene_out->cameras, cameras, num_cameras);
     scene_out->skybox = skybox;
-    scene_out->effects = effects;
-    scene_out->num_effects = num_effects;
 
     oct_tree_create(DEFAULT_MAX_OCTREE_DEPTH,
             should_split,

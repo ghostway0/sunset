@@ -117,25 +117,20 @@ struct scene {
     struct object *live_objects;
     size_t num_objects;
     struct oct_tree oct_tree;
-    Vector(struct camera) cameras;
+    vector(struct camera) cameras;
     struct image skybox;
-    struct effect *effects;
-    size_t num_effects;
 };
 
 void scene_init(struct camera *cameras,
         size_t num_cameras,
         struct image skybox,
-        struct effect *effects,
-        size_t num_effects,
         struct aabb bounds,
         struct chunk *root_chunk,
         struct scene *scene_out);
 
 struct chunk *get_chunk_for(struct scene const *scene, vec3 position);
 
-void scene_load_chunks(
-        struct scene *scene, struct chunk *chunks, size_t num_chunks);
+void scene_load_chunks(struct scene *scene, struct chunk *chunks, size_t num_chunks);
 
 void scene_destroy(struct scene *scene);
 

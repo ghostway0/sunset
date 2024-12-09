@@ -22,8 +22,8 @@
     vec4_args(m[0]), vec4_args(m[1]), vec4_args(m[2]), vec4_args(m[3])
 
 struct point {
-    uint32_t x;
-    uint32_t y;
+    float x;
+    float y;
 };
 
 struct rect {

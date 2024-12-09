@@ -15,10 +15,10 @@ struct face_element {
 };
 
 struct obj_model {
-    Vector(vec3) vertices;
-    Vector(vec3) normals;
-    Vector(vec2) texcoords;
-    Vector(Vector(struct face_element)) faces;
+    vector(vec3) vertices;
+    vector(vec3) normals;
+    vector(vec2) texcoords;
+    vector(vector(struct face_element)) faces;
     char *material_lib;
     char *object_name;
 };

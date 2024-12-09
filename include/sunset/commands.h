@@ -9,6 +9,8 @@
 #include "sunset/images.h"
 #include "sunset/ring_buffer.h"
 
+struct font;
+
 enum command_type : uint8_t {
     COMMAND_NOP,
     COMMAND_LINE,

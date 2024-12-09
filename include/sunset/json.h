@@ -13,6 +13,8 @@
         }                                                                      \
     } while (0)
 
+struct vfs_file;
+
 enum json_type {
     JSON_OBJECT,
     JSON_ARRAY,
@@ -23,13 +25,15 @@ enum json_type {
     JSON_NULL,
 };
 
+struct key_value;
+
 struct json_value {
     enum json_type type;
     union {
         char *string;
         double number;
-        Vector(struct key_value) object;
-        Vector(struct json_value) array;
+        vector(struct key_value) object;
+        vector(struct json_value) array;
         size_t whole_number;
         bool boolean;
     } data;
@@ -40,13 +44,9 @@ struct key_value {
     struct json_value value;
 };
 
-int json_parse(
-        char const *input, size_t input_size, struct json_value *value_out);
+int json_parse(char const *input, size_t input_size, struct json_value *value_out);
 
 void json_value_destroy(struct json_value *json);
 
-struct vfs_file;
-
 // -1 for not pretty
-void json_value_print(
-        struct json_value *json, struct vfs_file *file, size_t indent);
+void json_value_print(struct json_value *json, struct vfs_file *file, size_t indent);
