@@ -54,7 +54,7 @@ void event_queue_push(struct event_queue *queue, struct event const event) {
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_process(struct context *context, struct event_queue *queue) {
+void event_queue_process(void *context, struct event_queue *queue) {
     pthread_mutex_lock(queue->lock);
 
     for (size_t i = 0; i < vector_size(queue->events); i++) {
@@ -66,7 +66,7 @@ void event_queue_process(struct context *context, struct event_queue *queue) {
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_process_one(struct context *context,
+void event_queue_process_one(void *context,
         struct event_queue *queue,
         struct event const event) {
     if (queue->handlers[event.type_id] == NULL) {

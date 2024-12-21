@@ -37,10 +37,10 @@ void context_init(struct context *context,
     context->num_fonts = num_fonts;
     context->render_context = render_context;
     command_buffer_init(&context->command_buffer, COMMAND_BUFFER_DEFAULT);
-    context->event_queue = event_queue;
+    context->user_context.event_queue = event_queue;
     context->scene = scene;
 
-    context->mouse.first_mouse = true;
+    context->user_context.mouse.first_mouse = true;
 }
 
 void context_destroy(struct context *context) {

@@ -1,16 +1,7 @@
 #pragma once
 
 #include <stddef.h>
-
-#include "sunset/commands.h"
-#include "sunset/geometry.h"
-#include "sunset/physics.h"
-#include "sunset/ui.h"
-
-struct event_queue;
-struct font;
-struct scene;
-struct button;
+#include <stdint.h>
 
 struct active_animation {
     float start_time;
@@ -30,25 +21,30 @@ struct render_config {
     char const *window_title;
 };
 
-struct mouse {
-    struct point where;
-    bool first_mouse;
-};
-
-// should this structure be split into user_context and engine_context? (also
-// maybe a struct ui) user_context would be given to callbacks and such.
-struct context {
-    struct command_buffer command_buffer;
-    // the backend should handle these
-    struct font *fonts;
-    size_t num_fonts;
-
-    void *render_context;
-    struct scene *scene;
-
-    vector(struct ui_context) ui_contexts;
-    struct ui_context *active_ui;
-
-    struct mouse mouse;
-    struct event_queue *event_queue;
-};
+// struct mouse {
+//     struct point where;
+//     bool first_mouse;
+// };
+//
+// struct user_context {
+//     struct mouse mouse;
+//     struct event_queue *event_queue;
+//     struct scene *scene;
+// };
+//
+// // should this structure be split into user_context and engine_context? (also
+// // maybe a struct ui) user_context would be given to callbacks and such.
+// struct context {
+//     // the backend should handle these
+//     struct font *fonts;
+//     size_t num_fonts;
+//
+//     void *render_context;
+//
+//     vector(struct ui_context) ui_contexts;
+//     struct ui_context *active_ui;
+//
+//     struct physics physics;
+//
+//     struct user_context user_context;
+// };

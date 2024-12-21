@@ -183,7 +183,7 @@ static int render_object(
 }
 
 int scene_render(struct scene *scene, struct render_context *render_context) {
-    // doesn't make much sense - still need to think that through
+    // FIXME: doesn't make much sense - still need to think that through
     for (size_t i = 0; i < vector_size(scene->cameras); i++) {
         struct camera *camera = &scene->cameras[i];
 

@@ -299,30 +299,8 @@ static int setup_default_shaders(struct render_context *context) {
 }
 
 static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-    struct context *context = glfwGetWindowUserPointer(window);
-
-    if (context->mouse.first_mouse) {
-        context->mouse.where.x = xpos;
-        context->mouse.where.y = ypos;
-        context->mouse.first_mouse = false;
-        return;
-    }
-
-    float xoffset = context->mouse.where.x - xpos;
-    float yoffset = context->mouse.where.y - ypos;
-
-    event_queue_push(context->event_queue,
-            (struct event){
-                    .type_id = SYSTEM_EVENT_MOUSE,
-                    .data.mouse_move =
-                            (struct point){
-                                    .x = xoffset,
-                                    .y = yoffset,
-                            },
-            });
-
-    context->mouse.where.x = xpos;
-    context->mouse.where.y = ypos;
+    struct render_context *context = glfwGetWindowUserPointer(window);
+    context->mouse = (struct point){xpos, ypos};
 }
 
 static int setup_mouse(struct render_context *context) {
@@ -378,6 +356,8 @@ int backend_setup(struct render_context *context, struct render_config config) {
     if ((retval = setup_mouse(context))) {
         goto failure;
     }
+
+    glfwSetWindowUserPointer(context->window, context);
 
     vector_init(context->meshes);
     vector_init(context->frame_cache.instancing_buffers);
@@ -506,11 +486,6 @@ GLint compile_texture(struct image const *atlas_image) {
     glBindTexture(GL_TEXTURE_2D, 0);
 
     return atlas;
-}
-
-void backend_set_user_context(
-        struct render_context *context, void *user_context) {
-    glfwSetWindowUserPointer(context->window, user_context);
 }
 
 static void use_program(struct program program) {

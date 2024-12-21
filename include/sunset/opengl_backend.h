@@ -89,6 +89,8 @@ struct render_context {
     vector(struct atlas) atlases;
     GLuint texture_atlas;
 
+    struct point mouse;
+
     struct command_buffer command_buffer;
 };
 

@@ -33,3 +33,9 @@ uint64_t time_since_us(struct timespec start) {
     return (now.tv_sec - start.tv_sec) * 1000000
             + (now.tv_nsec - start.tv_nsec) / 1000;
 }
+
+float time_since_s(struct timespec start) {
+    struct timespec now = get_time();
+    return (float)(now.tv_sec - start.tv_sec)
+            + (float)(now.tv_nsec - start.tv_nsec) / 1000000000.0;
+}

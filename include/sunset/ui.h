@@ -4,11 +4,11 @@
 
 #include "sunset/geometry.h"
 
-struct context;
+struct engine_context;
 
 struct button {
     struct rect bounds;
-    void (*clicked_callback)(struct context *);
+    void (*clicked_callback)(struct engine_context *);
 };
 
 // engine context would have a vector of these and a pointer to the active one.

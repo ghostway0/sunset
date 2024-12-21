@@ -34,6 +34,8 @@ uint64_t time_since_ms(struct timespec start);
 
 uint64_t time_since_us(struct timespec start);
 
+float time_since_s(struct timespec start);
+
 static inline int compare_uint64_t(void const *a, void const *b) {
     return *(uint64_t *)a - *(uint64_t *)b;
 }

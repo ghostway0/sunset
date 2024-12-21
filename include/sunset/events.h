@@ -8,10 +8,10 @@
 #include "sunset/geometry.h"
 #include "sunset/vector.h"
 
-struct context;
+struct engine_context;
 struct event;
 
-typedef void (*event_handler)(struct context *context, struct event event);
+typedef void (*event_handler)(struct engine_context *context, struct event event);
 
 struct event_queue {
     vector(struct event) events;
@@ -39,6 +39,10 @@ struct collision_event {
 static_assert(
         sizeof(struct collision_event) <= 60, "collision_event too large");
 
+struct mouse_move_event {
+    // TODO:
+};
+
 struct event {
     uint32_t type_id;
     union {
@@ -57,9 +61,9 @@ void event_queue_add_handler(
 
 void event_queue_push(struct event_queue *queue, struct event const event);
 
-void event_queue_process(struct context *context, struct event_queue *queue);
+void event_queue_process(void *context, struct event_queue *queue);
 
-void event_queue_process_one(struct context *context,
+void event_queue_process_one(void *context,
         struct event_queue *queue,
         struct event const event);
 
