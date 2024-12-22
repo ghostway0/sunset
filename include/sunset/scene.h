@@ -71,10 +71,6 @@ struct object {
     size_t num_children;
 };
 
-void object_move(struct object *object, vec3 direction);
-
-void object_move_with_parent(struct object *object, vec3 direction);
-
 void object_rotate(struct object *object, vec3 rotation);
 
 void object_destroy(struct object *object);
@@ -106,8 +102,7 @@ struct light {
 
 struct chunk {
     struct aabb bounds;
-    struct object **objects;
-    size_t num_objects;
+    vector(struct object *) objects;
     struct light *lights;
     size_t num_lights;
     size_t id;
@@ -130,7 +125,8 @@ void scene_init(struct camera *cameras,
 
 struct chunk *get_chunk_for(struct scene const *scene, vec3 position);
 
-void scene_load_chunks(struct scene *scene, struct chunk *chunks, size_t num_chunks);
+void scene_load_chunks(
+        struct scene *scene, struct chunk *chunks, size_t num_chunks);
 
 void scene_destroy(struct scene *scene);
 
@@ -143,3 +139,9 @@ void scene_move_camera(
 
 void scene_rotate_camera(
         struct scene *scene, size_t camera_index, float x_angle, float y_angle);
+
+void scene_move_object_with_parent(
+        struct scene *scene, struct object *object, vec3 direction);
+
+void scene_move_object(
+        struct scene *scene, struct object *object, vec3 direction);

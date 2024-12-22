@@ -59,3 +59,7 @@ int backend_register_texture_atlas(struct render_context *context,
 struct render_config backend_build_render_config(char const *title);
 
 bool backend_should_stop(struct render_context *context);
+
+void backend_hide_mouse(struct render_context *context);
+
+void backend_show_mouse(struct render_context *context);

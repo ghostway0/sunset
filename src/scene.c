@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cglm/affine.h"
 #include "cglm/types.h"
 #include "sunset/commands.h"
+#include "sunset/map.h"
+#include "sunset/octree.h"
 #include "sunset/scene.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
@@ -14,7 +15,7 @@ static bool should_split(struct oct_tree *tree, struct oct_node *node) {
     unused(tree);
 
     struct chunk *chunk = (struct chunk *)node->data;
-    return chunk->num_objects > 5;
+    return vector_size(chunk->objects) > 5;
 }
 
 static void *split(struct oct_tree *, void *data, struct aabb bounds) {
@@ -24,21 +25,15 @@ static void *split(struct oct_tree *, void *data, struct aabb bounds) {
     *new_chunk = *chunk;
     new_chunk->bounds = bounds;
 
-    vector(struct object *) in_new_bounds;
-    vector_init(in_new_bounds);
+    vector_init(new_chunk->objects);
 
-    for (size_t i = 0; i < chunk->num_objects; ++i) {
+    for (size_t i = 0; i < vector_size(chunk->objects); ++i) {
         struct object *object = chunk->objects[i];
 
         if (position_within_aabb(object->transform.position, bounds)) {
-            vector_append(in_new_bounds, object);
+            vector_append(new_chunk->objects, object);
         }
     }
-
-    new_chunk->num_objects = vector_size(in_new_bounds);
-    new_chunk->objects = in_new_bounds;
-
-    vector_destroy(in_new_bounds);
 
     return new_chunk;
 }
@@ -47,6 +42,15 @@ static void destroy_chunk(void *data) {
     struct chunk *chunk = (struct chunk *)data;
     free(chunk->objects);
     free(chunk);
+}
+
+static void move_object_chunk(
+        struct scene *scene, struct object *object, vec3 from, vec3 to) {
+    struct chunk *old_chunk = get_chunk_for(scene, from);
+    struct chunk *new_chunk = get_chunk_for(scene, to);
+
+    map_remove(old_chunk->objects, object, compare_ptrs);
+    map_insert(new_chunk->objects, object, compare_ptrs);
 }
 
 void scene_init(struct camera *cameras,
@@ -77,21 +81,28 @@ void scene_destroy(struct scene *scene) {
     vector_destroy(scene->cameras);
 }
 
-void object_move_with_parent(struct object *object, vec3 direction) {
-    object_move(object, direction);
+void scene_move_object_with_parent(
+        struct scene *scene, struct object *object, vec3 direction) {
+    object_move(scene, object, direction);
 
     if (object->parent != NULL) {
-        object_move(object->parent, direction);
+        object_move(scene, object->parent, direction);
     }
 }
 
-void object_move(struct object *object, vec3 direction) {
-    glm_vec3_add(
-            object->transform.position, direction, object->transform.position);
+void scene_move_object(
+        struct scene *scene, struct object *object, vec3 direction) {
+    vec3 new_position;
+
+    glm_vec3_add(object->transform.position, direction, new_position);
     aabb_translate(&object->bounding_box, direction);
 
+    move_object_chunk(scene, object, object->transform.position, new_position);
+
+    glm_vec3_copy(new_position, object->transform.position);
+
     for (size_t i = 0; i < object->num_children; ++i) {
-        object_move(object->children[i], direction);
+        object_move(scene, object->children[i], direction);
     }
 
     if (object->move_callback != NULL) {
@@ -190,7 +201,7 @@ int scene_render(struct scene *scene, struct render_context *render_context) {
         struct chunk *chunk =
                 oct_tree_query(&scene->oct_tree, camera->position);
 
-        for (size_t i = 0; i < chunk->num_objects; ++i) {
+        for (size_t i = 0; i < vector_size(chunk->objects); ++i) {
             struct aabb object_bounds = chunk->objects[i]->bounding_box;
 
             if (camera_box_within_frustum(camera, object_bounds)) {
@@ -219,3 +230,5 @@ void scene_rotate_camera(struct scene *scene,
         float y_angle) {
     camera_rotate_scaled(&scene->cameras[camera_index], x_angle, y_angle);
 }
+
+int scene_load_config() {}

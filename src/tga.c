@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "log.h"
 #include "sunset/color.h"
 #include "sunset/errors.h"
 #include "sunset/images.h"

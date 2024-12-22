@@ -88,7 +88,7 @@ int event_queue_pop(struct event_queue *queue, struct event *event) {
         return -1;
     }
 
-    *event = vector_pop(queue->events);
+    *event = vector_pop_back(queue->events);
 
     pthread_mutex_unlock(queue->lock);
 

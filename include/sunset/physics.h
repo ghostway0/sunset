@@ -10,12 +10,6 @@
 
 struct scene;
 
-enum system_event {
-    SYSTEM_EVENT_TICK,
-    SYSTEM_EVENT_COLLISION,
-    SYSTEM_EVENT_MOUSE,
-};
-
 struct constraint {
     struct object *a;
     struct object *b;
@@ -71,11 +65,11 @@ void physics_add_constraint(struct physics *physics,
         float distance);
 
 void physics_step(struct physics *physics,
-        struct scene const *scene,
+        struct scene *scene,
         struct event_queue *event_queue,
         float dt);
 
-bool physics_move_object(struct scene const *scene,
+bool physics_move_object(struct scene *scene,
         struct object *object,
         vec3 direction,
         struct event_queue *event_queue);

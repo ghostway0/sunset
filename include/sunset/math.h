@@ -46,4 +46,16 @@ enum order {
         vectors_close(type, vector, _zero, tolerance);                         \
     })
 
+static inline enum order compare_ptrs(void const *a, void const *b) {
+    if (a > b) {
+        return ORDER_GREATER_THAN;
+    }
+
+    if (a < b) {
+        return ORDER_LESS_THAN;
+    }
+
+    return ORDER_EQUAL;
+}
+
 #endif // MATH_H

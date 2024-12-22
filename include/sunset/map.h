@@ -31,23 +31,35 @@ static inline size_t map_find_index(void const *v,
     return low;
 }
 
+#define map_get_index(v, value, compar)                                        \
+    map_find_index(v, vector_size(v), sizeof(*v), &value, compar)
+
 #define map_insert(v, value, compar)                                           \
     do {                                                                       \
-        size_t i =                                                             \
+        size_t __i =                                                           \
                 map_find_index(v, vector_size(v), sizeof(*v), &value, compar); \
         vector_resize(v, vector_size(v) + 1);                                  \
-        for (size_t j = vector_size(v); j > i; j--) {                          \
-            v[j] = v[j - 1];                                                   \
+        for (size_t __j = vector_size(v); __j > __i; __j--) {                  \
+            v[__j] = v[__j - 1];                                               \
         }                                                                      \
-        v[i] = value;                                                          \
+        v[__i] = value;                                                        \
     } while (0)
 
 #define map_get(v, value, compar)                                              \
     ({                                                                         \
-        size_t i =                                                             \
+        size_t __i =                                                           \
                 map_find_index(v, vector_size(v), sizeof(*v), &value, compar); \
-        i < vector_size(v) && compar(&v[i], &value) == 0 ? &v[i] : NULL;       \
+        __i < vector_size(v) && compar(&v[__i], &value) == ORDER_EQUAL         \
+                ? &v[__i]                                                      \
+                : NULL;                                                        \
     })
+
+#define map_remove(v, value, compar)                                           \
+    do {                                                                       \
+        size_t __i =                                                             \
+                map_find_index(v, vector_size(v), sizeof(*v), &value, compar); \
+        vector_remove_index(v, __i); \
+    } while (0)
 
 #define map_get_or_init(v, value, compar, value_or)                            \
     ({                                                                         \

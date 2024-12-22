@@ -4,10 +4,12 @@
 #include "sunset/backend.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
+#include "sunset/geometry.h"
 #include "sunset/physics.h"
 #include "sunset/scene.h"
 #include "sunset/ui.h"
 #include "sunset/utils.h"
+#include "sunset/vector.h"
 
 static constexpr float FRAME_TIME_S = 1.0f / 60.0f;
 
@@ -21,23 +23,10 @@ static constexpr float FRAME_TIME_S = 1.0f / 60.0f;
 // 5. profit
 // should this be done _every_ frame?
 
-void mouse_ui_handler(struct engine_context *context, struct event event) {
-    struct point mouse_move = event.data.mouse_move;
-
-    struct ui_context *active_ui = context->active_ui;
-
-    for (size_t i = 0; i < active_ui->num_buttons; i++) {
-        struct button button = active_ui->buttons[i];
-
-        if (point_within_rect(mouse_move, button.bounds)) {
-            button.clicked_callback(context);
-        }
-    }
-}
-
 void engine_setup(struct engine_context *context) {
+    // setup ui
     event_queue_add_handler(
-            &context->event_queue, SYSTEM_EVENT_MOUSE, mouse_ui_handler);
+            &context->event_queue, SYSTEM_EVENT_MOUSE_MOVE, mouse_ui_handler);
 }
 
 int engine_tick(struct engine_context *context) {
@@ -78,11 +67,11 @@ int engine_run(void) {
         goto cleanup;
     }
 
-    while (backend_should_stop(context.render_context)) {
+    while (!backend_should_stop(context.render_context)) {
         struct timespec timespec = get_time();
 
         // TODO: handle input using backend
-        // backend_generate_input_events
+        // backend_generate_input_events(context.render_context);
 
         if ((retval = engine_tick(&context))) {
             goto cleanup;

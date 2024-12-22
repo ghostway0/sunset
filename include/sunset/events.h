@@ -13,6 +13,15 @@ struct event;
 
 typedef void (*event_handler)(struct engine_context *context, struct event event);
 
+enum system_event {
+    SYSTEM_EVENT_TICK,
+    SYSTEM_EVENT_COLLISION,
+    SYSTEM_EVENT_MOUSE_MOVE,
+    SYSTEM_EVENT_MOUSE_CLICK,
+    SYSTEM_EVENT_KEY_DOWN,
+    SYSTEM_EVENT_KEY_UP,
+};
+
 struct event_queue {
     vector(struct event) events;
     /// maps event type to a Vector of event handlers
@@ -28,28 +37,31 @@ enum collision_type {
 };
 
 struct collision_event {
+    enum collision_type type;
     vec3 a_velocity;
     struct object *a;
     vec3 b_velocity;
     struct object *b;
-
-    enum collision_type type;
 };
 
 static_assert(
         sizeof(struct collision_event) <= 60, "collision_event too large");
 
 struct mouse_move_event {
-    // TODO:
+    struct point offset;
+    struct point absolute;
 };
 
 struct event {
     uint32_t type_id;
     union {
         struct collision_event collision;
-        struct point mouse_move;
+        struct mouse_move_event mouse_move;
+        // TODO: enum
+        char key_up;
+        char key_down;
         uint8_t other[60];
-    } data;
+    };
 };
 
 void event_queue_init(struct event_queue *queue);

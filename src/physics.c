@@ -312,7 +312,8 @@ static void handle_object_collision(struct object *object,
     glm_vec3_sub(direction, normal_direction, direction_out);
 }
 
-static void resolve_object_overlap(struct object *a, struct object *b) {
+static void resolve_object_overlap(
+        struct scene *scene, struct object *a, struct object *b) {
     vec3 mtv;
     calculate_mtv(a->bounding_box, b->bounding_box, mtv);
 
@@ -324,11 +325,11 @@ static void resolve_object_overlap(struct object *a, struct object *b) {
     glm_vec3_scale(mtv, scale, mtv);
 
     if (a->physics.type == PHYSICS_OBJECT_REGULAR) {
-        object_move_with_parent(b, mtv);
+        scene_move_object_with_parent(scene, b, mtv);
     }
 
     if (a->physics.type == PHYSICS_OBJECT_REGULAR) {
-        object_move_with_parent(a, mtv);
+        scene_move_object_with_parent(scene, a, mtv);
     }
 }
 
@@ -360,7 +361,7 @@ static void generate_collision_event(struct event_queue *event_queue,
     event_queue_push(event_queue, event);
 }
 
-static bool physics_move_object_with_collisions(struct scene const *scene,
+static bool physics_move_object_with_collisions(struct scene *scene,
         struct object *object,
         vec3 direction,
         struct event_queue *event_queue,
@@ -378,7 +379,7 @@ static bool physics_move_object_with_collisions(struct scene const *scene,
     vec3 new_direction;
     glm_vec3_copy(direction, new_direction);
 
-    for (size_t j = 0; j < chunk->num_objects; j++) {
+    for (size_t j = 0; j < vector_size(chunk->objects); j++) {
         struct object *other = chunk->objects[j];
 
         if (object == other) {
@@ -406,11 +407,11 @@ static bool physics_move_object_with_collisions(struct scene const *scene,
         }
 
         if (aabb_collide(&object->bounding_box, &other->bounding_box)) {
-            resolve_object_overlap(object, other);
+            resolve_object_overlap(scene, object, other);
         }
     }
 
-    object_move_with_parent(object, new_direction);
+    scene_move_object_with_parent(scene, object, new_direction);
 
     return found_collision;
 }
@@ -486,7 +487,7 @@ void physics_add_constraint(struct physics *physics,
     vector_append(physics->constraints, ((struct constraint){a, b, distance}));
 }
 
-bool physics_move_object(struct scene const *scene,
+bool physics_move_object(struct scene *scene,
         struct object *object,
         vec3 direction,
         struct event_queue *event_queue) {
@@ -495,7 +496,7 @@ bool physics_move_object(struct scene const *scene,
 }
 
 void physics_step(struct physics *physics,
-        struct scene const *scene,
+        struct scene *scene,
         struct event_queue *event_queue,
         float dt) {
     apply_constraint_forces(physics, dt);

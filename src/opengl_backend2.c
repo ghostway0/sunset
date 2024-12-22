@@ -300,7 +300,6 @@ static int setup_default_shaders(struct render_context *context) {
 
 static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     struct render_context *context = glfwGetWindowUserPointer(window);
-    context->mouse = (struct point){xpos, ypos};
 }
 
 static int setup_mouse(struct render_context *context) {
@@ -310,7 +309,6 @@ static int setup_mouse(struct render_context *context) {
     return 0;
 }
 
-// should give struct context which owns a render_context
 int backend_setup(struct render_context *context, struct render_config config) {
     int retval = 0;
 
@@ -324,10 +322,8 @@ int backend_setup(struct render_context *context, struct render_config config) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 
-    char const *title = "Sunset";
-    if (config.window_title) {
-        title = config.window_title;
-    }
+    char const *title =
+            config.window_title != NULL ? config.window_title : "Sunset";
 
     context->window = glfwCreateWindow(
             config.window_width, config.window_height, title, NULL, NULL);
@@ -955,4 +951,12 @@ void backend_draw(struct render_context *context,
 
     glfwSwapBuffers(context->window);
     glfwPollEvents();
+}
+
+void backend_hide_mouse(struct render_context *context) {
+    glfwSetInputMode(context->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+void backend_show_mouse(struct render_context *context) {
+    glfwSetInputMode(context->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }

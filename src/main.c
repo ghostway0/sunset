@@ -117,8 +117,9 @@ void camera_move_callback(struct object *object, vec3 direction) {
 
 // should be in engine
 void mouse_event_handler(struct context *context, struct event event) {
-    struct point mouse_move = event.data.mouse_move;
-    scene_rotate_camera(context->scene, 0, mouse_move.x, mouse_move.y);
+    struct mouse_move_event mouse_move = event.mouse_move;
+    scene_rotate_camera(
+            context->scene, 0, mouse_move.offset.x, mouse_move.offset.y);
 }
 
 int main() {

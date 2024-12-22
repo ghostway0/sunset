@@ -67,3 +67,5 @@ void octree_const_iterator_init(struct oct_tree const *tree,
         struct const_octree_iterator *iterator_out);
 
 void *octree_const_iterator_next(struct const_octree_iterator *iterator);
+
+void maybe_split_node(struct oct_tree *tree, struct oct_node *node);

@@ -7,11 +7,11 @@
 #include "sunset/utils.h"
 
 // split node into 8 octants recursively
-static void split_node(struct oct_tree *tree, struct oct_node *node) {
+void maybe_split_node(struct oct_tree *tree, struct oct_node *node) {
     assert(tree != NULL);
     assert(node != NULL);
 
-    if (node->depth >= tree->max_depth) {
+    if (node->depth >= tree->max_depth || !tree->should_split(tree, node)) {
         return;
     }
 
@@ -24,7 +24,7 @@ static void split_node(struct oct_tree *tree, struct oct_node *node) {
         oct_node_init(node->children[i], node->depth + 1, data, node, bounds);
 
         if (tree->should_split(tree, node->children[i])) {
-            split_node(tree, node->children[i]);
+            maybe_split_node(tree, node->children[i]);
         }
     }
 
@@ -54,9 +54,7 @@ void oct_tree_create(size_t max_depth,
     tree_out->root = sunset_malloc(sizeof(struct oct_node));
     oct_node_init(tree_out->root, 0, node_data, NULL, root_bounds);
 
-    if (tree_out->should_split(tree_out, tree_out->root)) {
-        split_node(tree_out, tree_out->root);
-    }
+    maybe_split_node(tree_out, tree_out->root);
 }
 
 void oct_node_init(struct oct_node *node,

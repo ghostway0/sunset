@@ -14,6 +14,7 @@ struct ui_context;
 struct mouse {
     struct point where;
     bool first_mouse;
+    bool new_click;
 };
 
 struct engine_context {
