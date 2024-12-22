@@ -58,6 +58,8 @@ sunset_files = [
   'src/base64.c',
   'src/backend.c',
   'src/octree.c',
+  'src/ui.c',
+  'src/engine.c',
   'src/commands.c',
   'src/tga.c',
   'src/filesystem.c',

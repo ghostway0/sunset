@@ -4,12 +4,10 @@
 #include "sunset/backend.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
-#include "sunset/geometry.h"
 #include "sunset/physics.h"
 #include "sunset/scene.h"
 #include "sunset/ui.h"
 #include "sunset/utils.h"
-#include "sunset/vector.h"
 
 static constexpr float FRAME_TIME_S = 1.0f / 60.0f;
 
@@ -24,9 +22,7 @@ static constexpr float FRAME_TIME_S = 1.0f / 60.0f;
 // should this be done _every_ frame?
 
 void engine_setup(struct engine_context *context) {
-    // setup ui
-    event_queue_add_handler(
-            &context->event_queue, SYSTEM_EVENT_MOUSE_MOVE, mouse_ui_handler);
+    unused(context);
 }
 
 int engine_tick(struct engine_context *context) {

@@ -300,6 +300,10 @@ static int setup_default_shaders(struct render_context *context) {
 
 static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     struct render_context *context = glfwGetWindowUserPointer(window);
+    unused(context);
+    unused(xpos);
+    unused(ypos);
+    todo();
 }
 
 static int setup_mouse(struct render_context *context) {

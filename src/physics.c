@@ -276,7 +276,7 @@ static void handle_object_collision(struct object *object,
 
     struct event event = {
             .type_id = SYSTEM_EVENT_COLLISION,
-            .data.collision =
+            .collision =
                     {
                             .a = object,
                             .b = other,
@@ -287,8 +287,8 @@ static void handle_object_collision(struct object *object,
             || !is_zero_vector(
                     vec3, other->physics.velocity, VELOCITY_EPSILON)) {
         glm_vec3_copy(
-                object->physics.velocity, event.data.collision.a_velocity);
-        glm_vec3_copy(other->physics.velocity, event.data.collision.b_velocity);
+                object->physics.velocity, event.collision.a_velocity);
+        glm_vec3_copy(other->physics.velocity, event.collision.b_velocity);
 
         event_queue_push(event_queue, event);
     }
@@ -348,15 +348,15 @@ static void generate_collision_event(struct event_queue *event_queue,
 
     struct event event = {
             .type_id = SYSTEM_EVENT_COLLISION,
-            .data.collision = {.a = collision.a,
+            .collision = {.a = collision.a,
                     .b = collision.b,
                     .type = collision_type},
     };
 
     // if event is a collider collision, b is the collider.
     swap_if(a_attr.type == PHYSICS_OBJECT_COLLIDER,
-            event.data.collision.a,
-            event.data.collision.b);
+            event.collision.a,
+            event.collision.b);
 
     event_queue_push(event_queue, event);
 }

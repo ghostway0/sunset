@@ -1,15 +1,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cglm/types.h"
+#include <cglm/types.h>
+#include <cglm/affine.h>
+
+#include "sunset/backend.h"
 #include "sunset/commands.h"
 #include "sunset/map.h"
 #include "sunset/octree.h"
-#include "sunset/scene.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
-#include "sunset/backend.h"
+#include "sunset/scene.h"
 
 static bool should_split(struct oct_tree *tree, struct oct_node *node) {
     unused(tree);
@@ -83,10 +85,10 @@ void scene_destroy(struct scene *scene) {
 
 void scene_move_object_with_parent(
         struct scene *scene, struct object *object, vec3 direction) {
-    object_move(scene, object, direction);
+    scene_move_object(scene, object, direction);
 
     if (object->parent != NULL) {
-        object_move(scene, object->parent, direction);
+        scene_move_object(scene, object->parent, direction);
     }
 }
 
@@ -102,7 +104,7 @@ void scene_move_object(
     glm_vec3_copy(new_position, object->transform.position);
 
     for (size_t i = 0; i < object->num_children; ++i) {
-        object_move(scene, object->children[i], direction);
+        scene_move_object(scene, object->children[i], direction);
     }
 
     if (object->move_callback != NULL) {
@@ -231,4 +233,7 @@ void scene_rotate_camera(struct scene *scene,
     camera_rotate_scaled(&scene->cameras[camera_index], x_angle, y_angle);
 }
 
-int scene_load_config() {}
+int scene_load_config() {
+    todo();
+    return 0;
+}
