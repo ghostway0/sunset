@@ -1,5 +1,5 @@
-#include <string.h>
 #include <stddef.h>
+#include <string.h>
 
 #include "sunset/byte_stream.h"
 #include "sunset/errors.h"
@@ -43,7 +43,6 @@ ssize_t byte_stream_read(void *ctx, size_t count, void *buf) {
 
     return count;
 }
-
 
 void byte_stream_from_data(
         uint8_t const *data, size_t size, struct byte_stream *stream_out) {

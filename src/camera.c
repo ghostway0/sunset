@@ -5,8 +5,9 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
-#include "sunset/camera.h"
 #include "sunset/math.h"
+
+#include "sunset/camera.h"
 
 // world->camera transformation matrix
 static void calculate_view_matrix(struct camera *camera, mat4 dest) {

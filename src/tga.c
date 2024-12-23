@@ -8,9 +8,10 @@
 #include "sunset/errors.h"
 #include "sunset/images.h"
 #include "sunset/io.h"
-#include "sunset/tga.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
+
+#include "sunset/tga.h"
 
 enum color_type {
     TGA_TYPE_INDEXED = 1,

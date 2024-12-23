@@ -11,7 +11,8 @@
 struct engine_context;
 struct event;
 
-typedef void (*event_handler)(struct engine_context *context, struct event event);
+typedef void (*event_handler)(
+        struct engine_context *context, struct event event);
 
 enum system_event {
     SYSTEM_EVENT_TICK,
@@ -75,9 +76,8 @@ void event_queue_push(struct event_queue *queue, struct event const event);
 
 void event_queue_process(void *context, struct event_queue *queue);
 
-void event_queue_process_one(void *context,
-        struct event_queue *queue,
-        struct event const event);
+void event_queue_process_one(
+        void *context, struct event_queue *queue, struct event const event);
 
 int event_queue_pop(struct event_queue *queue, struct event *event);
 

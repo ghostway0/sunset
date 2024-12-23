@@ -1,9 +1,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "sunset/io.h"
 #include "sunset/math.h"
 #include "sunset/utils.h"
+
+#include "sunset/io.h"
 
 ssize_t reader_read_until(
         struct reader *reader, uint8_t delimiter, vector(uint8_t) * out) {

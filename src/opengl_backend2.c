@@ -12,6 +12,7 @@
 #include "sunset/commands.h"
 #include "sunset/config.h"
 #include "sunset/errors.h"
+#include "sunset/events.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
@@ -300,10 +301,17 @@ static int setup_default_shaders(struct render_context *context) {
 
 static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     struct render_context *context = glfwGetWindowUserPointer(window);
-    unused(context);
-    unused(xpos);
-    unused(ypos);
-    todo();
+
+    if (context->first_mouse) {
+        context->mouse = (struct point){xpos, ypos};
+    }
+
+    event_queue_push(context->event_queue,
+            (struct event){.mouse_move = {
+                                   .offset = {xpos - context->mouse.x,
+                                           ypos - context->mouse.y},
+                                   .absolute = {xpos, ypos},
+                           }});
 }
 
 static int setup_mouse(struct render_context *context) {

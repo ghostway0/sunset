@@ -286,8 +286,7 @@ static void handle_object_collision(struct object *object,
     if (!is_zero_vector(vec3, object->physics.velocity, VELOCITY_EPSILON)
             || !is_zero_vector(
                     vec3, other->physics.velocity, VELOCITY_EPSILON)) {
-        glm_vec3_copy(
-                object->physics.velocity, event.collision.a_velocity);
+        glm_vec3_copy(object->physics.velocity, event.collision.a_velocity);
         glm_vec3_copy(other->physics.velocity, event.collision.b_velocity);
 
         event_queue_push(event_queue, event);

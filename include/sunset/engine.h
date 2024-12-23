@@ -1,9 +1,9 @@
 #include <stdbool.h>
 
 #include "sunset/commands.h"
-#include "sunset/vector.h"
 #include "sunset/geometry.h"
 #include "sunset/physics.h"
+#include "sunset/vector.h"
 
 struct event_queue;
 struct font;
@@ -20,7 +20,7 @@ struct mouse {
 struct engine_context {
     vector(struct ui_context) ui_contexts;
     struct ui_context *active_ui;
-    
+
     struct command_buffer command_buffer;
     void *render_context;
     struct scene *scene;

@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <cglm/types.h>
 #include <cglm/affine.h>
+#include <cglm/types.h>
 
 #include "sunset/backend.h"
 #include "sunset/commands.h"

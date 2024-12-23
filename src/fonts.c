@@ -4,10 +4,11 @@
 
 #include "sunset/color.h"
 #include "sunset/errors.h"
-#include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/utils.h"
 #include "sunset/vfs.h"
+
+#include "sunset/fonts.h"
 
 #define PSF2_MAGIC 0x864AB572
 
@@ -51,8 +52,9 @@ static void flip_image(struct image *image) {
     image->pixels = flipped_pixels;
 }
 
-static int load_glyphs(
-        struct vfs_file *file, struct psf2_header const *header, struct font *font_out) {
+static int load_glyphs(struct vfs_file *file,
+        struct psf2_header const *header,
+        struct font *font_out) {
     uint8_t *bitmap = sunset_malloc(header->height * header->width);
     uint8_t row_size = (header->width + 7) / 8;
 
@@ -142,7 +144,8 @@ int load_font_psf2(char const *path, struct font *font_out) {
     }
 
     font_out->num_glyphs = header.length;
-    font_out->glyphs = sunset_malloc(sizeof(struct glyph) * font_out->num_glyphs);
+    font_out->glyphs =
+            sunset_malloc(sizeof(struct glyph) * font_out->num_glyphs);
     font_out->glyph_map = sunset_calloc(0x10FFFF, sizeof(uint32_t));
 
     if ((retval = load_glyphs(&file, &header, font_out))) {
@@ -162,7 +165,8 @@ cleanup:
     return retval;
 }
 
-struct glyph const *font_get_glyph(struct font const *font, uint32_t codepoint) {
+struct glyph const *font_get_glyph(
+        struct font const *font, uint32_t codepoint) {
     if (codepoint > 0x10FFFF) {
         return NULL;
     }

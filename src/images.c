@@ -32,8 +32,7 @@ int load_image_file(char const *path, struct image *image_out) {
     struct byte_stream stream;
     byte_stream_from_data(data, file_size, &stream);
 
-    struct reader reader = {
-            .read = (read_fn)byte_stream_read, .ctx = &stream};
+    struct reader reader = {.read = (read_fn)byte_stream_read, .ctx = &stream};
 
     if (strcmp(get_filename_extesnion(path), ".tga")) {
         retval = tga_load_image(&reader, image_out);

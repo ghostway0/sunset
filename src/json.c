@@ -302,7 +302,8 @@ static void print_indent(struct vfs_file *file, size_t indent) {
     }
 }
 
-void json_value_print(struct json_value *json, struct vfs_file *file, size_t indent) {
+void json_value_print(
+        struct json_value *json, struct vfs_file *file, size_t indent) {
     switch (json->type) {
         case JSON_STRING:
             vfs_file_printf(file, "\"%s\"", json->data.string);

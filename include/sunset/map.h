@@ -56,9 +56,9 @@ static inline size_t map_find_index(void const *v,
 
 #define map_remove(v, value, compar)                                           \
     do {                                                                       \
-        size_t __i =                                                             \
+        size_t __i =                                                           \
                 map_find_index(v, vector_size(v), sizeof(*v), &value, compar); \
-        vector_remove_index(v, __i); \
+        vector_remove_index(v, __i);                                           \
     } while (0)
 
 #define map_get_or_init(v, value, compar, value_or)                            \

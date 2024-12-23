@@ -8,6 +8,8 @@
 #include "sunset/shader.h"
 #include "sunset/vector.h"
 
+struct event_queue;
+
 enum shader_type {
     SHADER_VERTEX = GL_VERTEX_SHADER,
     SHADER_FRAGMENT = GL_FRAGMENT_SHADER,
@@ -90,6 +92,9 @@ struct render_context {
     GLuint texture_atlas;
 
     struct point mouse;
+    bool first_mouse;
+
+    struct event_queue *event_queue;
 
     struct command_buffer command_buffer;
 };

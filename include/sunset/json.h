@@ -44,9 +44,11 @@ struct key_value {
     struct json_value value;
 };
 
-int json_parse(char const *input, size_t input_size, struct json_value *value_out);
+int json_parse(
+        char const *input, size_t input_size, struct json_value *value_out);
 
 void json_value_destroy(struct json_value *json);
 
 // -1 for not pretty
-void json_value_print(struct json_value *json, struct vfs_file *file, size_t indent);
+void json_value_print(
+        struct json_value *json, struct vfs_file *file, size_t indent);

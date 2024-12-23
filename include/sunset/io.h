@@ -22,7 +22,8 @@ ssize_t reader_read_until(
 #define reader_read_type(stream, out)                                          \
     do {                                                                       \
         int __err;                                                             \
-        if ((__err = reader_read(stream, sizeof(*out), out)) != sizeof(*out)) {        \
+        if ((__err = reader_read(stream, sizeof(*out), out))                   \
+                != sizeof(*out)) {                                             \
             return __err;                                                      \
         }                                                                      \
     } while (0)

@@ -1,9 +1,10 @@
 #include <pthread.h>
 #include <stdint.h>
 
-#include "sunset/events.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
+
+#include "sunset/events.h"
 
 void event_queue_init(struct event_queue *queue) {
     vector_init(queue->events);
@@ -66,9 +67,8 @@ void event_queue_process(void *context, struct event_queue *queue) {
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_process_one(void *context,
-        struct event_queue *queue,
-        struct event const event) {
+void event_queue_process_one(
+        void *context, struct event_queue *queue, struct event const event) {
     if (queue->handlers[event.type_id] == NULL) {
         return;
     }
