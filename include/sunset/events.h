@@ -11,8 +11,12 @@
 struct engine_context;
 struct event;
 
-typedef void (*event_handler)(
-        struct engine_context *context, struct event event);
+struct event_handler {
+    void *local_context;
+    void (*handler_fn)(struct engine_context *engine_context,
+            void *local_context,
+            struct event event);
+};
 
 enum system_event {
     SYSTEM_EVENT_TICK,
@@ -26,7 +30,7 @@ enum system_event {
 struct event_queue {
     vector(struct event) events;
     /// maps event type to a Vector of event handlers
-    vector(vector(event_handler)) handlers;
+    vector(vector(struct event_handler)) handlers;
 
     pthread_mutex_t *lock;
 };
@@ -69,15 +73,17 @@ void event_queue_init(struct event_queue *queue);
 
 void event_queue_destroy(struct event_queue *queue);
 
-void event_queue_add_handler(
-        struct event_queue *queue, uint32_t type_id, event_handler handler);
+void event_queue_add_handler(struct event_queue *queue,
+        uint32_t type_id,
+        struct event_handler handler);
 
 void event_queue_push(struct event_queue *queue, struct event const event);
 
-void event_queue_process(void *context, struct event_queue *queue);
+void event_queue_process(struct event_queue *queue, void *global_context);
 
-void event_queue_process_one(
-        void *context, struct event_queue *queue, struct event const event);
+void event_queue_process_one(void *global_context,
+        struct event_queue *queue,
+        struct event const event);
 
 int event_queue_pop(struct event_queue *queue, struct event *event);
 

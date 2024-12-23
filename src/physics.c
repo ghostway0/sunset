@@ -3,14 +3,16 @@
 
 #include <cglm/vec3.h>
 
+#include "sunset/engine.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
 #include "sunset/math.h"
-#include "sunset/physics.h"
 #include "sunset/scene.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
+
+#include "sunset/physics.h"
 
 #define VELOCITY_EPSILON 0.1
 
@@ -519,4 +521,14 @@ void physics_step(struct physics *physics,
 
     vector_destroy(physics->collision_pairs);
     physics->collision_pairs = new_collisions;
+}
+
+// TODO: merge physics_step and physics_callback
+void physics_callback(struct engine_context *engine_context,
+        void *physics,
+        struct event /* engine tick */) {
+    physics_step(physics,
+            engine_context->scene,
+            &engine_context->event_queue,
+            engine_context->dt);
 }

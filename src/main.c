@@ -434,8 +434,9 @@ int main() {
 
     backend_set_user_context(&render_context, &context);
 
-    event_queue_add_handler(
-            &event_queue, SYSTEM_EVENT_MOUSE, mouse_event_handler);
+    event_queue_add_handler(&event_queue,
+            SYSTEM_EVENT_MOUSE,
+            (struct event_handler){mouse_event_handler});
 
     char fps_text_buffer[256];
 

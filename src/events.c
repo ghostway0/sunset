@@ -32,8 +32,9 @@ void event_queue_destroy(struct event_queue *queue) {
     free(queue->lock);
 }
 
-void event_queue_add_handler(
-        struct event_queue *queue, uint32_t type_id, event_handler handler) {
+void event_queue_add_handler(struct event_queue *queue,
+        uint32_t type_id,
+        struct event_handler handler) {
     pthread_mutex_lock(queue->lock);
 
     if (type_id >= vector_size(queue->handlers)) {
@@ -55,28 +56,30 @@ void event_queue_push(struct event_queue *queue, struct event const event) {
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_process(void *context, struct event_queue *queue) {
+void event_queue_process(struct event_queue *queue, void *global_context) {
     pthread_mutex_lock(queue->lock);
 
     for (size_t i = 0; i < vector_size(queue->events); i++) {
         struct event event = queue->events[i];
-        event_queue_process_one(context, queue, event);
+        event_queue_process_one(global_context, queue, event);
     }
 
     vector_clear(queue->events);
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_process_one(
-        void *context, struct event_queue *queue, struct event const event) {
+void event_queue_process_one(void *global_context,
+        struct event_queue *queue,
+        struct event const event) {
     if (queue->handlers[event.type_id] == NULL) {
         return;
     }
 
     for (size_t j = 0; j < vector_size(queue->handlers[event.type_id]); j++) {
-        assert(queue->handlers[event.type_id][j] != NULL);
+        struct event_handler handler = queue->handlers[event.type_id][j];
 
-        queue->handlers[event.type_id][j](context, event);
+        assert(handler.handler_fn != NULL);
+        handler.handler_fn(global_context, handler.local_context, event);
     }
 }
 

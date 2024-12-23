@@ -73,3 +73,7 @@ bool physics_move_object(struct scene *scene,
         struct object *object,
         vec3 direction,
         struct event_queue *event_queue);
+
+void physics_callback(struct engine_context *engine_context,
+        void *physics,
+        struct event /* engine tick */);
