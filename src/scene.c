@@ -48,8 +48,8 @@ static void destroy_chunk(void *data) {
 
 static void move_object_chunk(
         struct scene *scene, struct object *object, vec3 from, vec3 to) {
-    struct chunk *old_chunk = get_chunk_for(scene, from);
-    struct chunk *new_chunk = get_chunk_for(scene, to);
+    struct chunk *old_chunk = scene_get_chunk_for(scene, from);
+    struct chunk *new_chunk = scene_get_chunk_for(scene, to);
 
     map_remove(old_chunk->objects, object, compare_ptrs);
     map_insert(new_chunk->objects, object, compare_ptrs);
@@ -236,7 +236,7 @@ void scene_rotate_camera(struct scene *scene,
 void scene_add_object(struct scene *scene, struct object object) {
     vector_append(scene->objects, object);
 
-    struct chunk *chunk = get_chunk_for(scene, object.transform.position);
+    struct chunk *chunk = scene_get_chunk_for(scene, object.transform.position);
     map_insert_ptr(chunk->objects, vector_back(scene->objects), compare_ptrs);
 }
 

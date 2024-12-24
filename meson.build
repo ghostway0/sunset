@@ -15,6 +15,7 @@ add_project_arguments(
     '-Wno-zero-length-array',
     '-Wimplicit-fallthrough',
     '-D_GNU_SOURCE',
+    '-g',
   ],
   language: 'c',
 )
@@ -43,7 +44,6 @@ sunset_inc = include_directories('include/')
 subdir('external')
 
 sunset_files = [
-  'src/color.c',
   'src/errors.c',
   'src/fonts.c',
   'src/ring_buffer.c',

@@ -4,7 +4,6 @@
 
 #include <cglm/types.h>
 
-#include "sunset/color.h"
 #include "sunset/geometry.h"
 #include "sunset/images.h"
 #include "sunset/ring_buffer.h"

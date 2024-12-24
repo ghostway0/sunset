@@ -1,5 +1,8 @@
+#pragma once
+
 #include <stdbool.h>
 
+#include "sunset/backend.h"
 #include "sunset/commands.h"
 #include "sunset/physics.h"
 #include "sunset/vector.h"
@@ -15,7 +18,7 @@ struct engine_context {
     struct ui_context *active_ui;
 
     struct command_buffer command_buffer;
-    void *render_context;
+    struct render_context render_context;
     struct scene *scene;
 
     struct event_queue event_queue;

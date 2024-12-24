@@ -122,8 +122,6 @@ void scene_init(struct camera *cameras,
         struct chunk *root_chunk,
         struct scene *scene_out);
 
-struct chunk *get_chunk_for(struct scene const *scene, vec3 position);
-
 void scene_load_chunks(
         struct scene *scene, struct chunk *chunks, size_t num_chunks);
 

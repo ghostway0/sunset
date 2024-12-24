@@ -4,9 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sunset/color.h"
-#include "sunset/errors.h"
 #include "sunset/images.h"
+#include "sunset/errors.h"
 #include "sunset/io.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"

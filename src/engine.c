@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "log.h"
 #include "sunset/backend.h"
+#include "sunset/errors.h"
 #include "sunset/events.h"
 #include "sunset/scene.h"
 #include "sunset/ui.h"
@@ -9,7 +11,7 @@
 
 #include "sunset/engine.h"
 
-static float const FRAME_TIME_S = 1.0f / 60.0f;
+        static float const FRAME_TIME_S = 1.0f / 60.0f;
 
 // engine tick:
 // 1. send SYSTEM_EVENT_TICK event
@@ -60,15 +62,18 @@ void example_destroy_physics(void *local_context) {
 int engine_run(void) {
     int retval = 0;
 
-    struct engine_context context;
-    // TODO: setup from config, open shared objects, etc.
+    struct engine_context context = {};
+    event_queue_init(&context.event_queue);
+    // TODO: setup
 
-    if ((retval = backend_setup(
-                 context.render_context, (struct render_config){}))) {
-        goto cleanup;
+    if ((retval = backend_setup(&context.render_context,
+                 (struct render_config){.window_width = 1920,
+                         .window_height = 1080,
+                         .window_title = ""}))) {
+        return -ERROR_BACKEND_UNKNOWN;
     }
 
-    while (!backend_should_stop(context.render_context)) {
+    while (!backend_should_stop(&context.render_context)) {
         struct timespec timespec = get_time();
 
         // TODO: handle input using backend
@@ -78,7 +83,7 @@ int engine_run(void) {
             goto cleanup;
         }
 
-        if ((retval = scene_render(context.scene, context.render_context))) {
+        if ((retval = scene_render(context.scene, &context.render_context))) {
             goto cleanup;
         }
 
@@ -88,7 +93,7 @@ int engine_run(void) {
     }
 
 cleanup:
-    backend_destroy(context.render_context);
+    backend_destroy(&context.render_context);
 
     return retval;
 }

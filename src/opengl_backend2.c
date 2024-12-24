@@ -972,3 +972,21 @@ void backend_hide_mouse(struct render_context *context) {
 void backend_show_mouse(struct render_context *context) {
     glfwSetInputMode(context->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
+
+void program_destroy(struct program *program) {
+    if (!program->handle) {
+        return;
+    }
+
+    glDeleteProgram(program->handle);
+}
+
+void backend_destroy(struct render_context *context) {
+    for (size_t i = 0; i < NUM_BACKEND_PROGRAMS; i++) {
+        program_destroy(&context->backend_programs[i]);
+    }
+
+    vector_destroy(context->meshes);
+    vector_destroy(context->atlases);
+    vector_destroy(context->textures);
+}
