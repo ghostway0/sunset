@@ -117,6 +117,13 @@ struct vector_metadata {
         v[--_meta->size];                                                      \
     })
 
+#define vector_back(v)                                                         \
+    ({                                                                         \
+        struct vector_metadata *_meta = _vector_metadata(v);                   \
+        assert(_meta->size > 0);                                               \
+        &v[_meta->size - 1];                                                   \
+    })
+
 #define vector_resize(v, new_size)                                             \
     do {                                                                       \
         struct vector_metadata *meta = _vector_metadata(v);                    \

@@ -109,8 +109,7 @@ struct chunk {
 };
 
 struct scene {
-    struct object *live_objects;
-    size_t num_objects;
+    vector(struct object) objects;
     struct oct_tree oct_tree;
     vector(struct camera) cameras;
     struct image skybox;
@@ -145,3 +144,5 @@ void scene_move_object_with_parent(
 
 void scene_move_object(
         struct scene *scene, struct object *object, vec3 direction);
+
+void scene_add_object(struct scene *scene, struct object object);

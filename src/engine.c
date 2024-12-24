@@ -3,7 +3,6 @@
 
 #include "sunset/backend.h"
 #include "sunset/events.h"
-#include "sunset/physics.h"
 #include "sunset/scene.h"
 #include "sunset/ui.h"
 #include "sunset/utils.h"
@@ -23,13 +22,7 @@ void engine_setup(struct engine_context *context) {
     unused(context);
 }
 
-struct physics_context {
-    struct scene *scene;
-    struct physics physics;
-    struct event_queue *event_queue;
-};
-
-int engine_tick(struct engine_context *context) {
+static int engine_tick(struct engine_context *context) {
     // send tick event
     event_queue_process_one(context,
             &context->event_queue,
@@ -42,6 +35,12 @@ int engine_tick(struct engine_context *context) {
 }
 
 /*
+struct physics_context {
+    struct scene *scene;
+    struct physics physics;
+    struct event_queue *event_queue;
+};
+
 void example_setup_physics(struct engine_context *engine_context) {
     struct physics *physics = malloc(sizeof(struct physics));
     physics_init(physics);

@@ -22,3 +22,5 @@ struct engine_context {
 
     float dt;
 };
+
+int engine_run(void);

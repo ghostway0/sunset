@@ -45,6 +45,17 @@ static inline size_t map_find_index(void const *v,
         v[__i] = value;                                                        \
     } while (0)
 
+#define map_insert_ptr(v, value, compar)                                       \
+    do {                                                                       \
+        size_t __i =                                                           \
+                map_find_index(v, vector_size(v), sizeof(*v), value, compar);  \
+        vector_resize(v, vector_size(v) + 1);                                  \
+        for (size_t __j = vector_size(v); __j > __i; __j--) {                  \
+            v[__j] = v[__j - 1];                                               \
+        }                                                                      \
+        v[__i] = value;                                                        \
+    } while (0)
+
 #define map_get(v, value, compar)                                              \
     ({                                                                         \
         size_t __i =                                                           \

@@ -233,6 +233,13 @@ void scene_rotate_camera(struct scene *scene,
     camera_rotate_scaled(&scene->cameras[camera_index], x_angle, y_angle);
 }
 
+void scene_add_object(struct scene *scene, struct object object) {
+    vector_append(scene->objects, object);
+
+    struct chunk *chunk = get_chunk_for(scene, object.transform.position);
+    map_insert_ptr(chunk->objects, vector_back(scene->objects), compare_ptrs);
+}
+
 int scene_load_config() {
     todo();
     return 0;
