@@ -7,55 +7,59 @@
 
 #define DEFAULT_MAX_OCTREE_DEPTH 8
 
-struct oct_node {
-    size_t depth;
-    struct oct_node *children[8];
+struct octree_node {
+    struct octree_node *children[8];
+    struct octree_node *parent;
     struct aabb bounds;
-    struct oct_node *parent;
+    size_t depth;
     void *data;
+    bool dirty;
 };
 
-struct oct_tree {
-    struct oct_node *root;
+struct octree {
+    struct octree_node *root;
     size_t max_depth;
-    bool (*should_split)(struct oct_tree *tree, struct oct_node *node);
-    void *(*split_i)(struct oct_tree *tree, void *data, struct aabb bounds);
+
+    bool (*should_split)(struct octree *tree, struct octree_node *node);
+    void *(*split_i)(struct octree *tree, void *data, struct aabb bounds);
     void (*destroy_data)(void *data);
 };
 
-void oct_tree_create(size_t max_depth,
-        bool (*should_split)(struct oct_tree *, struct oct_node *),
-        void *(*split)(struct oct_tree *, void *, struct aabb bounds),
+void octree_create(size_t max_depth,
+        bool (*should_split)(struct octree *, struct octree_node *),
+        void *(*split)(struct octree *, void *, struct aabb bounds),
         void (*destroy_data)(void *),
         void *node_data,
         struct aabb root_bounds,
-        struct oct_tree *tree_out);
+        struct octree *tree_out);
 
-void oct_tree_destroy(struct oct_tree *tree);
+void octree_destroy(struct octree *tree);
 
-void oct_node_init(struct oct_node *node,
+void octree_node_init(struct octree_node *node,
         size_t depth,
         void *data,
-        struct oct_node *parent,
+        struct octree_node *parent,
         struct aabb bounds);
 
-void *oct_tree_query(struct oct_tree const *tree, vec3 position);
+void *octree_query(struct octree const *tree, vec3 position);
+
+void *octree_get_mutable(struct octree *tree, vec3 position);
 
 // post-order traversal iterator
 struct octree_iterator {
-    struct oct_tree *tree;
-    struct oct_node *current;
+    struct octree *tree;
+    struct octree_node *current;
     size_t index;
 };
 
 struct const_octree_iterator {
-    struct oct_tree const *tree;
-    struct oct_node const *current;
+    struct octree const *tree;
+    struct octree_node const *current;
     size_t index;
 };
 
 void octree_iterator_init(
-        struct oct_tree *tree, struct octree_iterator *iterator_out);
+        struct octree *tree, struct octree_iterator *iterator_out);
 
 void octree_iterator_destroy(struct octree_iterator *iterator);
 
@@ -63,9 +67,7 @@ void *octree_iterator_next(struct octree_iterator *iterator);
 
 void octree_const_iterator_destroy(struct const_octree_iterator *iterator);
 
-void octree_const_iterator_init(struct oct_tree const *tree,
-        struct const_octree_iterator *iterator_out);
+void octree_const_iterator_init(
+        struct octree const *tree, struct const_octree_iterator *iterator_out);
 
 void *octree_const_iterator_next(struct const_octree_iterator *iterator);
-
-void maybe_split_node(struct oct_tree *tree, struct oct_node *node);

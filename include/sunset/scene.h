@@ -103,24 +103,20 @@ struct light {
 struct chunk {
     struct aabb bounds;
     vector(struct object *) objects;
-    struct light *lights;
-    size_t num_lights;
     size_t id;
 };
 
 struct scene {
     vector(struct object) objects;
-    struct oct_tree oct_tree;
+    vector(struct light) lights;
     vector(struct camera) cameras;
+    struct octree octree;
+
     struct image skybox;
 };
 
-void scene_init(struct camera *cameras,
-        size_t num_cameras,
-        struct image skybox,
-        struct aabb bounds,
-        struct chunk *root_chunk,
-        struct scene *scene_out);
+void scene_init(
+        struct image skybox, struct aabb bounds, struct scene *scene_out);
 
 void scene_load_chunks(
         struct scene *scene, struct chunk *chunks, size_t num_chunks);
@@ -144,3 +140,5 @@ void scene_move_object(
         struct scene *scene, struct object *object, vec3 direction);
 
 void scene_add_object(struct scene *scene, struct object object);
+
+void scene_set_size(struct scene *scene, struct aabb new_bounds);

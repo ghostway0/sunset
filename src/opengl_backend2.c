@@ -691,11 +691,9 @@ static int run_mesh_command(
                 command.mesh_id,
                 compare_instancing_buffers);
 
-        // NOTE: it is currently required that anything that gets instanced
-        // together is stored within a single atlas.
-        if (texture.atlas_id != buffer->atlas_id) {
-            return ERROR_BACKEND_UNKNOWN;
-        }
+        assert(texture.atlas_id == buffer->atlas_id &&
+               "it is currently required that anything that gets "
+               "instanced together is stored within a single atlas");
 
         vector_append_copy(buffer->transforms, command.transform);
     }

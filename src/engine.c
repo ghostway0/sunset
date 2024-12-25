@@ -7,6 +7,7 @@
 #include "sunset/scene.h"
 #include "sunset/ui.h"
 #include "sunset/utils.h"
+#include "sunset/vector.h"
 
 #include "sunset/engine.h"
 
@@ -58,7 +59,7 @@ void example_destroy_physics(void *local_context) {
 }
 */
 
-int engine_run(void) {
+int engine_run(struct game *game) {
     int retval = 0;
 
     struct engine_context context = {};
@@ -68,8 +69,8 @@ int engine_run(void) {
     if ((retval = backend_setup(&context.render_context,
                  (struct render_config){.window_width = 1920,
                          .window_height = 1080,
-                         .window_title = ""}))) {
-        return -ERROR_BACKEND_UNKNOWN;
+                         .window_title = "Test"}))) {
+        return retval;
     }
 
     while (!backend_should_stop(&context.render_context)) {

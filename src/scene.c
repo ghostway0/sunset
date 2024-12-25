@@ -13,14 +13,14 @@
 
 #include "sunset/scene.h"
 
-static bool should_split(struct oct_tree *tree, struct oct_node *node) {
+static bool should_split(struct octree *tree, struct octree_node *node) {
     unused(tree);
 
     struct chunk *chunk = (struct chunk *)node->data;
     return vector_size(chunk->objects) > 5;
 }
 
-static void *split(struct oct_tree *, void *data, struct aabb bounds) {
+static void *split(struct octree *, void *data, struct aabb bounds) {
     struct chunk *chunk = (struct chunk *)data;
     struct chunk *new_chunk = sunset_malloc(sizeof(struct chunk));
 
@@ -46,40 +46,56 @@ static void destroy_chunk(void *data) {
     free(chunk);
 }
 
+static struct chunk *scene_get_mutable_chunk_for(
+        struct scene *scene, vec3 position) {
+    return (struct chunk *)octree_get_mutable(&scene->octree, position);
+}
+
 static void move_object_chunk(
         struct scene *scene, struct object *object, vec3 from, vec3 to) {
-    struct chunk *old_chunk = scene_get_chunk_for(scene, from);
-    struct chunk *new_chunk = scene_get_chunk_for(scene, to);
+    struct chunk *old_chunk = scene_get_mutable_chunk_for(scene, from);
+    struct chunk *new_chunk = scene_get_mutable_chunk_for(scene, to);
 
     map_remove(old_chunk->objects, object, compare_ptrs);
     map_insert(new_chunk->objects, object, compare_ptrs);
 }
 
-void scene_init(struct camera *cameras,
-        size_t num_cameras,
-        struct image skybox,
-        struct aabb bounds,
-        struct chunk *root_chunk,
-        struct scene *scene_out) {
-    vector_init(scene_out->cameras);
-    vector_append_multiple(scene_out->cameras, cameras, num_cameras);
-    scene_out->skybox = skybox;
+void scene_set_size(struct scene *scene, struct aabb new_bounds) {
+    struct chunk *root_chunk = sunset_malloc(sizeof(struct chunk));
 
-    oct_tree_create(DEFAULT_MAX_OCTREE_DEPTH,
+    root_chunk->bounds = new_bounds;
+    root_chunk->id = 0;
+    vector_init(root_chunk->objects);
+
+    for (size_t i = 0; i < vector_size(scene->objects); i++) {
+        vector_append(root_chunk->objects, &scene->objects[i]);
+    }
+
+    octree_create(DEFAULT_MAX_OCTREE_DEPTH,
             should_split,
             split,
             destroy_chunk,
             root_chunk,
-            bounds,
-            &scene_out->oct_tree);
+            new_bounds,
+            &scene->octree);
+}
+
+void scene_init(
+        struct image skybox, struct aabb bounds, struct scene *scene_out) {
+    vector_init(scene_out->cameras);
+    vector_init(scene_out->objects);
+
+    scene_out->skybox = skybox;
+
+    scene_set_size(scene_out, bounds);
 }
 
 struct chunk *scene_get_chunk_for(struct scene const *scene, vec3 position) {
-    return (struct chunk *)oct_tree_query(&scene->oct_tree, position);
+    return (struct chunk *)octree_query(&scene->octree, position);
 }
 
 void scene_destroy(struct scene *scene) {
-    oct_tree_destroy(&scene->oct_tree);
+    octree_destroy(&scene->octree);
     vector_destroy(scene->cameras);
 }
 
@@ -200,8 +216,7 @@ int scene_render(struct scene *scene, struct render_context *render_context) {
     for (size_t i = 0; i < vector_size(scene->cameras); i++) {
         struct camera *camera = &scene->cameras[i];
 
-        struct chunk *chunk =
-                oct_tree_query(&scene->oct_tree, camera->position);
+        struct chunk *chunk = octree_query(&scene->octree, camera->position);
 
         for (size_t i = 0; i < vector_size(chunk->objects); ++i) {
             struct aabb object_bounds = chunk->objects[i]->bounding_box;
@@ -236,7 +251,8 @@ void scene_rotate_camera(struct scene *scene,
 void scene_add_object(struct scene *scene, struct object object) {
     vector_append(scene->objects, object);
 
-    struct chunk *chunk = scene_get_chunk_for(scene, object.transform.position);
+    struct chunk *chunk =
+            scene_get_mutable_chunk_for(scene, object.transform.position);
     map_insert_ptr(chunk->objects, vector_back(scene->objects), compare_ptrs);
 }
 
