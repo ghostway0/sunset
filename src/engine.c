@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "log.h"
 #include "sunset/backend.h"
 #include "sunset/errors.h"
 #include "sunset/events.h"
@@ -11,7 +10,7 @@
 
 #include "sunset/engine.h"
 
-        static float const FRAME_TIME_S = 1.0f / 60.0f;
+static float const FRAME_TIME_S = 1.0f / 60.0f;
 
 // engine tick:
 // 1. send SYSTEM_EVENT_TICK event

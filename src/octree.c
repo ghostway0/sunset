@@ -116,6 +116,21 @@ void *oct_tree_query(struct oct_tree const *tree, vec3 position) {
     return NULL;
 }
 
+// void oct_tree_reconstruct_branch(struct oct_tree *tree, struct oct_node *node) {
+//     // TODO: go through all children and get the chunks, and somehow reconstruct
+//     // the tree from them.
+// }
+//
+// void oct_tree_reconstruct(struct oct_tree *tree) {
+//     // TODO: go through branches and somehow
+//     // reconstruct everything
+// }
+//
+// void oct_tree_resize(struct oct_tree *tree, struct aabb new_bounds) {
+//     tree->root->bounds = new_bounds;
+//     oct_tree_reconstruct(tree);
+// }
+
 void octree_const_iterator_init(struct oct_tree const *tree,
         struct const_octree_iterator *iterator_out) {
     assert(tree != NULL);

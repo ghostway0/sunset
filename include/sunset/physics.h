@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "sunset/events.h"
+#include "sunset/utils.h"
 #include "sunset/vector.h"
 
 struct scene;
@@ -29,6 +30,10 @@ enum physics_object_type {
     PHYSICS_OBJECT_INFINITE,
     /// regular objects
     PHYSICS_OBJECT_REGULAR,
+};
+
+enum physics_flags {
+    PHYSICS_FLAGS_APPLY_GRAVITY = sunset_flag(0),
 };
 
 struct physics_object {
@@ -57,7 +62,9 @@ void physics_init(struct physics *physics);
 
 void physics_destroy(struct physics *physics);
 
-void physics_add_object(struct physics *physics, struct object *object);
+void physics_add_object(struct physics *physics,
+        struct object *object,
+        enum physics_flags flags);
 
 void physics_add_constraint(struct physics *physics,
         struct object *a,

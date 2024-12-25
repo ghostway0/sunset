@@ -105,3 +105,5 @@ static inline bool _match(int arr[], size_t len) {
 }
 
 typedef intmax_t ssize_t;
+
+#define sunset_flag(i) (1 << i)

@@ -471,10 +471,12 @@ void physics_destroy(struct physics *physics) {
     vector_destroy(physics->collision_pairs);
 }
 
-void physics_add_object(struct physics *physics, struct object *object) {
+void physics_add_object(struct physics *physics,
+        struct object *object,
+        enum physics_flags flags) {
     vector_append(physics->objects, object);
 
-    if (object->physics.type == PHYSICS_OBJECT_REGULAR) {
+    if (flags & PHYSICS_FLAGS_APPLY_GRAVITY) {
         glm_vec3_sub(object->physics.acceleration,
                 (vec3){0.0f, 0.01f, 0.0f},
                 object->physics.acceleration);
