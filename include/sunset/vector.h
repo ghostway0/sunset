@@ -50,7 +50,7 @@ struct vector_metadata {
         }                                                                      \
     } while (0)
 
-#define vector_append(v, value)                                                \
+#define vector_append(v, ...)                                                  \
     do {                                                                       \
         struct vector_metadata *meta = _vector_metadata(v);                    \
         if (meta->size == meta->capacity) {                                    \
@@ -63,7 +63,7 @@ struct vector_metadata {
             _Pragma("GCC diagnostic pop");                                     \
             v = (void *)(meta + 1);                                            \
         }                                                                      \
-        (v)[meta->size++] = value;                                             \
+        (v)[meta->size++] = __VA_ARGS__;                                       \
     } while (0)
 
 // use memcpy for types that are not trivially copyable

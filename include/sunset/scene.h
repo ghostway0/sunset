@@ -52,19 +52,15 @@ struct controller {
 typedef void (*move_callback)(struct object *, vec3 direction);
 
 struct object {
-    struct physics_object physics;
     struct aabb bounding_box;
     struct transform transform;
     uint32_t mesh_id;
     uint32_t texture_id;
-    struct material *materials;
-    size_t num_materials;
-    struct controller controller;
+    // struct material material;
 
     char const *label;
 
     void *data;
-    move_callback move_callback;
 
     struct object *parent;
     struct object **children;

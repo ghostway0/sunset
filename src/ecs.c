@@ -1,27 +1,29 @@
-#include "sunset/ecs.h"
-#include "sunset/utils.h"
-#include "sunset/vector.h"
-
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-size_t components_size[] = {
-        sizeof(struct position),
-        sizeof(struct velocity),
-};
+#include "sunset/bitmap.h"
+#include "sunset/vector.h"
 
-size_t archtype_num_columns(struct archtype const *archtype) {
-    return __builtin_popcountll(archtype->mask);
+#include "sunset/ecs.h"
+
+static size_t archtype_num_columns(struct archtype const *archtype) {
+    return bitmap_popcount(&archtype->mask);
 }
 
-struct archtype *ecs_get_archtype(struct ecs *ecs, uint64_t mask) {
-    size_t archtypes = vector_size(ecs->archtypes);
+size_t _ecs_register_component(struct ecs *ecs, size_t component_size) {
+    size_t id = ecs->next_component_id++;
+    assert(id < MAX_NUM_COMPONENTS);
 
-    for (size_t i = 0; i < archtypes; ++i) {
+    vector_append(ecs->component_sizes, component_size);
+    return id;
+}
+
+static struct archtype *get_archtype(struct ecs *ecs, struct bitmap *mask) {
+    for (size_t i = 0; i < vector_size(ecs->archtypes); ++i) {
         struct archtype *archtype = &ecs->archtypes[i];
-
-        if (archtype->mask == mask) {
+        if (bitmap_is_eql(&archtype->mask, mask)) {
             return archtype;
         }
     }
@@ -29,193 +31,193 @@ struct archtype *ecs_get_archtype(struct ecs *ecs, uint64_t mask) {
     return NULL;
 }
 
-// ecs_register_system(ecs, ECS_COMPONENT(0) | ECS_COMPONENT(1), sizeof(struct
-// position));
-
 static void ecs_iterator_advance_internal(struct ecs_iterator *iterator) {
-    struct archtype *archtype =
-            &iterator->ecs->archtypes[iterator->current_archtype];
-    while (iterator->current_archtype < vector_size(iterator->ecs->archtypes)
-            && (archtype->mask & iterator->mask) != iterator->mask) {
-        iterator->current_archtype++;
-        archtype = &iterator->ecs->archtypes[iterator->current_archtype];
-    }
+    while (iterator->current_archtype < vector_size(iterator->ecs->archtypes)) {
+        struct archtype *archtype =
+                &iterator->ecs->archtypes[iterator->current_archtype];
 
-    iterator->current_element = 0;
+        if (bitmap_is_superset(&archtype->mask, &iterator->mask)) {
+            if (iterator->current_element < archtype->num_elements) {
+                return;
+            } else {
+                iterator->current_archtype++;
+                iterator->current_element = 0;
+            }
+        } else {
+            iterator->current_archtype++;
+        }
+    }
 }
 
-struct ecs_iterator ecs_iterator_create(struct ecs *ecs, uint64_t mask) {
+void ecs_init(struct ecs *ecs) {
+    ecs->next_component_id = 0;
+    vector_init(ecs->archtypes);
+    vector_init(ecs->component_sizes);
+    vector_init(ecs->entity_ptrs);
+}
+
+void ecs_destroy(struct ecs *ecs) {
+    for (size_t i = 0; i < vector_size(ecs->archtypes); i++) {
+        struct archtype *archtype = &ecs->archtypes[i];
+        bitmap_destroy(&archtype->mask);
+        for (size_t j = 0; j < vector_size(archtype->columns); j++) {
+            vector_destroy(archtype->columns[j].data);
+        }
+        vector_destroy(archtype->columns);
+    }
+    vector_destroy(ecs->archtypes);
+    vector_destroy(ecs->component_sizes);
+    vector_destroy(ecs->entity_ptrs);
+}
+
+struct ecs_iterator ecs_iterator_create(struct ecs *ecs, struct bitmap mask) {
     struct ecs_iterator iterator = {
             .ecs = ecs,
             .mask = mask,
             .current_archtype = 0,
             .current_element = 0,
     };
-
     ecs_iterator_advance_internal(&iterator);
-
     return iterator;
 }
 
 void ecs_iterator_advance(struct ecs_iterator *iterator) {
-    if (iterator->current_element
-            < iterator->ecs->archtypes[iterator->current_archtype].num_elements
-                    - 1) {
+    if (iterator->current_element + 1
+            < iterator->ecs->archtypes[iterator->current_archtype]
+                      .num_elements) {
         iterator->current_element++;
-        return;
+    } else {
+        iterator->current_archtype++;
+        iterator->current_element = 0;
+        ecs_iterator_advance_internal(iterator);
     }
-
-    iterator->current_archtype++;
-    ecs_iterator_advance_internal(iterator);
-}
-
-void entity_builder_init(struct entity_builder *builder, struct ecs *ecs) {
-    builder->ecs = ecs;
-    builder->mask = 0;
-
-    vector_init(builder->components);
-    vector_init(builder->component_ids);
-}
-
-void entity_builder_add_component(
-        struct entity_builder *builder, void *component, size_t id) {
-    vector_append(builder->components, component);
-    builder->mask |= ECS_COMPONENT(id);
-    vector_append(builder->component_ids, id);
-}
-
-void ecs_add_entity(struct ecs *ecs, uint64_t mask) {
-    struct archtype *archtype = ecs_get_archtype(ecs, mask);
-
-    if (archtype != NULL) {
-        archtype->num_elements++;
-        return;
-    }
-
-    vector_append(ecs->archtypes,
-            ((struct archtype){
-                    .mask = mask,
-                    .num_elements = 0,
-            }));
-
-    archtype = &ecs->archtypes[vector_size(ecs->archtypes) - 1];
-
-    vector_init(archtype->columns);
-
-    while (mask) {
-        vector_append(archtype->columns,
-                ((struct column){
-                        .element_size = 0,
-                        .data = NULL,
-                }));
-
-        struct column *column =
-                &archtype->columns[vector_size(archtype->columns) - 1];
-
-        column->mask = mask & -mask;
-        column->element_size = components_size[__builtin_ctzll(column->mask)];
-
-        vector_init(column->data);
-
-        mask &= mask - 1;
-    }
-
-    archtype->num_elements++;
-}
-
-int entity_builder_finish(struct entity_builder *builder) {
-    size_t num_components = vector_size(builder->components);
-
-    ecs_add_entity(builder->ecs, builder->mask);
-
-    for (size_t i = 0; i < num_components; ++i) {
-        if (ecs_add_component(builder->ecs,
-                    builder->mask,
-                    builder->components[i],
-                    builder->component_ids[i])) {
-            return -1;
-        }
-    }
-
-    vector_destroy(builder->components);
-    vector_destroy(builder->component_ids);
-
-    return 0;
-}
-
-int ecs_add_component(struct ecs *ecs,
-        uint64_t mask,
-        void *component,
-        size_t component_index) {
-    struct archtype *archtype = ecs_get_archtype(ecs, mask);
-
-    if (archtype == NULL) {
-        return -1;
-    }
-
-    struct column *column = &archtype->columns[component_index];
-
-    vector_resize(column->data, vector_size(column->data) + 1);
-
-    memcpy(&column->data[(vector_size(column->data) - 1)
-                   * column->element_size],
-            component,
-            column->element_size);
-
-    return 0;
 }
 
 bool ecs_iterator_is_valid(struct ecs_iterator *iterator) {
-    return iterator->current_archtype < vector_size(iterator->ecs->archtypes)
-            && iterator->current_element
-            < iterator->ecs->archtypes[iterator->current_archtype].num_elements;
+    return iterator->current_archtype < vector_size(iterator->ecs->archtypes);
 }
 
 void *ecs_iterator_get_component_raw(
-        struct ecs_iterator *iterator, size_t component_index) {
+        struct ecs_iterator *iterator, size_t component_id) {
     struct archtype *archtype =
             &iterator->ecs->archtypes[iterator->current_archtype];
 
-    struct column *column = &archtype->columns[component_index];
+    size_t column_index = 0;
+    size_t num_columns = archtype_num_columns(archtype);
+    for (size_t i = 0; i < num_columns; ++i) {
+        if (bitmap_is_set(&archtype->columns[i].mask, component_id)) {
+            column_index = i;
+            break;
+        }
+    }
+
+    struct column *column = &archtype->columns[column_index];
 
     return &column->data[iterator->current_element * column->element_size];
 }
 
-void static_mesh_renderer_init(struct static_mesh_renderer *renderer) {
-    vector_init(renderer->positions);
-    vector_init(renderer->meshes);
-}
+void archtype_init(
+        struct ecs *ecs, struct bitmap mask, struct archtype *archtype_out) {
+    archtype_out->mask = mask;
+    archtype_out->num_elements = 0;
 
-void static_mesh_renderer_update(struct static_mesh_renderer *renderer) {
-    size_t affected = vector_size(renderer->positions);
+    vector_init(archtype_out->columns);
 
-    for (size_t i = 0; i < affected; ++i) {
-        struct position *pos = renderer->positions[i];
-        struct mesh *mesh = renderer->meshes[i];
+    for (size_t i = 0; i < MAX_NUM_COMPONENTS; ++i) {
+        if (bitmap_is_set(&mask, i)) {
+            vector_resize(archtype_out->columns,
+                    vector_size(archtype_out->columns) + 1);
 
-        unused(pos);
-        unused(mesh);
+            struct column *column = vector_back(archtype_out->columns);
+
+            bitmap_init_empty(ecs->next_component_id, &column->mask);
+            bitmap_set(&column->mask, i);
+
+            column->element_size = ecs->component_sizes[i];
+            vector_init(column->data);
+        }
     }
 }
 
-void physics_system_init(struct physics_system *system) {
-    vector_init(system->positions);
-    vector_init(system->velocities);
-}
+void ecs_add_entity(struct ecs *ecs, struct bitmap mask) {
+    struct archtype *archtype = get_archtype(ecs, &mask);
+    size_t entity_index = 0;
 
-void physics_system_update(struct physics_system *system) {
-    size_t affected = vector_size(system->positions);
+    if (archtype == NULL) {
+        vector_resize(ecs->archtypes, vector_size(ecs->archtypes) + 1);
+        archtype = vector_back(ecs->archtypes);
 
-    for (size_t i = 0; i < affected; ++i) {
-        struct position *pos = system->positions[i];
-        struct velocity *vel = system->velocities[i];
+        archtype_init(ecs, mask, archtype);
+    }
 
-        pos->x += vel->x;
-        pos->y += vel->y;
+    entity_index = archtype->num_elements;
+    archtype->num_elements++;
+
+    vector_append(ecs->entity_ptrs,
+            ((struct entity_ptr){
+                    .archtype = archtype,
+                    .index = entity_index,
+            }));
+
+    for (size_t i = 0; i < vector_size(archtype->columns); ++i) {
+        struct column *column = &archtype->columns[i];
+        vector_resize(
+                column->data, archtype->num_elements * column->element_size);
     }
 }
 
-void ecs_init(struct ecs *ecs) {
-    vector_init(ecs->systems);
-    vector_init(ecs->archtypes);
+void entity_builder_init(struct entity_builder *builder, struct ecs *ecs) {
+    builder->ecs = ecs;
+    bitmap_init_empty(MAX_NUM_COMPONENTS, &builder->mask);
+    vector_init(builder->components);
+    vector_init(builder->component_ids);
+}
+
+void entity_builder_destroy(struct entity_builder *builder) {
+    bitmap_destroy(&builder->mask);
+    for (size_t i = 0; i < vector_size(builder->components); ++i) {
+        free(builder->components[i]);
+    }
+    vector_destroy(builder->components);
+    vector_destroy(builder->component_ids);
+}
+
+void entity_builder_add_component(
+        struct entity_builder *builder, size_t id, void *component) {
+    bitmap_set(&builder->mask, id);
+
+    void *component_copy = sunset_malloc(builder->ecs->component_sizes[id]);
+    memcpy(component_copy, component, builder->ecs->component_sizes[id]);
+
+    vector_append(builder->components, component_copy);
+    vector_append(builder->component_ids, id);
+}
+
+void entity_builder_finish(struct entity_builder *builder) {
+    ecs_add_entity(builder->ecs, builder->mask);
+
+    size_t entity_index = vector_size(builder->ecs->entity_ptrs) - 1;
+    struct entity_ptr *eptr = &builder->ecs->entity_ptrs[entity_index];
+
+    struct archtype *archtype = get_archtype(builder->ecs, &builder->mask);
+    assert(archtype && "ecs_add_entity should've added the archtype");
+
+    for (size_t i = 0; i < vector_size(builder->components); ++i) {
+        size_t component_id = builder->component_ids[i];
+        void *component_data = builder->components[i];
+
+        struct column *column = NULL;
+        for (size_t j = 0; j < vector_size(archtype->columns); ++j) {
+            if (bitmap_is_set(&archtype->columns[j].mask, component_id)) {
+                column = &archtype->columns[j];
+                break;
+            }
+        }
+
+        assert(column && "columns should've been added earlier");
+
+        memcpy(&column->data[eptr->index * column->element_size],
+                component_data,
+                column->element_size);
+    }
 }

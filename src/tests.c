@@ -12,6 +12,7 @@
 #include "sunset/base64.h"
 #include "sunset/byte_stream.h"
 #include "sunset/camera.h"
+#include "sunset/ecs.h"
 #include "sunset/errors.h"
 #include "sunset/images.h"
 #include "sunset/io.h"
@@ -523,6 +524,80 @@ void test_mtl_file_parse_invalid_format(void **state) {
     assert_int_equal(err, ERROR_INVALID_FORMAT);
 }
 
+// TODO: I guess typedefs might be necessary so this wouldn't becmoe an
+// inconsistency
+struct position {
+    float x, y;
+} typedef position;
+
+struct velocity {
+    float x, y;
+} typedef velocity;
+
+struct health {
+    int value;
+} typedef health;
+
+void test_ecs(void **state) {
+    unused(state);
+
+    struct ecs ecs;
+    ecs_init(&ecs);
+
+    REGISTER_COMPONENT(&ecs, position);
+    REGISTER_COMPONENT(&ecs, velocity);
+    REGISTER_COMPONENT(&ecs, health);
+
+    struct entity_builder builder;
+    entity_builder_init(&builder, &ecs);
+
+    struct position pos = {1.0f, 2.0f};
+    entity_builder_add_component(&builder, COMPONENT_ID(position), &pos);
+
+    struct velocity vel = {0.1f, 0.2f};
+    entity_builder_add_component(&builder, COMPONENT_ID(velocity), &vel);
+
+    struct health hea = {100};
+    entity_builder_add_component(&builder, COMPONENT_ID(health), &hea);
+
+    entity_builder_finish(&builder);
+
+    struct entity_builder builder2;
+    entity_builder_init(&builder2, &ecs);
+
+    struct position pos2 = {3.0f, 4.0f};
+    entity_builder_add_component(&builder2, COMPONENT_ID(position), &pos2);
+
+    struct velocity vel2 = {0.1f, 0.3f};
+    entity_builder_add_component(&builder2, COMPONENT_ID(velocity), &vel2);
+
+    struct health hea2 = {50};
+    entity_builder_add_component(&builder2, COMPONENT_ID(health), &hea2);
+
+    entity_builder_finish(&builder2);
+
+    struct bitmap system_mask;
+    bitmap_init_empty(MAX_NUM_COMPONENTS, &system_mask);
+    bitmap_set(&system_mask, COMPONENT_ID(position));
+    bitmap_set(&system_mask, COMPONENT_ID(velocity));
+
+    struct ecs_iterator it = ecs_iterator_create(&ecs, system_mask);
+    while (ecs_iterator_is_valid(&it)) {
+        struct position *p = (struct position *)ecs_iterator_get_component_raw(
+                &it, COMPONENT_ID(position));
+        struct velocity *v = (struct velocity *)ecs_iterator_get_component_raw(
+                &it, COMPONENT_ID(velocity));
+        printf("Entity with position: (%f, %f) and velocity: (%f, %f)\n",
+                p->x,
+                p->y,
+                v->x,
+                v->y);
+        ecs_iterator_advance(&it);
+    }
+
+    bitmap_destroy(&system_mask);
+}
+
 int main(void) {
     const struct CMUnitTest general_tests[] = {
             cmocka_unit_test(test_ring_buffer),
@@ -545,6 +620,7 @@ int main(void) {
             cmocka_unit_test(test_mtl_file_parse_multiple_materials),
             cmocka_unit_test(test_mtl_file_parse_emission_map),
             cmocka_unit_test(test_mtl_file_parse_invalid_format),
+            cmocka_unit_test(test_ecs),
     };
 
     return cmocka_run_group_tests(general_tests, NULL, NULL);

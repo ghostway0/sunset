@@ -60,6 +60,7 @@ void example_destroy_physics(void *local_context) {
 */
 
 int engine_run(struct game *game) {
+    unused(game);
     int retval = 0;
 
     struct engine_context context = {};

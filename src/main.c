@@ -1,9 +1,7 @@
 #include <inttypes.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 #include <cglm/mat4.h>
@@ -75,8 +73,7 @@ int main() {
     //         .window_height = 1080,
     // };
 
-    engine_run();
-
+    // engine_run();
 
     // uint32_t texture_id;
     // backend_register_texture_atlas(

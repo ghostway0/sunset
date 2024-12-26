@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "sunset/images.h"
 #include "sunset/errors.h"
 #include "sunset/geometry.h"
+#include "sunset/images.h"
 #include "sunset/utils.h"
 #include "sunset/vfs.h"
 
