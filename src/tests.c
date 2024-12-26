@@ -524,7 +524,7 @@ void test_mtl_file_parse_invalid_format(void **state) {
     assert_int_equal(err, ERROR_INVALID_FORMAT);
 }
 
-// TODO: I guess typedefs might be necessary so this wouldn't becmoe an
+// TODO: I guess typedefs might be necessary so this wouldn't become an
 // inconsistency
 struct position {
     float x, y;
