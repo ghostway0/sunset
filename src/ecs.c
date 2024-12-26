@@ -84,7 +84,7 @@ struct ecs_iterator ecs_iterator_create(struct ecs *ecs, struct bitmap mask) {
 void ecs_iterator_advance(struct ecs_iterator *iterator) {
     if (iterator->current_element + 1
             < iterator->ecs->archtypes[iterator->current_archtype]
-                      .num_elements) {
+                    .num_elements) {
         iterator->current_element++;
     } else {
         iterator->current_archtype++;
@@ -97,7 +97,7 @@ bool ecs_iterator_is_valid(struct ecs_iterator *iterator) {
     return iterator->current_archtype < vector_size(iterator->ecs->archtypes);
 }
 
-void *ecs_iterator_get_component_raw(
+void *ecs_iterator_get_component(
         struct ecs_iterator *iterator, size_t component_id) {
     struct archtype *archtype =
             &iterator->ecs->archtypes[iterator->current_archtype];
@@ -196,8 +196,7 @@ void entity_builder_add_component(
 void entity_builder_finish(struct entity_builder *builder) {
     ecs_add_entity(builder->ecs, builder->mask);
 
-    size_t entity_index = vector_size(builder->ecs->entity_ptrs) - 1;
-    struct entity_ptr *eptr = &builder->ecs->entity_ptrs[entity_index];
+    struct entity_ptr *eptr = vector_back(builder->ecs->entity_ptrs);
 
     struct archtype *archtype = get_archtype(builder->ecs, &builder->mask);
     assert(archtype && "ecs_add_entity should've added the archtype");
@@ -220,4 +219,27 @@ void entity_builder_finish(struct entity_builder *builder) {
                 component_data,
                 column->element_size);
     }
+}
+
+void *ecs_get_component(
+        struct ecs *ecs, uint32_t entity_id, uint32_t component_id) {
+    if (entity_id >= vector_size(ecs->entity_ptrs)) {
+        return NULL;
+    }
+
+    struct entity_ptr eptr = ecs->entity_ptrs[entity_id];
+
+    struct column *column = NULL;
+    for (size_t i = 0; i < vector_size(eptr.archtype->columns); i++) {
+        if (bitmap_is_set(&eptr.archtype->columns[i].mask, component_id)) {
+            column = &eptr.archtype->columns[i];
+            break;
+        }
+    }
+
+    if (!column) {
+        return NULL;
+    }
+
+    return column->data + eptr.index * column->element_size;
 }

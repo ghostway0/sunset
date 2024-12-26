@@ -44,6 +44,9 @@ struct ecs {
 
 size_t _ecs_register_component(struct ecs *ecs, size_t component_size);
 
+void *ecs_get_component(
+        struct ecs *ecs, uint32_t entity_id, uint32_t component_id);
+
 struct ecs_iterator {
     struct ecs *ecs;
     struct bitmap mask;
@@ -57,7 +60,7 @@ void ecs_add_entity(struct ecs *ecs, struct bitmap mask);
 
 bool ecs_iterator_is_valid(struct ecs_iterator *iterator);
 
-void *ecs_iterator_get_component_raw(
+void *ecs_iterator_get_component(
         struct ecs_iterator *iterator, size_t component_index);
 
 struct ecs_iterator ecs_iterator_create(struct ecs *ecs, struct bitmap mask);
@@ -77,22 +80,5 @@ void entity_builder_add_component(
 void entity_builder_finish(struct entity_builder *builder);
 
 void ecs_init(struct ecs *ecs);
-
-#define ecs_iterator_get_component(iterator, type)                             \
-    ({                                                                         \
-        void *component = NULL;                                                \
-        struct archtype *arch =                                                \
-                &((iterator)->ecs->archtypes[(iterator)->current_archtype]);   \
-        size_t component_index = arch->component_indices[COMPONENT_##type];    \
-        if (component_index != SIZE_MAX) {                                     \
-            struct column *col = &arch->columns[component_index];              \
-            component = col->data[(iterator)->current_element                  \
-                    * col->element_size];                                      \
-        }                                                                      \
-        (type *)component;                                                     \
-    })
-
-#define ecs_insert(ecs, mask, component, component_index)                      \
-    ecs_insert_one(ecs, mask, component, component_index)
 
 #endif // ECS_H

@@ -3,6 +3,7 @@
 
 #include <cglm/vec3.h>
 
+#include "sunset/ecs.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
@@ -201,7 +202,7 @@ static void calculate_collision_normal(
     glm_vec3_normalize(collision_normal_out);
 }
 
-static void apply_collision_impulse(struct object *a, struct object *b) {
+static void apply_collision_impulse(struct ecs *ecs, struct object *a, struct object *b) {
     struct physics_object *a_attr = &a->physics;
     struct physics_object *b_attr = &b->physics;
 

@@ -583,9 +583,9 @@ void test_ecs(void **state) {
 
     struct ecs_iterator it = ecs_iterator_create(&ecs, system_mask);
     while (ecs_iterator_is_valid(&it)) {
-        struct position *p = (struct position *)ecs_iterator_get_component_raw(
+        struct position *p = (struct position *)ecs_iterator_get_component(
                 &it, COMPONENT_ID(position));
-        struct velocity *v = (struct velocity *)ecs_iterator_get_component_raw(
+        struct velocity *v = (struct velocity *)ecs_iterator_get_component(
                 &it, COMPONENT_ID(velocity));
         printf("Entity with position: (%f, %f) and velocity: (%f, %f)\n",
                 p->x,

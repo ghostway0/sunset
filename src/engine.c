@@ -2,12 +2,10 @@
 #include <unistd.h>
 
 #include "sunset/backend.h"
-#include "sunset/errors.h"
 #include "sunset/events.h"
 #include "sunset/scene.h"
 #include "sunset/ui.h"
 #include "sunset/utils.h"
-#include "sunset/vector.h"
 
 #include "sunset/engine.h"
 
