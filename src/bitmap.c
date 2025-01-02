@@ -4,60 +4,60 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sunset/bitmap.h"
+#include "sunset/bitmask.h"
 #include "sunset/utils.h"
 
-void bitmap_init(size_t size, Bitmap *bitmap_out) {
-    bitmap_out->num_chunks = (size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
-    bitmap_out->chunks = sunset_malloc(bitmap_out->num_chunks * sizeof(Limb));
+void bitmask_init(size_t size, Bitmask *bitmask_out) {
+    bitmask_out->num_chunks = (size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
+    bitmask_out->chunks = sunset_malloc(bitmask_out->num_chunks * sizeof(Limb));
 }
 
-void bitmap_init_full(size_t size, Bitmap *bitmap_out) {
-    bitmap_init(size, bitmap_out);
-    memset(bitmap_out->chunks,
+void bitmask_init_full(size_t size, Bitmask *bitmask_out) {
+    bitmask_init(size, bitmask_out);
+    memset(bitmask_out->chunks,
             0xFFFFFFFF,
-            bitmap_out->num_chunks * sizeof(Limb));
+            bitmask_out->num_chunks * sizeof(Limb));
 }
 
-void bitmap_init_empty(size_t size, Bitmap *bitmap_out) {
-    bitmap_init(size, bitmap_out);
-    memset(bitmap_out->chunks, 0, bitmap_out->num_chunks * sizeof(Limb));
+void bitmask_init_empty(size_t size, Bitmask *bitmask_out) {
+    bitmask_init(size, bitmask_out);
+    memset(bitmask_out->chunks, 0, bitmask_out->num_chunks * sizeof(Limb));
 }
 
-bool bitmap_is_set(Bitmap const *bitmap, size_t index) {
-    return bitmap->chunks[index / LIMB_SIZE_BITS]
+bool bitmask_is_set(Bitmask const *bitmask, size_t index) {
+    return bitmask->chunks[index / LIMB_SIZE_BITS]
             & (1ULL << (index % LIMB_SIZE_BITS));
 }
 
-void bitmap_set(Bitmap *bitmap, size_t index) {
-    bitmap->chunks[index / LIMB_SIZE_BITS] |=
+void bitmask_set(Bitmask *bitmask, size_t index) {
+    bitmask->chunks[index / LIMB_SIZE_BITS] |=
             (1ULL << (index % LIMB_SIZE_BITS));
 }
 
-size_t bitmap_ctz(Bitmap const *bitmap) {
-    for (size_t i = 0; i < bitmap->num_chunks; ++i) {
-        Limb chunk = bitmap->chunks[i];
+size_t bitmask_ctz(Bitmask const *bitmask) {
+    for (size_t i = 0; i < bitmask->num_chunks; ++i) {
+        Limb chunk = bitmask->chunks[i];
 
         if (chunk != 0) {
             return i * LIMB_SIZE_BITS + __builtin_ctzll(chunk);
         }
     }
 
-    return bitmap->num_chunks * LIMB_SIZE_BITS;
+    return bitmask->num_chunks * LIMB_SIZE_BITS;
 }
 
-void bitmap_resize(Bitmap *bitmap, size_t new_size) {
-    bitmap->num_chunks = (new_size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
-    bitmap->chunks = realloc(bitmap->chunks, bitmap->num_chunks * sizeof(Limb));
+void bitmask_resize(Bitmask *bitmask, size_t new_size) {
+    bitmask->num_chunks = (new_size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
+    bitmask->chunks = realloc(bitmask->chunks, bitmask->num_chunks * sizeof(Limb));
 }
 
-bool bitmap_is_eql(Bitmap const *bitmap, Bitmap const *other) {
-    return memcmp(bitmap->chunks, other->chunks, bitmap->num_chunks * 8) == 0;
+bool bitmask_is_eql(Bitmask const *bitmask, Bitmask const *other) {
+    return memcmp(bitmask->chunks, other->chunks, bitmask->num_chunks * 8) == 0;
 }
 
-bool bitmap_is_superset(Bitmap const *bitmap, Bitmap const *other) {
-    for (size_t i = 0; i < bitmap->num_chunks; ++i) {
-        if ((bitmap->chunks[i] & other->chunks[i]) != other->chunks[i]) {
+bool bitmask_is_superset(Bitmask const *bitmask, Bitmask const *other) {
+    for (size_t i = 0; i < bitmask->num_chunks; ++i) {
+        if ((bitmask->chunks[i] & other->chunks[i]) != other->chunks[i]) {
             return false;
         }
     }
@@ -65,36 +65,36 @@ bool bitmap_is_superset(Bitmap const *bitmap, Bitmap const *other) {
     return true;
 }
 
-size_t bitmap_popcount(Bitmap const *bitmap) {
+size_t bitmask_popcount(Bitmask const *bitmask) {
     size_t popcount = 0;
 
-    for (size_t i = 0; i < bitmap->num_chunks; ++i) {
-        popcount += __builtin_popcountll(bitmap->chunks[i]);
+    for (size_t i = 0; i < bitmask->num_chunks; ++i) {
+        popcount += __builtin_popcountll(bitmask->chunks[i]);
     }
 
     return popcount;
 }
 
-void bitmap_lsb_reset(Bitmap *bitmap) {
-    for (size_t i = 0; i < bitmap->num_chunks; i--) {
-        if (bitmap->chunks[i] != 0) {
-            bitmap->chunks[i] &= bitmap->chunks[i] - 1;
+void bitmask_lsb_reset(Bitmask *bitmask) {
+    for (size_t i = 0; i < bitmask->num_chunks; i--) {
+        if (bitmask->chunks[i] != 0) {
+            bitmask->chunks[i] &= bitmask->chunks[i] - 1;
             return;
         }
     }
 }
 
 // premature but vectorization is cool
-bool bitmap_is_zero(Bitmap const *bitmap) {
+bool bitmask_is_zero(Bitmask const *bitmask) {
     Limb result = 0;
-    for (size_t i = 0; i < bitmap->num_chunks; i++) {
-        result |= bitmap->chunks[i];
+    for (size_t i = 0; i < bitmask->num_chunks; i++) {
+        result |= bitmask->chunks[i];
     }
     return result == 0;
 }
 
-void bitmap_destroy(Bitmap *bitmap) {
-    free(bitmap->chunks);
-    bitmap->chunks = NULL;
-    bitmap->num_chunks = 0;
+void bitmask_destroy(Bitmask *bitmask) {
+    free(bitmask->chunks);
+    bitmask->chunks = NULL;
+    bitmask->num_chunks = 0;
 }

@@ -2,10 +2,12 @@
 
 #include <stdbool.h>
 
+#include "geometry.h"
 #include "sunset/backend.h"
 #include "sunset/commands.h"
 #include "sunset/physics.h"
 #include "sunset/vector.h"
+#include "vector.h"
 
 struct event_queue;
 struct scene;
@@ -50,19 +52,25 @@ enum mouse_mode {
 // load all shared objects. call plugin_init within the objects
 // with the engine_context.
 
-struct game {
+struct game_config {
+    struct rect bounds;
+    // game objects
     // scene stuff (bounds, objects)
 
-    // plugin names (vector)
+    // the scene can be saved
 
-    // textures, meshes, atlases
+    // resources
+    vector(char const *) plugins;
+    vector(char const *) atlases;
+    vector(char const *) meshes;
 };
 
 // external API
 
-int engine_run(struct game *game);
+int engine_run(struct game_config *game);
 
-int engine_load_scene(struct scene *scene);
+int engine_load_scene(
+        struct engine_context *engine_context, struct scene *scene);
 
 void engine_set_mouse_mode(
         struct engine_context *engine_context, enum mouse_mode mode);

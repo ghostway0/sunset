@@ -135,7 +135,7 @@ struct vector_metadata {
             assert(meta);                                                      \
             v = (void *)(meta + 1);                                            \
         }                                                                      \
-        memset(v + meta->size, 0, (new_size - meta->size + 1) * sizeof(*v));   \
+        memset(v + meta->size, 0, (new_size - meta->size) * sizeof(*v));   \
         meta->size = new_size;                                                 \
     } while (0)
 

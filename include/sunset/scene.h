@@ -9,11 +9,12 @@
 
 #include "sunset/backend.h"
 #include "sunset/camera.h"
+#include "sunset/ecs.h"
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
 #include "sunset/physics.h"
 
-struct transform {
+struct Transform {
     enum physics_object_type type;
     struct physics_material material;
 
@@ -21,12 +22,18 @@ struct transform {
     vec3 position;
     vec3 rotation;
     float scale;
+} typedef Transform;
 
+DECLARE_COMPONENT_ID(Transform);
+
+struct Physics {
     vec3 acceleration;
     vec3 velocity;
     float damping;
     float mass;
-};
+} typedef Physics;
+
+DECLARE_COMPONENT_ID(Physics);
 
 struct object;
 
@@ -63,7 +70,6 @@ typedef void (*move_callback)(struct object *, vec3 direction);
 struct object {
     uint32_t entity_id;
     struct aabb bounding_box;
-    struct transform transform;
     uint32_t mesh_id;
     uint32_t texture_id;
     // struct material material;
@@ -119,6 +125,7 @@ struct scene {
     struct octree octree;
 
     struct image skybox;
+    World world;
 };
 
 void scene_init(

@@ -547,55 +547,87 @@ void test_ecs(void **state) {
     REGISTER_COMPONENT(&ecs, Health);
 
     EntityBuilder builder;
-    entity_builder_init(&builder, &ecs);
 
     Position pos = {1.0f, 2.0f};
-    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos);
-
     Velocity vel = {0.1f, 0.2f};
-    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel);
-
     Health hea = {100};
-    entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea);
 
+    entity_builder_init(&builder, &ecs);
+    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel);
+    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos);
+    entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea);
     entity_builder_finish(&builder);
 
-    EntityBuilder builder2;
-    entity_builder_init(&builder2, &ecs);
-
     Position pos2 = {3.0f, 4.0f};
-    entity_builder_add_component(&builder2, COMPONENT_ID(Position), &pos2);
-
     Velocity vel2 = {0.1f, 0.3f};
-    entity_builder_add_component(&builder2, COMPONENT_ID(Velocity), &vel2);
-
     Health hea2 = {50};
-    entity_builder_add_component(&builder2, COMPONENT_ID(Health), &hea2);
 
-    entity_builder_finish(&builder2);
+    entity_builder_init(&builder, &ecs);
+    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel2);
+    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos2);
+    entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea2);
+    entity_builder_finish(&builder);
 
-    Bitmap system_mask;
-    bitmap_init_empty(MAX_NUM_COMPONENTS, &system_mask);
-    bitmap_set(&system_mask, COMPONENT_ID(Position));
-    bitmap_set(&system_mask, COMPONENT_ID(Velocity));
+    Position pos3 = {4.0f, 5.0f};
+    Velocity vel3 = {0.0f, 0.0f};
+
+    entity_builder_init(&builder, &ecs);
+    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel3);
+    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos3);
+    entity_builder_finish(&builder);
+
+    Bitmask system_mask;
+    bitmask_init_empty(64, &system_mask);
+    bitmask_set(&system_mask, COMPONENT_ID(Position));
+    bitmask_set(&system_mask, COMPONENT_ID(Velocity));
 
     WorldIterator it = ecs_iterator_create(&ecs, system_mask);
-    while (ecs_iterator_is_valid(&it)) {
+
+    // we assume ordering for now
+    {
         Position *p = (Position *)ecs_iterator_get_component(
                 &it, COMPONENT_ID(Position));
         Velocity *v = (Velocity *)ecs_iterator_get_component(
                 &it, COMPONENT_ID(Velocity));
 
-        printf("Entity with position: (%f, %f) and velocity: (%f, %f)\n",
-                p->x,
-                p->y,
-                v->x,
-                v->y);
-
-        ecs_iterator_advance(&it);
+        assert_float_equal(p->x, 1.0f, EPSILON);
+        assert_float_equal(p->y, 2.0f, EPSILON);
+        
+        assert_float_equal(v->x, 0.1f, EPSILON);
+        assert_float_equal(v->y, 0.2f, EPSILON);
     }
 
-    bitmap_destroy(&system_mask);
+    ecs_iterator_advance(&it);
+    
+    {
+        Position *p = (Position *)ecs_iterator_get_component(
+                &it, COMPONENT_ID(Position));
+        Velocity *v = (Velocity *)ecs_iterator_get_component(
+                &it, COMPONENT_ID(Velocity));
+
+        assert_float_equal(p->x, 3.0f, EPSILON);
+        assert_float_equal(p->y, 4.0f, EPSILON);
+        
+        assert_float_equal(v->x, 0.1f, EPSILON);
+        assert_float_equal(v->y, 0.3f, EPSILON);
+    }
+
+    ecs_iterator_advance(&it);
+    
+    {
+        Position *p = (Position *)ecs_iterator_get_component(
+                &it, COMPONENT_ID(Position));
+        Velocity *v = (Velocity *)ecs_iterator_get_component(
+                &it, COMPONENT_ID(Velocity));
+
+        assert_float_equal(p->x, 4.0f, EPSILON);
+        assert_float_equal(p->y, 5.0f, EPSILON);
+        
+        assert_float_equal(v->x, 0.0f, EPSILON);
+        assert_float_equal(v->y, 0.0f, EPSILON);
+    }
+
+    ecs_iterator_destroy(&it);
 }
 
 int main(void) {
