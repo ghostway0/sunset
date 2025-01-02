@@ -1,12 +1,16 @@
 #pragma once
 
+#include "sunset/utils.h"
 #include <stddef.h>
+
+typedef struct Writer Writer;
+typedef struct Reader Reader;
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 
-struct vfs_file {
+typedef struct VfsFile {
     int fd;
-};
+} VfsFile;
 
 #define vfs_file_print(file, fmt) dprintf(file->fd, fmt)
 #define vfs_file_printf(file, fmt, ...) dprintf(file->fd, fmt, __VA_ARGS__)
@@ -17,55 +21,63 @@ struct vfs_file {
 
 #endif
 
-enum vfs_open_mode {
+typedef enum VfsOpenMode {
     VFS_OPEN_MODE_WRITE = 1 << 0,
     VFS_OPEN_MODE_READ = 1 << 1,
     VFS_OPEN_MODE_READ_WRITE = VFS_OPEN_MODE_READ | VFS_OPEN_MODE_WRITE,
-};
+} VfsOpenMode;
 
-enum vfs_map_prot {
+typedef enum VfsMapProt {
     VFS_MAP_PROT_NONE = 0,
     VFS_MAP_PROT_READ = 1 << 0,
     VFS_MAP_PROT_WRITE = 1 << 1,
     VFS_MAP_PROT_EXEC = 1 << 2,
-};
+} VfsMapProt;
 
-enum vfs_seek_mode {
+typedef enum VfsSeekMode {
     VFS_SEEK_SET,
     VFS_SEEK_END,
     VFS_SEEK_CUR,
-};
+} VfsSeekMode;
 
-enum vfs_map_flags {
+typedef enum VfsMapFlags {
     VFS_MAP_SHARED = 1 << 0,
     VFS_MAP_PRIVATE = 1 << 1,
     VFS_MAP_ANONYMOUS = 1 << 2,
-};
+} VfsMapFlags;
 
-size_t vfs_file_size(struct vfs_file const *file);
+size_t vfs_file_size(VfsFile const *file);
 
-int vfs_open(
-        char const *path, enum vfs_open_mode mode, struct vfs_file *file_out);
+int vfs_open(char const *path, VfsOpenMode mode, VfsFile *file_out);
 
-int vfs_close(struct vfs_file *file);
+int vfs_close(VfsFile *file);
 
-int vfs_file_read(struct vfs_file *file, void *buf, size_t count);
+ssize_t vfs_file_read(VfsFile *file, size_t count, void *buf);
 
-int vfs_file_write(struct vfs_file *file, void const *buf, size_t count);
+ssize_t vfs_file_write(VfsFile *file, void const *buf, size_t count);
 
-int vfs_map_file(struct vfs_file *file,
-        enum vfs_map_prot prot,
-        enum vfs_map_flags flags,
+int vfs_map_file(VfsFile *file,
+        VfsMapProt prot,
+        VfsMapFlags flags,
         void **addr_out,
         size_t *size_out);
 
 void vfs_munmap(void *ptr, size_t size);
 
-bool vfs_is_eof(struct vfs_file *file);
+bool vfs_is_eof(VfsFile *file);
 
-size_t vfs_file_seek(
-        struct vfs_file *file, enum vfs_seek_mode seek_mode, size_t offset);
+size_t vfs_file_seek(VfsFile *file, VfsSeekMode seek_mode, size_t offset);
 
-size_t vfs_file_get_offset(struct vfs_file *file);
+size_t vfs_file_get_offset(VfsFile *file);
 
-int vfs_create_tempfile(struct vfs_file *file_out);
+int vfs_create_tempfile(VfsFile *file_out);
+
+void vfs_get_stdout(VfsFile *file_out);
+
+void vfs_get_stderr(VfsFile *file_out);
+
+void vfs_get_stdin(VfsFile *file_out);
+
+Writer vfs_file_writer(VfsFile *file);
+
+Reader vfs_file_reader(VfsFile *file);

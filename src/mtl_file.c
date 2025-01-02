@@ -18,7 +18,7 @@ static void mtl_material_init(struct mtl_material *material) {
     material->d = 1.0f;
 }
 
-int mtl_file_parse(struct reader *reader, struct mtl_file *mtl_out) {
+int mtl_file_parse(Reader *reader, struct mtl_file *mtl_out) {
     int retval = 0;
     size_t line_number = 1;
 

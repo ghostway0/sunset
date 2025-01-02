@@ -5,7 +5,7 @@
 
 #include "sunset/vector.h"
 
-struct reader;
+typedef struct Reader Reader;
 
 struct mtl_material {
     char *name;
@@ -21,7 +21,7 @@ struct mtl_file {
     vector(struct mtl_material) materials;
 };
 
-int mtl_file_parse(struct reader *reader, struct mtl_file *mtl_out);
+int mtl_file_parse(Reader *reader, struct mtl_file *mtl_out);
 void mtl_file_destroy(struct mtl_file *mtl);
 
 #endif // SUNSET_MTL_FILE_H

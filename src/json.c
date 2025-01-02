@@ -294,7 +294,7 @@ void json_value_destroy(struct json_value *json) {
     }
 }
 
-static void print_indent(struct vfs_file *file, size_t indent) {
+static void print_indent(VfsFile *file, size_t indent) {
     if (indent != (size_t)-1) {
         for (size_t i = 0; i < indent; i++) {
             vfs_file_print(file, " ");
@@ -303,7 +303,7 @@ static void print_indent(struct vfs_file *file, size_t indent) {
 }
 
 void json_value_print(
-        struct json_value *json, struct vfs_file *file, size_t indent) {
+        struct json_value *json, VfsFile *file, size_t indent) {
     switch (json->type) {
         case JSON_STRING:
             vfs_file_printf(file, "\"%s\"", json->data.string);

@@ -5,30 +5,54 @@
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
-typedef ssize_t (*read_fn)(void *ctx, size_t count, void *buf);
+typedef ssize_t (*ReadFn)(void *ctx, size_t count, void *buf);
 
-struct reader {
+struct Reader {
     void *ctx;
-    read_fn read;
-};
+    ReadFn read;
+} typedef Reader;
 
-void reader_init(struct reader *reader, void *ctx, read_fn read);
+void reader_init(Reader *reader, void *ctx, ReadFn read);
 
-ssize_t reader_read(struct reader *reader, size_t count, void *out);
+ssize_t reader_read(Reader *reader, size_t count, void *out);
 
 ssize_t reader_read_until(
-        struct reader *reader, uint8_t delimiter, vector(uint8_t) * out);
+        Reader *reader, uint8_t delimiter, vector(uint8_t) * out);
 
-#define reader_read_type(stream, out)                                          \
-    do {                                                                       \
-        int __err;                                                             \
-        if ((__err = reader_read(stream, sizeof(*out), out))                   \
-                != sizeof(*out)) {                                             \
-            return __err;                                                      \
-        }                                                                      \
+#define reader_read_type(stream, out)                                      \
+    do {                                                                   \
+        int __err;                                                         \
+        if ((__err = reader_read(stream, sizeof(*out), out))               \
+                != sizeof(*out)) {                                         \
+            return __err;                                                  \
+        }                                                                  \
     } while (0)
 
-void reader_skip(struct reader *reader, size_t num_bytes);
+void reader_skip(Reader *reader, size_t num_bytes);
 
 ssize_t reader_read_to_vec(
-        struct reader *reader, size_t count, vector(uint8_t) * out);
+        Reader *reader, size_t count, vector(uint8_t) * out);
+
+typedef ssize_t (*WriteFn)(void *ctx, void const *buf, size_t count);
+
+struct Writer {
+    void *ctx;
+    WriteFn write;
+} typedef Writer;
+
+void writer_init(Writer *writer, void *ctx, WriteFn write);
+
+ssize_t writer_write(Writer *writer, void const *buf, size_t count);
+
+#define writer_write_type(stream, in)                                      \
+    do {                                                                   \
+        int __err;                                                         \
+        if ((__err = writer_write(stream, in, sizeof(*in)))                \
+                != sizeof(*in)) {                                          \
+            return __err;                                                  \
+        }                                                                  \
+    } while (0)
+
+Writer *get_stdout(void);
+
+Reader *get_stdin(void);

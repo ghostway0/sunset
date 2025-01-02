@@ -51,7 +51,7 @@ struct color color_from_grayscale(uint8_t value) {
 }
 
 int load_image_file(char const *path, struct image *image_out) {
-    struct vfs_file file;
+    VfsFile file;
     int retval = 0;
 
     if ((retval = vfs_open(path, VFS_OPEN_MODE_READ, &file))) {
@@ -72,7 +72,7 @@ int load_image_file(char const *path, struct image *image_out) {
     struct byte_stream stream;
     byte_stream_from_data(data, file_size, &stream);
 
-    struct reader reader = {.read = (read_fn)byte_stream_read, .ctx = &stream};
+    Reader reader = {.read = (ReadFn)byte_stream_read, .ctx = &stream};
 
     if (strcmp(get_filename_extesnion(path), ".tga")) {
         retval = tga_load_image(&reader, image_out);

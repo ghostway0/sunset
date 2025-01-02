@@ -6,7 +6,7 @@
 
 #include "sunset/vector.h"
 
-struct reader;
+typedef struct Reader Reader;
 
 struct face_element {
     uint32_t vertex_index;
@@ -29,4 +29,4 @@ void obj_model_destroy(struct obj_model *model);
 /// - the OBJ file represents a single object/mesh.
 /// - the object has a single material applied to it.
 /// - the file adheres to Blender's typical OBJ export conventions.
-int obj_model_parse(struct reader *reader, struct obj_model *model_out);
+int obj_model_parse(Reader *reader, struct obj_model *model_out);

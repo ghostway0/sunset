@@ -1,10 +1,9 @@
-#include <log.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "include/sunset/vector.h"
+#include "sunset/vector.h"
 #include "sunset/bitmask.h"
 #include "sunset/vector.h"
 
@@ -118,12 +117,6 @@ void *ecs_iterator_get_component(
     }
 
     Column *column = &archetype->columns[column_index];
-
-    log_debug("11 %p %zu %p",
-            column,
-            iterator->current_element,
-            &column->data[iterator->current_element
-                    * column->element_size]);
 
     return &column->data[iterator->current_element * column->element_size];
 }
@@ -245,8 +238,6 @@ void entity_builder_finish(EntityBuilder *builder) {
                 break;
             }
         }
-
-        log_debug("%p %zu", column->data + eptr->index * column->element_size, eptr->index);
 
         assert(column && "columns should've been added earlier");
 

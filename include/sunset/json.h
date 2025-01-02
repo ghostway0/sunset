@@ -13,7 +13,7 @@
         }                                                                      \
     } while (0)
 
-struct vfs_file;
+typedef struct VfsFile VfsFile;
 
 enum json_type {
     JSON_OBJECT,
@@ -51,4 +51,4 @@ void json_value_destroy(struct json_value *json);
 
 // -1 for not pretty
 void json_value_print(
-        struct json_value *json, struct vfs_file *file, size_t indent);
+        struct json_value *json, VfsFile *file, size_t indent);

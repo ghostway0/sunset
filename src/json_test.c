@@ -218,7 +218,7 @@ void test_json_value_print(void **state) {
     err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, 0);
 
-    struct vfs_file temp_file;
+    VfsFile temp_file;
     err = vfs_create_tempfile(&temp_file);
     assert_int_equal(err, 0);
 
@@ -227,7 +227,7 @@ void test_json_value_print(void **state) {
 
     assert_int_equal(vfs_file_size(&temp_file), strlen(json));
     assert_int_equal(
-            vfs_file_read(&temp_file, test_buffer, strlen(json)), strlen(json));
+            vfs_file_read(&temp_file, strlen(json), test_buffer), strlen(json));
 
     assert_string_equal(test_buffer, "{\"key\": {\"key2\": \"value2\"}}");
 

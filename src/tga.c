@@ -94,7 +94,7 @@ static int decompress_rle(uint8_t *data,
     return 0;
 }
 
-int tga_load_image(struct reader *reader, struct image *image_out) {
+int tga_load_image(Reader *reader, struct image *image_out) {
     int retval = 0;
 
     assert(reader != NULL);

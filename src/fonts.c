@@ -52,7 +52,7 @@ static void flip_image(struct image *image) {
     image->pixels = flipped_pixels;
 }
 
-static int load_glyphs(struct vfs_file *file,
+static int load_glyphs(VfsFile *file,
         struct psf2_header const *header,
         struct font *font_out) {
     uint8_t *bitmap = sunset_malloc(header->height * header->width);
@@ -74,7 +74,7 @@ static int load_glyphs(struct vfs_file *file,
 
         font_out->glyphs[i].advance_x = header->width;
 
-        vfs_file_read(file, bitmap, header->height * row_size);
+        vfs_file_read(file, header->height * row_size, bitmap);
 
         for (size_t y = 0; y < header->height; y++) {
             for (size_t x = 0; x < header->width; x++) {
@@ -96,11 +96,11 @@ static int load_glyphs(struct vfs_file *file,
     return 0;
 }
 
-static int correct_glyph_table(struct vfs_file *file, struct font *font_out) {
+static int correct_glyph_table(VfsFile *file, struct font *font_out) {
     for (size_t glyph_index = 0; glyph_index < font_out->num_glyphs;
             glyph_index++) {
         uint8_t length;
-        vfs_file_read(file, &length, 1);
+        vfs_file_read(file, 1, &length);
 
         if (vfs_is_eof(file)) {
             break;
@@ -112,7 +112,7 @@ static int correct_glyph_table(struct vfs_file *file, struct font *font_out) {
 
         for (uint8_t i = 0; i < length; ++i) {
             uint32_t unicode_code_point;
-            if (vfs_file_read(file, &unicode_code_point, sizeof(uint32_t))
+            if (vfs_file_read(file, sizeof(uint32_t), &unicode_code_point)
                     != 1) {
                 break;
             }
@@ -132,11 +132,11 @@ static int correct_glyph_table(struct vfs_file *file, struct font *font_out) {
 int load_font_psf2(char const *path, struct font *font_out) {
     int retval = 0;
 
-    struct vfs_file file;
+    VfsFile file;
     vfs_open(path, VFS_OPEN_MODE_READ, &file);
 
     struct psf2_header header;
-    vfs_file_read(&file, &header, sizeof(header));
+    vfs_file_read(&file, sizeof(header), &header);
 
     if (*(uint32_t *)header.magic != PSF2_MAGIC) {
         retval = -ERROR_INVALID_FORMAT;

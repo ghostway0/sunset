@@ -222,7 +222,7 @@ void test_obj_model_parse_empty(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -247,7 +247,7 @@ void test_obj_model_parse_vertices(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -268,7 +268,7 @@ void test_obj_model_parse_normals(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -289,7 +289,7 @@ void test_obj_model_parse_texcoords(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -312,7 +312,7 @@ void test_obj_model_parse_faces(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -332,7 +332,7 @@ void test_obj_model_parse_material_lib(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -350,7 +350,7 @@ void test_obj_model_parse_object_name(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -371,7 +371,7 @@ void test_obj_model_parse_invalid_faces(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -388,7 +388,7 @@ void test_obj_model_parse_partial_faces(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -418,7 +418,7 @@ void test_mtl_file_parse_empty(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
@@ -442,7 +442,7 @@ void test_mtl_file_parse_single_material(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
@@ -473,7 +473,7 @@ void test_mtl_file_parse_multiple_materials(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
@@ -496,7 +496,7 @@ void test_mtl_file_parse_emission_map(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
@@ -517,7 +517,7 @@ void test_mtl_file_parse_invalid_format(void **state) {
 
     struct byte_stream stream;
     byte_stream_from_data(str, sizeof(str) - 1, &stream);
-    struct reader reader = {.ctx = &stream, .read = byte_stream_read};
+    Reader reader = {.ctx = &stream, .read = byte_stream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
