@@ -5,6 +5,7 @@
 #include <cglm/vec3.h>
 #include <stdint.h>
 
+#include "sunset/ecs.h"
 #include "sunset/events.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
@@ -36,7 +37,7 @@ enum physics_flags {
     PHYSICS_FLAGS_APPLY_GRAVITY = sunset_flag(0),
 };
 
-struct physics_object {
+struct PhysicsObject {
     enum physics_object_type type;
 
     vec3 velocity;
@@ -45,7 +46,9 @@ struct physics_object {
     float mass;
 
     struct physics_material material;
-};
+} typedef PhysicsObject;
+
+DECLARE_COMPONENT_ID(PhysicsObject);
 
 struct collision_pair {
     struct object *a;

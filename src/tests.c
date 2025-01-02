@@ -524,74 +524,74 @@ void test_mtl_file_parse_invalid_format(void **state) {
     assert_int_equal(err, ERROR_INVALID_FORMAT);
 }
 
-// TODO: I guess typedefs might be necessary so this wouldn't become an
-// inconsistency
-struct position {
+struct Position {
     float x, y;
-} typedef position;
+} typedef Position;
 
-struct velocity {
+struct Velocity {
     float x, y;
-} typedef velocity;
+} typedef Velocity;
 
-struct health {
+struct Health {
     int value;
-} typedef health;
+} typedef Health;
 
 void test_ecs(void **state) {
     unused(state);
 
-    struct ecs ecs;
+    World ecs;
     ecs_init(&ecs);
 
-    REGISTER_COMPONENT(&ecs, position);
-    REGISTER_COMPONENT(&ecs, velocity);
-    REGISTER_COMPONENT(&ecs, health);
+    REGISTER_COMPONENT(&ecs, Position);
+    REGISTER_COMPONENT(&ecs, Velocity);
+    REGISTER_COMPONENT(&ecs, Health);
 
-    struct entity_builder builder;
+    EntityBuilder builder;
     entity_builder_init(&builder, &ecs);
 
-    struct position pos = {1.0f, 2.0f};
-    entity_builder_add_component(&builder, COMPONENT_ID(position), &pos);
+    Position pos = {1.0f, 2.0f};
+    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos);
 
-    struct velocity vel = {0.1f, 0.2f};
-    entity_builder_add_component(&builder, COMPONENT_ID(velocity), &vel);
+    Velocity vel = {0.1f, 0.2f};
+    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel);
 
-    struct health hea = {100};
-    entity_builder_add_component(&builder, COMPONENT_ID(health), &hea);
+    Health hea = {100};
+    entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea);
 
     entity_builder_finish(&builder);
 
-    struct entity_builder builder2;
+    EntityBuilder builder2;
     entity_builder_init(&builder2, &ecs);
 
-    struct position pos2 = {3.0f, 4.0f};
-    entity_builder_add_component(&builder2, COMPONENT_ID(position), &pos2);
+    Position pos2 = {3.0f, 4.0f};
+    entity_builder_add_component(&builder2, COMPONENT_ID(Position), &pos2);
 
-    struct velocity vel2 = {0.1f, 0.3f};
-    entity_builder_add_component(&builder2, COMPONENT_ID(velocity), &vel2);
+    Velocity vel2 = {0.1f, 0.3f};
+    entity_builder_add_component(&builder2, COMPONENT_ID(Velocity), &vel2);
 
-    struct health hea2 = {50};
-    entity_builder_add_component(&builder2, COMPONENT_ID(health), &hea2);
+    Health hea2 = {50};
+    entity_builder_add_component(&builder2, COMPONENT_ID(Health), &hea2);
 
     entity_builder_finish(&builder2);
 
-    struct bitmap system_mask;
+    Bitmap system_mask;
     bitmap_init_empty(MAX_NUM_COMPONENTS, &system_mask);
-    bitmap_set(&system_mask, COMPONENT_ID(position));
-    bitmap_set(&system_mask, COMPONENT_ID(velocity));
+    bitmap_set(&system_mask, COMPONENT_ID(Position));
+    bitmap_set(&system_mask, COMPONENT_ID(Velocity));
 
-    struct ecs_iterator it = ecs_iterator_create(&ecs, system_mask);
+    WorldIterator it = ecs_iterator_create(&ecs, system_mask);
     while (ecs_iterator_is_valid(&it)) {
-        struct position *p = (struct position *)ecs_iterator_get_component(
-                &it, COMPONENT_ID(position));
-        struct velocity *v = (struct velocity *)ecs_iterator_get_component(
-                &it, COMPONENT_ID(velocity));
+        Position *p = (Position *)ecs_iterator_get_component(
+                &it, COMPONENT_ID(Position));
+        Velocity *v = (Velocity *)ecs_iterator_get_component(
+                &it, COMPONENT_ID(Velocity));
+
         printf("Entity with position: (%f, %f) and velocity: (%f, %f)\n",
                 p->x,
                 p->y,
                 v->x,
                 v->y);
+
         ecs_iterator_advance(&it);
     }
 

@@ -127,13 +127,18 @@ void physics_init(struct physics *physics) {
 // NOTE: this is not the most accurate. you can see that when two objects
 // are constrained they are moving at slightly different speeds than if
 // they were not constrained together.
-static void apply_constraint_forces(struct physics const *physics, float dt) {
+static void apply_constraint_forces(
+        struct physics const *physics, World *ecs, float dt) {
     for (size_t i = 0; i < vector_size(physics->constraints); i++) {
         struct constraint constraint = physics->constraints[i];
-        struct object *a = constraint.a;
-        struct object *b = constraint.b;
+
+        struct physics_object *a_attr = ecs_get_component(
+                ecs, constraint.a->entity_id, COMPONENT_ID(PhysicsObject));
+        struct physics_object *b_attr = ecs_get_component(
+                ecs, constraint.b->entity_id, COMPONENT_ID(PhysicsObject));
 
         vec3 direction;
+
         glm_vec3_sub(b->transform.position, a->transform.position, direction);
 
         float current_distance = glm_vec3_norm(direction);
@@ -202,9 +207,14 @@ static void calculate_collision_normal(
     glm_vec3_normalize(collision_normal_out);
 }
 
-static void apply_collision_impulse(struct ecs *ecs, struct object *a, struct object *b) {
-    struct physics_object *a_attr = &a->physics;
-    struct physics_object *b_attr = &b->physics;
+DECLARE_COMPONENT_ID(physics_object);
+
+static void apply_collision_impulse(
+        World *ecs, struct object *a, struct object *b) {
+    struct physics_object *a_attr =
+            ecs_get_component(ecs, a->entity_id, COMPONENT_ID(physics_object));
+    struct physics_object *b_attr =
+            ecs_get_component(ecs, b->entity_id, COMPONENT_ID(physics_object));
 
     assert(a_attr->type == PHYSICS_OBJECT_REGULAR
             || b_attr->type == PHYSICS_OBJECT_REGULAR);

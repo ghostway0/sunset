@@ -8,7 +8,6 @@
 #include <cglm/types.h>
 #include <log.h>
 
-#include "sunset/bitmap.h"
 #include "sunset/commands.h"
 #include "sunset/config.h"
 #include "sunset/errors.h"

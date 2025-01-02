@@ -14,9 +14,18 @@
 #include "sunset/physics.h"
 
 struct transform {
+    enum physics_object_type type;
+    struct physics_material material;
+
+    struct aabb bounding_box;
     vec3 position;
     vec3 rotation;
     float scale;
+
+    vec3 acceleration;
+    vec3 velocity;
+    float damping;
+    float mass;
 };
 
 struct object;
@@ -52,6 +61,7 @@ struct controller {
 typedef void (*move_callback)(struct object *, vec3 direction);
 
 struct object {
+    uint32_t entity_id;
     struct aabb bounding_box;
     struct transform transform;
     uint32_t mesh_id;
