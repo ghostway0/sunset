@@ -88,7 +88,8 @@ int load_image_file(char const *path, struct image *image_out) {
 void show_image_grayscale(struct image const *image) {
     for (size_t y = 0; y < image->h; y++) {
         for (size_t x = 0; x < image->w; x++) {
-            uint8_t pixel = color_to_grayscale(image->pixels[y * image->w + x]);
+            uint8_t pixel =
+                    color_to_grayscale(image->pixels[y * image->w + x]);
             printf("%c", " .:-=+*#"[pixel / 32]);
         }
         printf("\n");
@@ -97,10 +98,13 @@ void show_image_grayscale(struct image const *image) {
 
 void show_image_grayscale_at(struct image const *image, struct point pos) {
     for (size_t y = 0; y < image->h; y++) {
-        printf("\033[%u;%uH", (uint32_t)pos.y + (uint32_t)y, (uint32_t)pos.x);
+        printf("\033[%u;%uH",
+                (uint32_t)pos.y + (uint32_t)y,
+                (uint32_t)pos.x);
 
         for (size_t x = 0; x < image->w; x++) {
-            uint8_t pixel = color_to_grayscale(image->pixels[y * image->w + x]);
+            uint8_t pixel =
+                    color_to_grayscale(image->pixels[y * image->w + x]);
             printf("%c", " .:-=+*#"[pixel / 32]);
         }
         printf("\n");

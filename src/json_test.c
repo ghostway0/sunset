@@ -39,7 +39,8 @@ void test_json_parse_number(void **state) {
     int err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, 0);
     assert_int_equal(value.type, JSON_OBJECT);
-    assert_float_equal(value.data.object[0].value.data.number, 42.5, EPSILON);
+    assert_float_equal(
+            value.data.object[0].value.data.number, 42.5, EPSILON);
 
     json_value_destroy(&value);
 }
@@ -72,15 +73,16 @@ void test_json_parse_array(void **state) {
     assert_int_equal(value.data.object[0].value.type, JSON_ARRAY);
     assert_int_equal(vector_size(value.data.object[0].value.data.array), 4);
 
-    assert_int_equal(
-            value.data.object[0].value.data.array[0].type, JSON_WHOLE_NUMBER);
+    assert_int_equal(value.data.object[0].value.data.array[0].type,
+            JSON_WHOLE_NUMBER);
     assert_int_equal(
             value.data.object[0].value.data.array[0].data.whole_number, 1);
 
     assert_int_equal(
             value.data.object[0].value.data.array[1].type, JSON_NUMBER);
-    assert_float_equal(
-            value.data.object[0].value.data.array[1].data.number, 2.0, EPSILON);
+    assert_float_equal(value.data.object[0].value.data.array[1].data.number,
+            2.0,
+            EPSILON);
     assert_int_equal(
             value.data.object[0].value.data.array[2].type, JSON_BOOLEAN);
     assert_true(value.data.object[0].value.data.array[2].data.boolean);
@@ -226,8 +228,8 @@ void test_json_value_print(void **state) {
     vfs_file_seek(&temp_file, VFS_SEEK_SET, 0);
 
     assert_int_equal(vfs_file_size(&temp_file), strlen(json));
-    assert_int_equal(
-            vfs_file_read(&temp_file, strlen(json), test_buffer), strlen(json));
+    assert_int_equal(vfs_file_read(&temp_file, strlen(json), test_buffer),
+            strlen(json));
 
     assert_string_equal(test_buffer, "{\"key\": {\"key2\": \"value2\"}}");
 

@@ -154,7 +154,8 @@ void test_base64_invalid_input(void **state) {
 //
 //         if (position_within_rect(object->position, new_bounds)) {
 //             in_new_bounds++;
-//             log_trace("object %zu: " vec3_format " in chunk " rect_format,
+//             log_trace("object %zu: " vec3_format " in chunk "
+//             rect_format,
 //                     i,
 //                     vec3_args(object->position),
 //                     rect_args(new_bounds));
@@ -209,7 +210,8 @@ void test_base64_invalid_input(void **state) {
 //
 //     for (size_t i = 0; i < 10; ++i) {
 //         struct object *object = objects + i;
-//         log_info("object %zu: " vec3_format, i, vec3_args(object->position));
+//         log_info("object %zu: " vec3_format, i,
+//         vec3_args(object->position));
 //     }
 //
 //     quad_tree_destroy(&tree);
@@ -592,13 +594,13 @@ void test_ecs(void **state) {
 
         assert_float_equal(p->x, 1.0f, EPSILON);
         assert_float_equal(p->y, 2.0f, EPSILON);
-        
+
         assert_float_equal(v->x, 0.1f, EPSILON);
         assert_float_equal(v->y, 0.2f, EPSILON);
     }
 
     ecs_iterator_advance(&it);
-    
+
     {
         Position *p = (Position *)ecs_iterator_get_component(
                 &it, COMPONENT_ID(Position));
@@ -607,13 +609,13 @@ void test_ecs(void **state) {
 
         assert_float_equal(p->x, 3.0f, EPSILON);
         assert_float_equal(p->y, 4.0f, EPSILON);
-        
+
         assert_float_equal(v->x, 0.1f, EPSILON);
         assert_float_equal(v->y, 0.3f, EPSILON);
     }
 
     ecs_iterator_advance(&it);
-    
+
     {
         Position *p = (Position *)ecs_iterator_get_component(
                 &it, COMPONENT_ID(Position));
@@ -622,7 +624,7 @@ void test_ecs(void **state) {
 
         assert_float_equal(p->x, 4.0f, EPSILON);
         assert_float_equal(p->y, 5.0f, EPSILON);
-        
+
         assert_float_equal(v->x, 0.0f, EPSILON);
         assert_float_equal(v->y, 0.0f, EPSILON);
     }

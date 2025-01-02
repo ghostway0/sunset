@@ -58,7 +58,8 @@ const struct program_config default_program_config = {
                 "#version 330 core\n"
                 "out vec4 FragColor;\n"
                 "void main() {\n"
-                "    float ndc = (2.0 * gl_FragCoord.z - gl_DepthRange.near - "
+                "    float ndc = (2.0 * gl_FragCoord.z - "
+                "gl_DepthRange.near - "
                 "gl_DepthRange.far) / (gl_DepthRange.far - "
                 "gl_DepthRange.near);\n"
                 "    float clip = ndc / gl_FragCoord.w;\n"
@@ -105,7 +106,8 @@ const struct program_config instanced_textured_program_config = {
                 "uniform mat4 projection;\n"
                 "void main() {\n"
                 "    mat4 transform = transforms[gl_InstanceID];\n"
-                "    gl_Position = projection * view * transform * vec4(aPos, "
+                "    gl_Position = projection * view * transform * "
+                "vec4(aPos, "
                 "1.0);\n"
                 "    TexCoords = aTexCoords;\n"
                 "}\n",
@@ -280,8 +282,10 @@ static int setup_default_shaders(struct render_context *context) {
         return retval;
     }
 
-    if ((retval = add_preconfigured_shader(instanced_textured_program_config,
-                 &context->backend_programs[PROGRAM_DRAW_INSTANCED_MESH]))) {
+    if ((retval = add_preconfigured_shader(
+                 instanced_textured_program_config,
+                 &context->backend_programs
+                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -320,7 +324,8 @@ static int setup_mouse(struct render_context *context) {
     return 0;
 }
 
-int backend_setup(struct render_context *context, struct render_config config) {
+int backend_setup(
+        struct render_context *context, struct render_config config) {
     int retval = 0;
 
     if (!glfwInit()) {
@@ -396,7 +401,8 @@ failure:
 //     // return offset into atlas
 // }
 //
-// int compile_texture_into(struct image const *texture, struct atlas *atlas) {
+// int compile_texture_into(struct image const *texture, struct atlas
+// *atlas) {
 //     ptrdiff_t offset = get_atlas_region(atlas, texture->h, texture->w);
 //
 //     // write into atlas at offset
@@ -411,8 +417,8 @@ int backend_register_texture(
     todo();
 }
 
-/// first_id_out gets set the id of the first texture that has been registered
-/// in this atlas. the ids are guaranteed to be in-order.
+/// first_id_out gets set the id of the first texture that has been
+/// registered in this atlas. the ids are guaranteed to be in-order.
 int backend_register_texture_atlas(struct render_context *context,
         struct image const *atlas_image,
         struct rect *bounds,
@@ -568,8 +574,10 @@ static void upload_default_uniforms(
             program, "model", &context->frame_cache.model_matrix, 1);
     program_set_uniform_mat4(
             program, "view", &context->frame_cache.view_matrix, 1);
-    program_set_uniform_mat4(
-            program, "projection", &context->frame_cache.projection_matrix, 1);
+    program_set_uniform_mat4(program,
+            "projection",
+            &context->frame_cache.projection_matrix,
+            1);
 
     // (?) bind textures
 }
@@ -594,10 +602,13 @@ static void draw_instanced_mesh(struct render_context *context,
 
     program_set_uniform_mat4(
             program, "view", &context->frame_cache.view_matrix, 1);
-    program_set_uniform_mat4(
-            program, "projection", &context->frame_cache.projection_matrix, 1);
+    program_set_uniform_mat4(program,
+            "projection",
+            &context->frame_cache.projection_matrix,
+            1);
 
-    program_set_uniform_mat4(program, "transforms", transforms, num_transforms);
+    program_set_uniform_mat4(
+            program, "transforms", transforms, num_transforms);
 
     program_set_uniform_int(program, "sampler", 0);
     glBindTexture(GL_TEXTURE_2D, context->atlases[atlas_id].buffer);
@@ -647,7 +658,8 @@ static int run_mesh_command(
     struct frame_cache *cache = &context->frame_cache;
 
     if (!command.instanced) {
-        struct program program = context->backend_programs[PROGRAM_DRAW_MESH];
+        struct program program =
+                context->backend_programs[PROGRAM_DRAW_MESH];
         struct compiled_mesh *mesh = &context->meshes[command.mesh_id];
 
         glm_mat4_copy(command.transform, cache->model_matrix);
@@ -671,7 +683,8 @@ static int run_mesh_command(
             return ERROR_OUT_OF_BOUNDS;
         }
 
-        struct compiled_texture texture = context->textures[command.texture_id];
+        struct compiled_texture texture =
+                context->textures[command.texture_id];
 
         if (!map_get(cache->instancing_buffers,
                     command.mesh_id,
@@ -686,9 +699,10 @@ static int run_mesh_command(
                     compare_instancing_buffers);
         }
 
-        struct instancing_buffer *buffer = map_get(cache->instancing_buffers,
-                command.mesh_id,
-                compare_instancing_buffers);
+        struct instancing_buffer *buffer =
+                map_get(cache->instancing_buffers,
+                        command.mesh_id,
+                        compare_instancing_buffers);
 
         assert(texture.atlas_id == buffer->atlas_id &&
                "it is currently required that anything that gets "
@@ -709,7 +723,8 @@ int backend_start_frame(
 }
 
 int backend_flush(struct render_context *context) {
-    for (size_t i = 0; i < vector_size(context->frame_cache.instancing_buffers);
+    for (size_t i = 0;
+            i < vector_size(context->frame_cache.instancing_buffers);
             ++i) {
         instancing_buffer_flush(
                 context, &context->frame_cache.instancing_buffers[i]);
@@ -733,7 +748,8 @@ static int run_text_command(
     glGenBuffers(1, &vbo);
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glBufferData(
+            GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
 
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
     glEnableVertexAttribArray(0);
@@ -814,11 +830,13 @@ static void run_rect_command(
     float a = color.a / 255.0f;
 
     float x1 = ((float)rect.x / (float)context->screen_width) * 2.0f - 1.0f;
-    float y1 = ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
-    float x2 =
-            ((float)(rect.x + rect.width) / (float)context->screen_width) * 2.0f
+    float y1 =
+            ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
+    float x2 = ((float)(rect.x + rect.width) / (float)context->screen_width)
+                    * 2.0f
             - 1.0f;
-    float y2 = ((float)(rect.y + rect.height) / (float)context->screen_height)
+    float y2 =
+            ((float)(rect.y + rect.height) / (float)context->screen_height)
                     * 2.0f
             - 1.0f;
 
@@ -843,7 +861,8 @@ static void run_rect_command(
     GLuint vbo;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(
+            GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // TODO: this should be automated somehow
     glVertexAttribPointer(
@@ -869,11 +888,13 @@ static void run_fill_rect_command(struct render_context *context,
     float a = color.a / 255.0f;
 
     float x1 = ((float)rect.x / (float)context->screen_width) * 2.0f - 1.0f;
-    float y1 = ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
-    float x2 =
-            ((float)(rect.x + rect.width) / (float)context->screen_width) * 2.0f
+    float y1 =
+            ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
+    float x2 = ((float)(rect.x + rect.width) / (float)context->screen_width)
+                    * 2.0f
             - 1.0f;
-    float y2 = ((float)(rect.y + rect.height) / (float)context->screen_height)
+    float y2 =
+            ((float)(rect.y + rect.height) / (float)context->screen_height)
                     * 2.0f
             - 1.0f;
 
@@ -896,7 +917,8 @@ static void run_fill_rect_command(struct render_context *context,
     GLuint vbo;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(
+            GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(
             0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);

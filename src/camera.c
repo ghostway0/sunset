@@ -68,7 +68,8 @@ void camera_rotate_absolute(
     calculate_view_matrix(camera, camera->view_matrix);
 }
 
-void camera_set_rotation(struct camera *camera, float x_angle, float y_angle) {
+void camera_set_rotation(
+        struct camera *camera, float x_angle, float y_angle) {
     camera->yaw = x_angle;
     camera->pitch = y_angle;
 
@@ -97,7 +98,8 @@ void camera_set_rotation(struct camera *camera, float x_angle, float y_angle) {
     calculate_view_matrix(camera, camera->view_matrix);
 }
 
-void camera_rotate_scaled(struct camera *camera, float x_angle, float y_angle) {
+void camera_rotate_scaled(
+        struct camera *camera, float x_angle, float y_angle) {
     camera_rotate_absolute(camera,
             x_angle * camera->sensitivity,
             y_angle * camera->sensitivity);
@@ -132,8 +134,9 @@ bool camera_sphere_in_frustum(
     mat4 view_projection;
     vec4 clip;
 
-    glm_mat4_mul(
-            camera->projection_matrix, camera->view_matrix, view_projection);
+    glm_mat4_mul(camera->projection_matrix,
+            camera->view_matrix,
+            view_projection);
     glm_mat4_mulv(view_projection, sphere_center, clip);
 
     return within(clip[0], -clip[3] - radius, clip[3] + radius)
@@ -146,8 +149,9 @@ bool camera_point_in_frustum(struct camera *camera, vec3 point) {
     mat4 view_projection;
     vec4 clip;
 
-    glm_mat4_mul(
-            camera->projection_matrix, camera->view_matrix, view_projection);
+    glm_mat4_mul(camera->projection_matrix,
+            camera->view_matrix,
+            view_projection);
     glm_mat4_mulv(view_projection, quat_point, clip);
 
     return within(clip[0], -clip[3], clip[3])

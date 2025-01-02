@@ -67,7 +67,7 @@ void *octree_iterator_next(struct octree_iterator *iterator);
 
 void octree_const_iterator_destroy(struct const_octree_iterator *iterator);
 
-void octree_const_iterator_init(
-        struct octree const *tree, struct const_octree_iterator *iterator_out);
+void octree_const_iterator_init(struct octree const *tree,
+        struct const_octree_iterator *iterator_out);
 
 void *octree_const_iterator_next(struct const_octree_iterator *iterator);

@@ -15,10 +15,10 @@
 #define vec4_format "vec4(%f, %f, %f, %f)"
 #define vec4_args(v) v[0], v[1], v[2], v[3]
 
-#define mat4_format                                                            \
-    "mat4(\n\t" vec4_format ",\n\t" vec4_format ",\n\t" vec4_format            \
+#define mat4_format                                                        \
+    "mat4(\n\t" vec4_format ",\n\t" vec4_format ",\n\t" vec4_format        \
     ",\n\t" vec4_format ",\n)"
-#define mat4_fmt_args(m)                                                       \
+#define mat4_fmt_args(m)                                                   \
     vec4_args(m[0]), vec4_args(m[1]), vec4_args(m[2]), vec4_args(m[3])
 
 struct point {
@@ -90,4 +90,5 @@ void aabb_extend_to(struct aabb *aabb, vec3 point);
 #define aabb_format "aabb(min: " vec3_format ", max: " vec3_format ")"
 #define aabb_args(b) vec3_args(b.min), vec3_args(b.max)
 
-void aabb_closest_point(struct aabb const *aabb, vec3 point, vec3 closest_out);
+void aabb_closest_point(
+        struct aabb const *aabb, vec3 point, vec3 closest_out);

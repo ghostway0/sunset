@@ -11,17 +11,17 @@
 
 #ifdef __APPLE__
 
-#define sunset_qsort(base, nmemb, size, arg, compar)                           \
+#define sunset_qsort(base, nmemb, size, arg, compar)                       \
     qsort_r(base, nmemb, size, arg, compar)
 
 #elif defined(__linux__)
 
-#define sunset_qsort(base, nmemb, size, arg, compar)                           \
+#define sunset_qsort(base, nmemb, size, arg, compar)                       \
     qsort_r(base, nmemb, size, compar, arg)
 
 #endif
 
-#define container_of(p, T, a)                                                  \
+#define container_of(p, T, a)                                              \
     ((T *)((uintptr_t)(p) - (uintptr_t)(&((T *)(0))->a)))
 
 struct timespec get_time(void);
@@ -46,17 +46,17 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 
 #define todo() assert(false && "This is not implemented yet")
 
-#define sunset_memory(f, ...)                                                  \
-    ({                                                                         \
-        void *__new_ptr = f(__VA_ARGS__);                                      \
-        if (!__new_ptr) {                                                      \
-            fprintf(stderr,                                                    \
-                    "%s:%d out of memory... exiting",                          \
-                    __FILE__,                                                  \
-                    __LINE__);                                                 \
-            exit(1);                                                           \
-        }                                                                      \
-        __new_ptr;                                                             \
+#define sunset_memory(f, ...)                                              \
+    ({                                                                     \
+        void *__new_ptr = f(__VA_ARGS__);                                  \
+        if (!__new_ptr) {                                                  \
+            fprintf(stderr,                                                \
+                    "%s:%d out of memory... exiting",                      \
+                    __FILE__,                                              \
+                    __LINE__);                                             \
+            exit(1);                                                       \
+        }                                                                  \
+        __new_ptr;                                                         \
     })
 
 #define sunset_malloc(size) sunset_memory(malloc, size);
@@ -67,18 +67,18 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 
 #define sunset_strdup(ptr) sunset_memory(strdup, ptr);
 
-#define swap_if(predicate, a, b)                                               \
-    a = (predicate) ? (b) : (a);                                               \
+#define swap_if(predicate, a, b)                                           \
+    a = (predicate) ? (b) : (a);                                           \
     b = (predicate) ? (a) : (b);
 
 #define SIZE_FAIL ((size_t) - 1)
 
-#define one_matches(value, ...)                                                \
-    _one_matches(value,                                                        \
-            (int[]){__VA_ARGS__},                                              \
+#define one_matches(value, ...)                                            \
+    _one_matches(value,                                                    \
+            (int[]){__VA_ARGS__},                                          \
             sizeof((int[]){__VA_ARGS__}) / sizeof(int))
 
-#define all_match(...)                                                         \
+#define all_match(...)                                                     \
     _match((int[]){__VA_ARGS__}, sizeof((int[]){__VA_ARGS__}) / sizeof(int))
 
 static inline bool _one_matches(int value, int arr[], size_t len) {

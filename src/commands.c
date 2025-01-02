@@ -41,7 +41,8 @@ void command_filled_arc_init(struct command *command,
         float a0,
         float a1) {
     command->type = COMMAND_FILLED_ARC;
-    command->data.filled_arc = (struct command_filled_arc){center, r, a0, a1};
+    command->data.filled_arc =
+            (struct command_filled_arc){center, r, a0, a1};
 }
 
 void command_text_init(struct command *command,
@@ -55,8 +56,9 @@ void command_text_init(struct command *command,
             (struct command_text){start, font, text, text_len, alignment};
 }
 
-void command_image_init(
-        struct command *command, struct point pos, struct image const *image) {
+void command_image_init(struct command *command,
+        struct point pos,
+        struct image const *image) {
     command->type = COMMAND_IMAGE;
     command->data.image = (struct command_image){pos, *image};
 }
@@ -72,13 +74,13 @@ void command_buffer_destroy(struct command_buffer *command_buffer) {
     ring_buffer_destroy(&command_buffer->ring_buffer);
 }
 
-void command_buffer_append(
-        struct command_buffer *command_buffer, struct command const *command) {
+void command_buffer_append(struct command_buffer *command_buffer,
+        struct command const *command) {
     ring_buffer_append(&command_buffer->ring_buffer, command);
 }
 
-int command_buffer_pop(
-        struct command_buffer *command_buffer, struct command *command_out) {
+int command_buffer_pop(struct command_buffer *command_buffer,
+        struct command *command_out) {
     return ring_buffer_pop(&command_buffer->ring_buffer, command_out);
 }
 
@@ -155,7 +157,8 @@ void command_buffer_add_image(struct command_buffer *command_buffer,
     command_buffer_append(command_buffer, &command);
 }
 
-void command_buffer_add_custom_command(struct command_buffer *command_buffer,
+void command_buffer_add_custom_command(
+        struct command_buffer *command_buffer,
         uint8_t command_type,
         uint8_t seq_num,
         void *data) {

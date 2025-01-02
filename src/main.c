@@ -201,7 +201,8 @@ int main() {
     // };
     //
     // aabb_translate(&player.bounding_box, player.transform.position);
-    // aabb_translate(&player.bounding_box, camera_object.transform.position);
+    // aabb_translate(&player.bounding_box,
+    // camera_object.transform.position);
     //
     // player.children = malloc(sizeof(struct object *));
     // player.children[0] = &camera_object;
@@ -282,7 +283,8 @@ int main() {
     // };
     //
     // aabb_translate(
-    //         &ground_object.bounding_box, ground_object.transform.position);
+    //         &ground_object.bounding_box,
+    //         ground_object.transform.position);
 
     // cleanup:
     return retval;

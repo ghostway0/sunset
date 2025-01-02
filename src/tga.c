@@ -47,8 +47,8 @@ int fill_color_map(uint8_t const *data,
         uint8_t r = data[i * pixel_size_bytes + 2];
         uint8_t g = data[i * pixel_size_bytes + 1];
         uint8_t b = data[i * pixel_size_bytes + 0];
-        uint8_t a =
-                pixel_size_bytes == 4 ? data[i * pixel_size_bytes + 3] : 255;
+        uint8_t a = pixel_size_bytes == 4 ? data[i * pixel_size_bytes + 3]
+                                          : 255;
 
         color_map_out[i] = (struct color){r, g, b, a};
     }
@@ -144,7 +144,8 @@ int tga_load_image(Reader *reader, struct image *image_out) {
         // Read and decompress RLE data
         vector(uint8_t) rle_data;
         vector_init(rle_data);
-        reader_read_to_vec(reader, image_size * pixel_size_bytes, &rle_data);
+        reader_read_to_vec(
+                reader, image_size * pixel_size_bytes, &rle_data);
 
         if ((retval = decompress_rle(rle_data,
                      image_size * pixel_size_bytes,

@@ -86,7 +86,8 @@ static int parse_face(char const *str,
     while ((token = strsep(&duped_str, " ")) != NULL) {
         struct face_element current_face;
 
-        if ((retval = parse_face_element(token, vertex_count, &current_face))) {
+        if ((retval = parse_face_element(
+                     token, vertex_count, &current_face))) {
             break;
         }
 
@@ -177,7 +178,8 @@ int obj_model_parse(Reader *reader, struct obj_model *model_out) {
             vector_append_copy(model_out->normals, normal);
         } else if (strncmp(line, "vt ", 3) == 0) {
             vec2 texcoord;
-            retval = sscanf(line + 3, "%f %f", &texcoord[0], &texcoord[1]) == 2
+            retval = sscanf(line + 3, "%f %f", &texcoord[0], &texcoord[1])
+                            == 2
                     ? 0
                     : ERROR_INVALID_FORMAT;
             vector_append_copy(model_out->texcoords, texcoord);
@@ -193,11 +195,14 @@ int obj_model_parse(Reader *reader, struct obj_model *model_out) {
         } else if (strncmp(line, "mtllib ", 7) == 0) {
             assert(model_out->material_lib == NULL);
             model_out->material_lib = sunset_strdup(line + 7);
-        } else if (strncmp(line, "g ", 2) == 0 || strncmp(line, "o ", 2) == 0) {
+        } else if (strncmp(line, "g ", 2) == 0
+                || strncmp(line, "o ", 2) == 0) {
             assert(model_out->object_name == NULL);
             model_out->object_name = sunset_strdup(line + 2);
         } else {
-            log_warn("unsupported element at line %zu: %s", line_number, line);
+            log_warn("unsupported element at line %zu: %s",
+                    line_number,
+                    line);
         }
 
         if (retval) {

@@ -13,7 +13,7 @@
 #define DECLARE_COMPONENT_ID(type) extern size_t COMPONENT_ID(type)
 #define DEFINE_COMPONENT_ID(type, id) size_t COMPONENT_ID(type) = id
 
-#define REGISTER_COMPONENT(world, type)                                          \
+#define REGISTER_COMPONENT(world, type)                                    \
     DEFINE_COMPONENT_ID(type, ecs_register_component(world, sizeof(type)))
 
 struct Column {
@@ -43,11 +43,12 @@ struct World {
 
 size_t ecs_register_component(World *world, size_t component_size);
 
-void *ecs_get_component(World *world, uint32_t entity_id, uint32_t component_id);
+void *ecs_get_component(
+        World *world, uint32_t entity_id, uint32_t component_id);
 void ecs_remove_entity(World *world, uint32_t entity_id);
 
 struct WorldIterator {
-    const World *world;
+    World const *world;
     Bitmask mask;
     size_t current_archetype;
     size_t current_element;
@@ -57,12 +58,12 @@ void ecs_iterator_advance(WorldIterator *iterator);
 
 uint32_t ecs_add_entity(World *world, Bitmask mask);
 
-bool ecs_iterator_is_valid(const WorldIterator *iterator);
+bool ecs_iterator_is_valid(WorldIterator const *iterator);
 
 void *ecs_iterator_get_component(
         WorldIterator *iterator, size_t component_id);
 
-WorldIterator ecs_iterator_create(const World *world, Bitmask mask);
+WorldIterator ecs_iterator_create(World const *world, Bitmask mask);
 
 void ecs_iterator_destroy(WorldIterator *iterator);
 

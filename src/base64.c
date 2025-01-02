@@ -18,8 +18,8 @@ int base64_encode(uint8_t const *in, size_t in_size, vector(char) * out) {
 
         vector_append(*out, alphabet[(value >> 18) & 0x3F]);
         vector_append(*out, alphabet[(value >> 12) & 0x3F]);
-        vector_append(
-                *out, i + 1 < in_size ? alphabet[(value >> 6) & 0x3F] : '=');
+        vector_append(*out,
+                i + 1 < in_size ? alphabet[(value >> 6) & 0x3F] : '=');
         vector_append(*out, i + 2 < in_size ? alphabet[value & 0x3F] : '=');
     }
 

@@ -9,7 +9,8 @@
 
 void bitmask_init(size_t size, Bitmask *bitmask_out) {
     bitmask_out->num_chunks = (size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
-    bitmask_out->chunks = sunset_malloc(bitmask_out->num_chunks * sizeof(Limb));
+    bitmask_out->chunks =
+            sunset_malloc(bitmask_out->num_chunks * sizeof(Limb));
 }
 
 void bitmask_init_full(size_t size, Bitmask *bitmask_out) {
@@ -48,11 +49,13 @@ size_t bitmask_ctz(Bitmask const *bitmask) {
 
 void bitmask_resize(Bitmask *bitmask, size_t new_size) {
     bitmask->num_chunks = (new_size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
-    bitmask->chunks = realloc(bitmask->chunks, bitmask->num_chunks * sizeof(Limb));
+    bitmask->chunks =
+            realloc(bitmask->chunks, bitmask->num_chunks * sizeof(Limb));
 }
 
 bool bitmask_is_eql(Bitmask const *bitmask, Bitmask const *other) {
-    return memcmp(bitmask->chunks, other->chunks, bitmask->num_chunks * 8) == 0;
+    return memcmp(bitmask->chunks, other->chunks, bitmask->num_chunks * 8)
+            == 0;
 }
 
 bool bitmask_is_superset(Bitmask const *bitmask, Bitmask const *other) {

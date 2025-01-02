@@ -41,7 +41,8 @@ void camera_init(struct camera_state state,
 void camera_rotate_absolute(
         struct camera *camera, float x_angle, float y_angle);
 
-void camera_rotate_scaled(struct camera *camera, float x_angle, float y_angle);
+void camera_rotate_scaled(
+        struct camera *camera, float x_angle, float y_angle);
 
 void camera_move_absolute(struct camera *camera, vec3 direction);
 
@@ -55,4 +56,5 @@ bool camera_point_in_frustum(struct camera *camera, vec3 point);
 
 bool camera_box_within_frustum(struct camera *camera, struct aabb aabb);
 
-void camera_set_rotation(struct camera *camera, float x_angle, float y_angle);
+void camera_set_rotation(
+        struct camera *camera, float x_angle, float y_angle);

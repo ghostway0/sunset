@@ -48,7 +48,8 @@ void example_setup_physics(struct engine_context *engine_context) {
     event_queue_add_handler(&engine_context->event_queue,
             SYSTEM_EVENT_TICK,
             (struct event_handler){
-                    .local_context = physics, .handler_fn = physics_callback});
+                    .local_context = physics, .handler_fn =
+physics_callback});
 }
 
 void example_destroy_physics(void *local_context) {
@@ -82,7 +83,8 @@ int engine_run(struct game_config *game) {
             goto cleanup;
         }
 
-        if ((retval = scene_render(context.scene, &context.render_context))) {
+        if ((retval = scene_render(
+                     context.scene, &context.render_context))) {
             goto cleanup;
         }
 

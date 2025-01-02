@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sunset/vector.h"
 #include "sunset/bitmask.h"
 #include "sunset/vector.h"
 

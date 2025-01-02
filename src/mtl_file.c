@@ -87,7 +87,9 @@ int mtl_file_parse(Reader *reader, struct mtl_file *mtl_out) {
             assert(current_material != NULL);
             current_material->map_ke = sunset_strdup(line + 7);
         } else {
-            log_warn("unsupported element at line %zu: %s", line_number, line);
+            log_warn("unsupported element at line %zu: %s",
+                    line_number,
+                    line);
         }
 
         if (retval) {

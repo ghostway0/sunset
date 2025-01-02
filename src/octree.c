@@ -106,8 +106,8 @@ void *octree_get_mutable(struct octree *tree, vec3 position) {
         // if the node is not split, we can return the node. otherwise,
         // we need to keep going down the children
         if (current->data && !maybe_split_node(tree, current)) {
-            // the node can be changed by the user now, so we need to monitor it
-            // next query. this is probably not the best way
+            // the node can be changed by the user now, so we need to
+            // monitor it next query. this is probably not the best way
             current->dirty = true;
             return current->data;
         }
@@ -156,8 +156,8 @@ void *octree_query(struct octree const *tree, vec3 position) {
     return NULL;
 }
 
-void octree_const_iterator_init(
-        struct octree const *tree, struct const_octree_iterator *iterator_out) {
+void octree_const_iterator_init(struct octree const *tree,
+        struct const_octree_iterator *iterator_out) {
     assert(tree != NULL);
     assert(iterator_out != NULL);
 

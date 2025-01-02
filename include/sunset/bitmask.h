@@ -1,9 +1,9 @@
 #pragma once
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <limits.h>
 
 typedef uint64_t Limb;
 
@@ -34,8 +34,7 @@ void bitmask_resize(Bitmask *bitmask, size_t new_size);
 
 bool bitmask_is_eql(Bitmask const *bitmask, Bitmask const *other);
 
-bool bitmask_is_superset(
-        Bitmask const *bitmask, Bitmask const *other);
+bool bitmask_is_superset(Bitmask const *bitmask, Bitmask const *other);
 
 size_t bitmask_popcount(Bitmask const *bitmask);
 

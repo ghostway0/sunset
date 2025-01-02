@@ -8,22 +8,22 @@
 
 #include "sunset/json.h"
 
-#define bump(p)                                                                \
-    ({                                                                         \
-        if (p->cursor >= p->json_size) {                                       \
-            return -ERROR_INVALID_FORMAT;                                      \
-        }                                                                      \
-        p->buffer[p->cursor++];                                                \
+#define bump(p)                                                            \
+    ({                                                                     \
+        if (p->cursor >= p->json_size) {                                   \
+            return -ERROR_INVALID_FORMAT;                                  \
+        }                                                                  \
+        p->buffer[p->cursor++];                                            \
     })
 
-#define multi_bump(p, n)                                                       \
-    ({                                                                         \
-        size_t start = p->cursor;                                              \
-        p->cursor += n;                                                        \
-        if (p->cursor >= p->json_size) {                                       \
-            return -ERROR_INVALID_FORMAT;                                      \
-        }                                                                      \
-        p->buffer + start;                                                     \
+#define multi_bump(p, n)                                                   \
+    ({                                                                     \
+        size_t start = p->cursor;                                          \
+        p->cursor += n;                                                    \
+        if (p->cursor >= p->json_size) {                                   \
+            return -ERROR_INVALID_FORMAT;                                  \
+        }                                                                  \
+        p->buffer + start;                                                 \
     })
 
 struct parser {
@@ -258,8 +258,9 @@ static int parse_value(struct parser *p, struct json_value *value_out) {
     return -ERROR_INVALID_FORMAT;
 }
 
-int json_parse(
-        char const *input, size_t input_size, struct json_value *value_out) {
+int json_parse(char const *input,
+        size_t input_size,
+        struct json_value *value_out) {
     struct parser p = {
             .buffer = input,
             .json_size = input_size,

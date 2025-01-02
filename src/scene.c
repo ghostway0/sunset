@@ -90,7 +90,8 @@ void scene_init(
     scene_set_size(scene_out, bounds);
 }
 
-struct chunk *scene_get_chunk_for(struct scene const *scene, vec3 position) {
+struct chunk *scene_get_chunk_for(
+        struct scene const *scene, vec3 position) {
     return (struct chunk *)octree_query(&scene->octree, position);
 }
 
@@ -115,7 +116,8 @@ void scene_move_object(
     glm_vec3_add(object->transform.position, direction, new_position);
     aabb_translate(&object->bounding_box, direction);
 
-    move_object_chunk(scene, object, object->transform.position, new_position);
+    move_object_chunk(
+            scene, object, object->transform.position, new_position);
 
     glm_vec3_copy(new_position, object->transform.position);
 
@@ -129,8 +131,9 @@ void scene_move_object(
 }
 
 void object_rotate(struct object *object, vec3 rotation) {
-    glm_vec3_add(
-            object->transform.rotation, rotation, object->transform.rotation);
+    glm_vec3_add(object->transform.rotation,
+            rotation,
+            object->transform.rotation);
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_rotate(object->children[i], rotation);
@@ -160,7 +163,8 @@ void object_set_velocity(struct object *object, vec3 velocity) {
 }
 
 void object_scale_velocity(struct object *object, float factor) {
-    glm_vec3_scale(object->physics.velocity, factor, object->physics.velocity);
+    glm_vec3_scale(
+            object->physics.velocity, factor, object->physics.velocity);
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_scale_velocity(object->children[i], factor);
@@ -168,8 +172,9 @@ void object_scale_velocity(struct object *object, float factor) {
 }
 
 void object_add_velocity(struct object *object, vec3 acceleration) {
-    glm_vec3_add(
-            object->physics.velocity, acceleration, object->physics.velocity);
+    glm_vec3_add(object->physics.velocity,
+            acceleration,
+            object->physics.velocity);
 
     for (size_t i = 0; i < object->num_children; ++i) {
         object_add_velocity(object->children[i], acceleration);
@@ -184,7 +189,8 @@ void object_rotate_velocity(struct object *object, float angle, vec3 axis) {
     }
 }
 
-void object_calculate_model_matrix(struct object *object, mat4 model_matrix) {
+void object_calculate_model_matrix(
+        struct object *object, mat4 model_matrix) {
     glm_mat4_identity(model_matrix);
 
     glm_translate(model_matrix, object->transform.position);
@@ -205,18 +211,22 @@ static int render_object(
     mat4 model_matrix;
     object_calculate_model_matrix(object, model_matrix);
 
-    command_buffer_add_mesh(
-            command_buffer, object->mesh_id, object->texture_id, model_matrix);
+    command_buffer_add_mesh(command_buffer,
+            object->mesh_id,
+            object->texture_id,
+            model_matrix);
 
     return 0;
 }
 
-int scene_render(struct scene *scene, struct render_context *render_context) {
+int scene_render(
+        struct scene *scene, struct render_context *render_context) {
     // FIXME: doesn't make much sense - still need to think that through
     for (size_t i = 0; i < vector_size(scene->cameras); i++) {
         struct camera *camera = &scene->cameras[i];
 
-        struct chunk *chunk = octree_query(&scene->octree, camera->position);
+        struct chunk *chunk =
+                octree_query(&scene->octree, camera->position);
 
         for (size_t i = 0; i < vector_size(chunk->objects); ++i) {
             struct aabb object_bounds = chunk->objects[i]->bounding_box;
@@ -253,7 +263,8 @@ void scene_add_object(struct scene *scene, struct object object) {
 
     struct chunk *chunk =
             scene_get_mutable_chunk_for(scene, object.transform.position);
-    map_insert_ptr(chunk->objects, vector_back(scene->objects), compare_ptrs);
+    map_insert_ptr(
+            chunk->objects, vector_back(scene->objects), compare_ptrs);
 }
 
 int scene_load_config() {

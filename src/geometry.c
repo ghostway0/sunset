@@ -125,7 +125,8 @@ void aabb_extend_to(struct aabb *aabb, vec3 point) {
     }
 }
 
-void aabb_closest_point(struct aabb const *aabb, vec3 point, vec3 closest_out) {
+void aabb_closest_point(
+        struct aabb const *aabb, vec3 point, vec3 closest_out) {
     for (size_t i = 0; i < 3; i++) {
         closest_out[i] = fmax(aabb->min[i], fmin(point[i], aabb->max[i]));
     }

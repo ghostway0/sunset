@@ -138,13 +138,16 @@ void scene_destroy(struct scene *scene);
 
 struct chunk *scene_get_chunk_for(struct scene const *scene, vec3 position);
 
-int scene_render(struct scene *scene, struct render_context *render_context);
+int scene_render(
+        struct scene *scene, struct render_context *render_context);
 
 void scene_move_camera(
         struct scene *scene, size_t camera_index, vec3 direction);
 
-void scene_rotate_camera(
-        struct scene *scene, size_t camera_index, float x_angle, float y_angle);
+void scene_rotate_camera(struct scene *scene,
+        size_t camera_index,
+        float x_angle,
+        float y_angle);
 
 void scene_move_object_with_parent(
         struct scene *scene, struct object *object, vec3 direction);

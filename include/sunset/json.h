@@ -6,11 +6,11 @@
 
 #include "sunset/vector.h"
 
-#define json_assert_type(value, T)                                             \
-    do {                                                                       \
-        if ((value)->type != (T)) {                                            \
-            return -ERROR_INVALID_FORMAT;                                      \
-        }                                                                      \
+#define json_assert_type(value, T)                                         \
+    do {                                                                   \
+        if ((value)->type != (T)) {                                        \
+            return -ERROR_INVALID_FORMAT;                                  \
+        }                                                                  \
     } while (0)
 
 typedef struct VfsFile VfsFile;

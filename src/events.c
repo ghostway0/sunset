@@ -75,7 +75,8 @@ void event_queue_process_one(void *global_context,
         return;
     }
 
-    for (size_t j = 0; j < vector_size(queue->handlers[event.type_id]); j++) {
+    for (size_t j = 0; j < vector_size(queue->handlers[event.type_id]);
+            j++) {
         struct event_handler handler = queue->handlers[event.type_id][j];
 
         assert(handler.handler_fn != NULL);

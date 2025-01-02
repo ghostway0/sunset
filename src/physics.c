@@ -139,7 +139,8 @@ static void apply_constraint_forces(
 
         vec3 direction;
 
-        glm_vec3_sub(b->transform.position, a->transform.position, direction);
+        glm_vec3_sub(
+                b->transform.position, a->transform.position, direction);
 
         float current_distance = glm_vec3_norm(direction);
         float diff = current_distance - constraint.distance;
@@ -162,8 +163,9 @@ static void apply_constraint_forces(
         float velocity_correction = velocity_diff / 2.0f;
 
         vec3 velocity_correction_vector;
-        glm_vec3_scale(
-                velocity, velocity_correction * dt, velocity_correction_vector);
+        glm_vec3_scale(velocity,
+                velocity_correction * dt,
+                velocity_correction_vector);
 
         glm_vec3_add(a->physics.velocity,
                 velocity_correction_vector,
@@ -173,8 +175,9 @@ static void apply_constraint_forces(
                 b->physics.velocity);
 
         vec3 acceleration;
-        glm_vec3_sub(
-                b->physics.acceleration, a->physics.acceleration, acceleration);
+        glm_vec3_sub(b->physics.acceleration,
+                a->physics.acceleration,
+                acceleration);
 
         float acceleration_diff = glm_vec3_norm(acceleration);
         float acceleration_correction = acceleration_diff / 2.0f;
@@ -211,10 +214,10 @@ DECLARE_COMPONENT_ID(physics_object);
 
 static void apply_collision_impulse(
         World *ecs, struct object *a, struct object *b) {
-    struct physics_object *a_attr =
-            ecs_get_component(ecs, a->entity_id, COMPONENT_ID(physics_object));
-    struct physics_object *b_attr =
-            ecs_get_component(ecs, b->entity_id, COMPONENT_ID(physics_object));
+    struct physics_object *a_attr = ecs_get_component(
+            ecs, a->entity_id, COMPONENT_ID(physics_object));
+    struct physics_object *b_attr = ecs_get_component(
+            ecs, b->entity_id, COMPONENT_ID(physics_object));
 
     assert(a_attr->type == PHYSICS_OBJECT_REGULAR
             || b_attr->type == PHYSICS_OBJECT_REGULAR);
@@ -242,8 +245,10 @@ static void apply_collision_impulse(
                 / (m1 + m2);
 
         vec3 delta_v1, delta_v2;
-        glm_vec3_scale(collision_normal, new_v1_normal - v1_normal, delta_v1);
-        glm_vec3_scale(collision_normal, new_v2_normal - v2_normal, delta_v2);
+        glm_vec3_scale(
+                collision_normal, new_v1_normal - v1_normal, delta_v1);
+        glm_vec3_scale(
+                collision_normal, new_v2_normal - v2_normal, delta_v2);
 
         object_add_velocity(a, delta_v1);
         object_add_velocity(b, delta_v2);
@@ -356,7 +361,8 @@ static void generate_collision_event(struct event_queue *event_queue,
             && "collider objects shouldn't collide with each other.");
     // NOTE: does this one make sense?
     assert(!all_match(PHYSICS_OBJECT_INFINITE, a_attr.type, b_attr.type)
-            && "infinite-massed objects shouldn't collide with each other.");
+            && "infinite-massed objects shouldn't collide with each "
+               "other.");
 
     struct event event = {
             .type_id = SYSTEM_EVENT_COLLISION,
@@ -412,7 +418,8 @@ static bool physics_move_object_with_collisions(struct scene *scene,
                         .b = max(object, other),
                 };
 
-                map_insert(new_collisions_out, collision, compare_collisions);
+                map_insert(
+                        new_collisions_out, collision, compare_collisions);
             }
 
             found_collision = true;
@@ -498,7 +505,8 @@ void physics_add_constraint(struct physics *physics,
         struct object *a,
         struct object *b,
         float distance) {
-    vector_append(physics->constraints, ((struct constraint){a, b, distance}));
+    vector_append(
+            physics->constraints, ((struct constraint){a, b, distance}));
 }
 
 bool physics_move_object(struct scene *scene,
@@ -526,8 +534,11 @@ void physics_step(struct physics *physics,
         vec3 velocity_scaled;
         glm_vec3_scale(object->physics.velocity, dt, velocity_scaled);
 
-        physics_move_object_with_collisions(
-                scene, object, velocity_scaled, event_queue, new_collisions);
+        physics_move_object_with_collisions(scene,
+                object,
+                velocity_scaled,
+                event_queue,
+                new_collisions);
     }
 
     generate_collider_events(physics, event_queue, new_collisions);

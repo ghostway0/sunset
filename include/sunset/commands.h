@@ -134,8 +134,9 @@ void command_text_init(struct command *command,
         uint32_t text_len,
         enum window_point alignment);
 
-void command_image_init(
-        struct command *command, struct point pos, struct image const *image);
+void command_image_init(struct command *command,
+        struct point pos,
+        struct image const *image);
 
 void command_custom_init(struct command *command, struct program *program);
 
@@ -150,9 +151,9 @@ struct command_buffer_options {
     size_t buffer_size;
 };
 
-#define COMMAND_BUFFER_DEFAULT                                                 \
-    (struct command_buffer_options) {                                          \
-        .buffer_size = 1024                                                    \
+#define COMMAND_BUFFER_DEFAULT                                             \
+    (struct command_buffer_options) {                                      \
+        .buffer_size = 1024                                                \
     }
 
 struct command_buffer {
@@ -164,8 +165,8 @@ void command_buffer_init(struct command_buffer *command_buffer,
 
 void command_buffer_destroy(struct command_buffer *command_buffer);
 
-void command_buffer_append(
-        struct command_buffer *command_buffer, struct command const *command);
+void command_buffer_append(struct command_buffer *command_buffer,
+        struct command const *command);
 
 int command_buffer_pop(
         struct command_buffer *command_buffer, struct command *command_out);

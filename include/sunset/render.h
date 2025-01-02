@@ -32,7 +32,8 @@ struct render_config {
 //     struct scene *scene;
 // };
 //
-// // should this structure be split into user_context and engine_context? (also
+// // should this structure be split into user_context and engine_context?
+// (also
 // // maybe a struct ui) user_context would be given to callbacks and such.
 // struct context {
 //     // the backend should handle these

@@ -22,4 +22,5 @@ bool input_key_pressed(struct input_state const *state, int key);
 
 bool input_key_released(struct input_state const *state, int key);
 
-bool input_mouse_button_down(struct input_state const *state, uint8_t button);
+bool input_mouse_button_down(
+        struct input_state const *state, uint8_t button);
