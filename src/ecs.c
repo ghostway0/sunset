@@ -85,7 +85,7 @@ WorldIterator ecs_iterator_create(World const *world, Bitmask mask) {
 void ecs_iterator_advance(WorldIterator *iterator) {
     if (iterator->current_element + 1
             < iterator->world->archetypes[iterator->current_archetype]
-                    .num_elements) {
+                      .num_elements) {
         iterator->current_element++;
     } else {
         iterator->current_archetype++;
@@ -127,6 +127,8 @@ void archetype_init(World *world, Bitmask mask, Archetype *archetype_out) {
     archetype_out->num_elements = 0;
 
     vector_init(archetype_out->columns);
+    // a bitmask might be better if we expect many additions/deletions
+    vector_init(archetype_out->free_elems);
 
     for (size_t i = 0; i < ECS_MAX_COMPONENTS; i++) {
         if (bitmask_is_set(&mask, i)) {
@@ -150,7 +152,6 @@ uint32_t ecs_add_entity(World *world, Bitmask mask) {
             : vector_size(world->entity_ptrs);
 
     Archetype *archetype = get_archetype(world, &mask);
-    size_t element_index = 0;
 
     if (!archetype) {
         vector_resize(
@@ -159,8 +160,9 @@ uint32_t ecs_add_entity(World *world, Bitmask mask) {
         archetype_init(world, mask, archetype);
     }
 
-    element_index = archetype->num_elements;
-    archetype->num_elements++;
+    size_t element_index = vector_empty(archetype->free_elems)
+            ? archetype->num_elements++
+            : vector_pop_back(archetype->free_elems);
 
     if (entity_id >= vector_size(world->entity_ptrs)) {
         vector_resize(world->entity_ptrs, entity_id + 1);
@@ -183,6 +185,14 @@ uint32_t ecs_add_entity(World *world, Bitmask mask) {
 }
 
 void ecs_remove_entity(World *world, uint32_t entity_id) {
+    EntityPtr *eptr = &world->entity_ptrs[entity_id];
+
+    vector_append(
+            world->archetypes[eptr->archetype].free_elems, eptr->element);
+
+    world->entity_ptrs[entity_id].element = -1;
+    world->entity_ptrs[entity_id].archetype = -1;
+
     vector_append(world->free_ids, entity_id);
 }
 

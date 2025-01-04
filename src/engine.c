@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include "sunset/backend.h"
+#include "sunset/ecs.h"
 #include "sunset/errors.h"
 #include "sunset/events.h"
 #include "sunset/octree.h"
@@ -13,13 +14,6 @@
 #include "sunset/engine.h"
 
 static float const FRAME_TIME_S = 1.0f / 60.0f;
-
-// engine tick:
-// 1. send SYSTEM_EVENT_TICK event
-// 2. zones??
-// 3. ?????
-// 4. profit
-// should this be done _every_ frame?
 
 static int engine_tick(EngineContext *context) {
     // send tick event
@@ -76,7 +70,6 @@ static int load_plugin(EngineContext *context, Plugin const *plugin) {
 
 static int unload_plugin(EngineContext *context, void *handle) {
     PluginUnloadFn unload_fn = dlsym(handle, "plugin_unload");
-
     return unload_fn(context);
 }
 
@@ -88,11 +81,24 @@ static int engine_setup(EngineContext *context, Game const *game) {
     event_queue_init(&context->event_queue);
     rman_init(&context->rman);
 
+    ecs_init(&context->world);
+
+    // cmdbuf_init(&context->cmdbuf);
+
+    if ((err = backend_setup(&context->render_context,
+                 (RenderConfig){.window_width = 1920,
+                         .window_height = 1080,
+                         .window_title = "Test"}))) {
+        return err;
+    }
+
     for (size_t i = 0; i < vector_size(game->plugins); i++) {
         if ((err = load_plugin(context, &game->plugins[i]))) {
             return err;
         }
     }
+
+    context->dt = FRAME_TIME_S;
 
     return 0;
 }
@@ -111,17 +117,10 @@ int engine_run(Game const *game) {
         return retval;
     }
 
+    // TODO: figure out who's responsible for this init
     OcTree octree;
 
     REGISTER_RESOURCE(&context.rman, /* rname = */ octree, &octree);
-    // TODO: setup
-
-    if ((retval = backend_setup(&context.render_context,
-                 (RenderConfig){.window_width = 1920,
-                         .window_height = 1080,
-                         .window_title = "Test"}))) {
-        return retval;
-    }
 
     for (size_t i = 0; i < vector_size(game->plugins); i++) {
         load_plugin(&context, &game->plugins[i]);

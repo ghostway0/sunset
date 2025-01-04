@@ -14,7 +14,7 @@ void rman_init(ResourceManager *rman_out) {
 }
 
 void *rman_get(ResourceManager *rman, size_t id) {
-    if (id < vector_size(rman->resources)) {
+    if (id >= vector_size(rman->resources)) {
         return NULL;
     }
 

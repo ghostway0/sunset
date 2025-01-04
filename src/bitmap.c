@@ -48,9 +48,13 @@ size_t bitmask_ctz(Bitmask const *bitmask) {
 }
 
 void bitmask_resize(Bitmask *bitmask, size_t new_size) {
-    bitmask->num_chunks = (new_size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
-    bitmask->chunks =
-            realloc(bitmask->chunks, bitmask->num_chunks * sizeof(Limb));
+    size_t new_chunk_count =
+            (new_size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
+
+    if (new_chunk_count != bitmask->num_chunks) {
+        bitmask->chunks = sunset_realloc(
+                bitmask->chunks, bitmask->num_chunks * sizeof(Limb));
+    }
 }
 
 bool bitmask_is_eql(Bitmask const *bitmask, Bitmask const *other) {

@@ -32,6 +32,7 @@ struct Archetype {
     Bitmask mask;
     size_t num_elements;
     vector(Column) columns;
+    vector(Index) free_elems;
 } typedef Archetype;
 
 struct EntityPtr {
@@ -40,10 +41,10 @@ struct EntityPtr {
 } typedef EntityPtr;
 
 struct World {
-    vector(size_t) component_sizes;
+    vector(ptrdiff_t) component_sizes;
     vector(Archetype) archetypes;
     vector(EntityPtr) entity_ptrs;
-    vector(uint32_t) free_ids;
+    vector(Index) free_ids;
 } typedef World;
 
 struct EntityBuilder {

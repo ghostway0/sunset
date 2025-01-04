@@ -10,4 +10,5 @@ todo:
  [ ] animation file format
  [ ] 3d mesh commands
  [ ] save a `World`
- [ ] get rid of `Scene`
+ [X] get rid of `Scene`
+ [ ] fonts should be grayscale, and then you can choose text color in command

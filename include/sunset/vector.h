@@ -33,6 +33,8 @@ struct vector_metadata {
 
 #define vector_size(v) (_vector_metadata(v)->size)
 
+#define vector_empty(v) (_vector_metadata(v)->size == 0)
+
 #define vector_capacity(v) (_vector_metadata(v)->capacity)
 
 #define vector_clear(v) _vector_metadata(v)->size = 0

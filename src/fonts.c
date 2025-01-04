@@ -27,7 +27,7 @@ enum {
     PSF2_HAS_FONT_BBX = 1 << 11,
 };
 
-struct psf2_header {
+struct PSF2Header {
     uint8_t magic[4];
     uint32_t version;
     uint32_t headersize;
@@ -35,7 +35,7 @@ struct psf2_header {
     uint32_t length;
     uint32_t charsize;
     uint32_t height, width;
-};
+} typedef PSF2Header;
 
 static void flip_image(struct image *image) {
     Color *flipped_pixels =
@@ -52,9 +52,8 @@ static void flip_image(struct image *image) {
     image->pixels = flipped_pixels;
 }
 
-static int load_glyphs(VfsFile *file,
-        struct psf2_header const *header,
-        struct font *font_out) {
+static int load_glyphs(
+        VfsFile *file, PSF2Header const *header, struct font *font_out) {
     uint8_t *bitmap = sunset_malloc(header->height * header->width);
     uint8_t row_size = (header->width + 7) / 8;
 
@@ -135,7 +134,7 @@ int load_font_psf2(char const *path, struct font *font_out) {
     VfsFile file;
     vfs_open(path, VFS_OPEN_MODE_READ, &file);
 
-    struct psf2_header header;
+    PSF2Header header;
     vfs_file_read(&file, sizeof(header), &header);
 
     if (*(uint32_t *)header.magic != PSF2_MAGIC) {
