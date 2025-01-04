@@ -8,7 +8,7 @@
 #include "sunset/shader.h"
 #include "sunset/vector.h"
 
-struct event_queue;
+typedef struct EventQueue EventQueue;
 
 enum shader_type {
     SHADER_VERTEX = GL_VERTEX_SHADER,
@@ -94,13 +94,12 @@ struct render_context {
     struct point mouse;
     bool first_mouse;
 
-    struct event_queue *event_queue;
+    EventQueue *event_queue;
 
     struct command_buffer command_buffer;
 };
 
-uint32_t backend_register_mesh(
-        struct render_context *context, struct mesh mesh);
+uint32_t backend_register_mesh(struct render_context *context, Mesh mesh);
 
 void backend_draw_mesh(struct compiled_mesh *mesh);
 

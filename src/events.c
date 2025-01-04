@@ -32,9 +32,8 @@ void event_queue_destroy(EventQueue *queue) {
     free(queue->lock);
 }
 
-void event_queue_add_handler(EventQueue *queue,
-        uint32_t type_id,
-        struct event_handler handler) {
+void event_queue_add_handler(
+        EventQueue *queue, uint32_t type_id, struct event_handler handler) {
     pthread_mutex_lock(queue->lock);
 
     if (type_id >= vector_size(queue->handlers)) {
@@ -68,9 +67,8 @@ void event_queue_process(EventQueue *queue, void *global_context) {
     pthread_mutex_unlock(queue->lock);
 }
 
-void event_queue_process_one(void *global_context,
-        EventQueue *queue,
-        struct event const event) {
+void event_queue_process_one(
+        void *global_context, EventQueue *queue, struct event const event) {
     if (queue->handlers[event.type_id] == NULL) {
         return;
     }

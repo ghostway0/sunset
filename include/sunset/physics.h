@@ -77,14 +77,24 @@ void physics_add_constraint(struct physics *physics,
 
 void physics_step(struct physics *physics,
         struct scene *scene,
-        struct event_queue *event_queue,
+        EventQueue *event_queue,
         float dt);
 
 bool physics_move_object(struct scene *scene,
         struct object *object,
         vec3 direction,
-        struct event_queue *event_queue);
+        EventQueue *event_queue);
 
 void physics_callback(EngineContext *engine_context,
         void *physics,
         struct event /* engine tick */);
+
+struct PhysicsState {
+    enum physics_object_type type;
+    struct physics_material material;
+
+    vec3 acceleration;
+    vec3 velocity;
+    float damping;
+    float mass;
+} typedef PhysicsState;

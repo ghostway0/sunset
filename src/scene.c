@@ -80,8 +80,7 @@ void scene_set_size(struct scene *scene, AABB new_bounds) {
             &scene->octree);
 }
 
-void scene_init(
-        struct image skybox, AABB bounds, struct scene *scene_out) {
+void scene_init(struct image skybox, AABB bounds, struct scene *scene_out) {
     vector_init(scene_out->cameras);
     vector_init(scene_out->objects);
 

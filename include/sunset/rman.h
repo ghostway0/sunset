@@ -12,7 +12,7 @@ typedef struct ResourceManager ResourceManager;
 
 size_t _rman_register_resource(ResourceManager *rman, void *ptr);
 
-#define REGISTER_RESOURCE(rman, rname, ptr)                                 \
+#define REGISTER_RESOURCE(rman, rname, ptr)                                \
     RESOURCE_ID(rname) = _rman_register_resource(rman, ptr)
 
 struct ResourceManager {

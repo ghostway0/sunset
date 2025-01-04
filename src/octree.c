@@ -7,7 +7,7 @@
 #include "sunset/utils.h"
 
 // split node into 8 octants recursively
-bool maybe_split_node(struct octree *tree, struct octree_node *node) {
+bool maybe_split_node(OcTree *tree, OcTreeNode *node) {
     if (!node->dirty) {
         return false;
     }
@@ -18,12 +18,12 @@ bool maybe_split_node(struct octree *tree, struct octree_node *node) {
 
     for (size_t i = 0; i < 8; ++i) {
         AABB bounds = aabb_subdivide_i(node->bounds, i, 8);
-        node->children[i] = sunset_malloc(sizeof(struct octree_node));
+        node->children[i] = sunset_malloc(sizeof(OcTreeNode));
 
         void *data = tree->split_i(tree, node->data, bounds);
 
-        octree_node_init(
-                node->children[i], node->depth + 1, data, node, bounds);
+        octnode_init(
+                node->depth + 1, data, node, bounds, node->children[i]);
 
         if (tree->should_split(tree, node->children[i])) {
             maybe_split_node(tree, node->children[i]);
@@ -40,12 +40,12 @@ bool maybe_split_node(struct octree *tree, struct octree_node *node) {
 }
 
 void octree_create(size_t max_depth,
-        bool (*should_split)(struct octree *, struct octree_node *),
-        void *(*split)(struct octree *, void *, AABB bounds),
+        bool (*should_split)(OcTree *, OcTreeNode *),
+        void *(*split)(OcTree *, void *, AABB bounds),
         void (*destroy_data)(void *),
         void *node_data,
         AABB root_bounds,
-        struct octree *tree_out) {
+        OcTree *tree_out) {
     assert(should_split != NULL);
     assert(split != NULL);
     assert(tree_out != NULL);
@@ -55,16 +55,16 @@ void octree_create(size_t max_depth,
     tree_out->split_i = split;
     tree_out->destroy_data = destroy_data;
 
-    tree_out->root = sunset_malloc(sizeof(struct octree_node));
-    octree_node_init(tree_out->root, 0, node_data, NULL, root_bounds);
+    tree_out->root = sunset_malloc(sizeof(OcTreeNode));
+    octnode_init(0, node_data, NULL, root_bounds, tree_out->root);
 
     maybe_split_node(tree_out, tree_out->root);
 }
 
-void octree_node_init(struct octree_node *node,
+void octree_node_init(OcTreeNode *node,
         size_t depth,
         void *data,
-        struct octree_node *parent,
+        OcTreeNode *parent,
         AABB bounds) {
     assert(node != NULL);
 
@@ -77,8 +77,7 @@ void octree_node_init(struct octree_node *node,
     memset(node->children, 0, sizeof(node->children));
 }
 
-static void destroy_node(
-        struct octree_node *node, void (*destroy_data)(void *)) {
+static void destroy_node(OcTreeNode *node, void (*destroy_data)(void *)) {
     if (node == NULL) {
         return;
     }
@@ -95,13 +94,13 @@ static void destroy_node(
 }
 
 /// might split a node
-void *octree_get_mutable(struct octree *tree, vec3 position) {
+void *octree_get_mutable(OcTree *tree, vec3 position) {
     assert(tree != NULL);
 
-    struct octree_node *current = tree->root;
+    OcTreeNode *current = tree->root;
 
     while (current != NULL) {
-        struct octree_node *next = NULL;
+        OcTreeNode *next = NULL;
 
         // if the node is not split, we can return the node. otherwise,
         // we need to keep going down the children
@@ -128,13 +127,13 @@ void *octree_get_mutable(struct octree *tree, vec3 position) {
     return NULL;
 }
 
-void *octree_query(struct octree const *tree, vec3 position) {
+void *octree_query(OcTree const *tree, vec3 position) {
     assert(tree != NULL);
 
-    struct octree_node *current = tree->root;
+    OcTreeNode *current = tree->root;
 
     while (current != NULL) {
-        struct octree_node *next = NULL;
+        OcTreeNode *next = NULL;
 
         if (current->data) {
             return current->data;
@@ -156,8 +155,8 @@ void *octree_query(struct octree const *tree, vec3 position) {
     return NULL;
 }
 
-void octree_const_iterator_init(struct octree const *tree,
-        struct const_octree_iterator *iterator_out) {
+void octree_const_iterator_init(
+        OcTree const *tree, ConstOcTreeIterator *iterator_out) {
     assert(tree != NULL);
     assert(iterator_out != NULL);
 
@@ -166,15 +165,14 @@ void octree_const_iterator_init(struct octree const *tree,
     iterator_out->index = 0;
 }
 
-static void goto_first_leaf(struct octree_iterator *iterator) {
+static void goto_first_leaf(OcTreeIterator *iterator) {
     while (iterator->current != NULL
             && iterator->current->children[0] != NULL) {
         iterator->current = iterator->current->children[0];
     }
 }
 
-void octree_iterator_init(
-        struct octree *tree, struct octree_iterator *iterator_out) {
+void octree_iterator_init(OcTree *tree, OcTreeIterator *iterator_out) {
     assert(tree != NULL);
     assert(iterator_out != NULL);
 
@@ -185,17 +183,17 @@ void octree_iterator_init(
     goto_first_leaf(iterator_out);
 }
 
-void octree_iterator_destroy(struct octree_iterator *iterator) {
+void octree_iterator_destroy(OcTreeIterator *iterator) {
     free(iterator);
 }
 
 // iterate over all leafs
-void *octree_iterator_next(struct octree_iterator *iterator) {
+void *octree_iterator_next(OcTreeIterator *iterator) {
     assert(iterator != NULL);
 
     while (iterator->current != NULL) {
         if (iterator->index < 8) {
-            struct octree_node *child =
+            OcTreeNode *child =
                     iterator->current->children[iterator->index];
 
             if (child != NULL) {
@@ -219,18 +217,17 @@ void *octree_iterator_next(struct octree_iterator *iterator) {
     return NULL;
 }
 
-void octree_destroy(struct octree *tree) {
+void octree_destroy(OcTree *tree) {
     assert(tree != NULL);
 
     destroy_node(tree->root, tree->destroy_data);
 }
 
-void octree_const_iterator_destroy(struct const_octree_iterator *iterator) {
+void octree_const_iterator_destroy(ConstOcTreeIterator *iterator) {
     free(iterator);
 }
 
-void *octree_const_iterator_next(struct const_octree_iterator *iterator) {
-    struct octree_iterator *mutable_iterator =
-            (struct octree_iterator *)iterator;
+void *octree_const_iterator_next(ConstOcTreeIterator *iterator) {
+    OcTreeIterator *mutable_iterator = (OcTreeIterator *)iterator;
     return octree_iterator_next(mutable_iterator);
 }

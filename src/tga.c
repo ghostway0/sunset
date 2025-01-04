@@ -39,7 +39,7 @@ struct tga_header {
 int fill_color_map(uint8_t const *data,
         size_t pixel_size_bytes,
         size_t color_map_length,
-        struct color *color_map_out) {
+        Color *color_map_out) {
     assert(data != NULL);
     assert(color_map_out != NULL);
 
@@ -50,7 +50,7 @@ int fill_color_map(uint8_t const *data,
         uint8_t a = pixel_size_bytes == 4 ? data[i * pixel_size_bytes + 3]
                                           : 255;
 
-        color_map_out[i] = (struct color){r, g, b, a};
+        color_map_out[i] = (Color){r, g, b, a};
     }
 
     return 0;
@@ -64,12 +64,10 @@ struct tga_footer {
     char null;
 } __attribute__((packed));
 
-static int decompress_rle(uint8_t *data,
-        size_t size,
-        size_t pixel_size_bytes,
-        struct color *out) {
+static int decompress_rle(
+        uint8_t *data, size_t size, size_t pixel_size_bytes, Color *out) {
     size_t offset = 0;
-    struct color pixel;
+    Color pixel;
 
     while (offset < size) {
         uint8_t packet_header = data[offset++];
@@ -110,17 +108,17 @@ int tga_load_image(Reader *reader, struct image *image_out) {
     size_t image_size = header.width * header.height;
     size_t pixel_size_bytes = header.bpp / 8;
 
-    image_out->pixels = sunset_calloc(image_size, sizeof(struct color));
+    image_out->pixels = sunset_calloc(image_size, sizeof(Color));
     image_out->w = header.width;
     image_out->h = header.height;
     reader_skip(reader, header.id_length);
 
     if (header.image_type == TGA_TYPE_RLE_RGB
             || header.image_type == TGA_TYPE_RLE_GREY) {
-        struct color *color_map = NULL;
+        Color *color_map = NULL;
         if (header.color_map_length > 0) {
-            color_map = sunset_calloc(
-                    header.color_map_length, sizeof(struct color));
+            color_map =
+                    sunset_calloc(header.color_map_length, sizeof(Color));
 
             // Read color map data
             vector(uint8_t) color_map_data;

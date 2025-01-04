@@ -155,8 +155,7 @@ static int compile_shader_into(GLuint shader, char const *source) {
     return 0;
 }
 
-static int compile_mesh(
-        struct mesh const *mesh, struct compiled_mesh *mesh_out) {
+static int compile_mesh(Mesh const *mesh, struct compiled_mesh *mesh_out) {
     glGenVertexArrays(1, &mesh_out->vao);
     glGenBuffers(1, &mesh_out->vbo);
     glGenBuffers(1, &mesh_out->ebo);
@@ -238,8 +237,7 @@ void backend_destroy_program(struct program *program) {
     glDeleteProgram((GLuint)program->handle);
 }
 
-uint32_t backend_register_mesh(
-        struct render_context *context, struct mesh mesh) {
+uint32_t backend_register_mesh(struct render_context *context, Mesh mesh) {
     struct compiled_mesh compiled_mesh;
     if (compile_mesh(&mesh, &compiled_mesh) != 0) {
         return -1;
@@ -285,7 +283,7 @@ static int setup_default_shaders(struct render_context *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -324,8 +322,7 @@ static int setup_mouse(struct render_context *context) {
     return 0;
 }
 
-int backend_setup(
-        struct render_context *context, struct render_config config) {
+int backend_setup(struct render_context *context, RenderConfig config) {
     int retval = 0;
 
     if (!glfwInit()) {
@@ -756,8 +753,8 @@ static int run_text_command(
 
     float scale = 1;
 
-    float y = command.alignment == WINDOW_POINT_TOP_LEFT
-                    || command.alignment == WINDOW_POINT_TOP_RIGHT
+    float y = command.alignment == WINDOW_TOP_LEFT
+                    || command.alignment == WINDOW_TOP_RIGHT
             ? context->screen_height - command.start.y
             : command.start.y;
 
@@ -821,7 +818,7 @@ bool backend_should_stop(struct render_context *context) {
 
 static void run_rect_command(
         struct render_context *context, struct command_rect command) {
-    struct color color = command.color;
+    Color color = command.color;
     struct rect rect = command.bounds;
 
     float r = color.r / 255.0f;
@@ -880,7 +877,7 @@ static void run_rect_command(
 static void run_fill_rect_command(struct render_context *context,
         struct command_filled_rect filled_rect) {
     struct rect rect = filled_rect.rect;
-    struct color color = filled_rect.color;
+    Color color = filled_rect.color;
 
     float r = color.r / 255.0f;
     float g = color.g / 255.0f;

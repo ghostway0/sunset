@@ -38,9 +38,8 @@ int ring_buffer_pop(RingBuffer *ring_buffer, void *data_out) {
     return 0;
 }
 
-void ring_buffer_init(RingBuffer *ring_buffer,
-        size_t buffer_size,
-        size_t element_size) {
+void ring_buffer_init(
+        RingBuffer *ring_buffer, size_t buffer_size, size_t element_size) {
     assert(__builtin_popcount(buffer_size) == 1
             && "buffer_size must be power of two");
 

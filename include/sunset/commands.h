@@ -6,6 +6,7 @@
 
 #include "sunset/geometry.h"
 #include "sunset/images.h"
+#include "sunset/render.h"
 #include "sunset/ring_buffer.h"
 
 struct font;
@@ -34,12 +35,12 @@ struct command_line {
 
 struct command_rect {
     struct rect bounds;
-    struct color color;
+    Color color;
 };
 
 struct command_filled_rect {
     struct rect rect;
-    struct color color;
+    Color color;
 };
 
 struct command_arc {
@@ -61,7 +62,7 @@ struct command_text {
     struct font *font;
     char const *text;
     uint32_t text_len;
-    enum window_point alignment;
+    WindowPoint alignment;
 };
 
 struct command_image {
@@ -110,10 +111,10 @@ void command_line_init(
         struct command *command, struct point from, struct point to);
 
 void command_rect_init(
-        struct command *command, struct rect rect, struct color color);
+        struct command *command, struct rect rect, Color color);
 
 void command_filled_rect_init(
-        struct command *command, struct rect rect, struct color color);
+        struct command *command, struct rect rect, Color color);
 
 void command_arc_init(struct command *command,
         struct point center,
@@ -132,7 +133,7 @@ void command_text_init(struct command *command,
         struct font *font,
         char const *text,
         uint32_t text_len,
-        enum window_point alignment);
+        WindowPoint alignment);
 
 void command_image_init(struct command *command,
         struct point pos,
@@ -152,9 +153,7 @@ struct command_buffer_options {
 };
 
 #define COMMAND_BUFFER_DEFAULT                                             \
-    (struct command_buffer_options) {                                      \
-        .buffer_size = 1024                                                \
-    }
+    (struct command_buffer_options){.buffer_size = 1024}
 
 struct command_buffer {
     RingBuffer ring_buffer;
@@ -181,11 +180,11 @@ void command_buffer_add_line(struct command_buffer *command_buffer,
 
 void command_buffer_add_rect(struct command_buffer *command_buffer,
         struct rect rect,
-        struct color color);
+        Color color);
 
 void command_buffer_add_filled_rect(struct command_buffer *command_buffer,
         struct rect rect,
-        struct color color);
+        Color color);
 
 void command_buffer_add_arc(struct command_buffer *command_buffer,
         struct point center,
@@ -204,7 +203,7 @@ void command_buffer_add_text(struct command_buffer *command_buffer,
         struct font *font,
         char const *text,
         uint32_t text_len,
-        enum window_point alignment);
+        WindowPoint alignment);
 
 void command_buffer_add_image(struct command_buffer *command_buffer,
         struct point pos,

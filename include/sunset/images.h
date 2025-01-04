@@ -13,29 +13,29 @@ enum image_format {
     IMAGE_FORMAT_RGBA,
 };
 
-struct color {
+struct Color {
     uint8_t r;
     uint8_t g;
     uint8_t b;
     uint8_t a;
-};
+} typedef Color;
 
-struct color color_from_rgb(uint8_t r, uint8_t g, uint8_t b);
+Color color_from_rgb(uint8_t r, uint8_t g, uint8_t b);
 
-struct color color_from_16bit(uint16_t color);
+Color color_from_16bit(uint16_t color);
 
-struct color color_from_grayscale(uint8_t value);
+Color color_from_grayscale(uint8_t value);
 
-struct color color_from_hex(char const *hex_str);
+Color color_from_hex(char const *hex_str);
 
-bool colors_equal(struct color a, struct color b);
+bool colors_equal(Color a, Color b);
 
-uint8_t color_to_grayscale(struct color color);
+uint8_t color_to_grayscale(Color color);
 
 struct image {
     size_t w;
     size_t h;
-    struct color *pixels;
+    Color *pixels;
 };
 
 // void image_convert(struct image const *image, struct image *image_out);

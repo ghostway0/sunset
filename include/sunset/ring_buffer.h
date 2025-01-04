@@ -18,9 +18,8 @@ int ring_buffer_append(RingBuffer *ring_buffer, void const *data);
 
 int ring_buffer_pop(RingBuffer *ring_buffer, void *data_out);
 
-void ring_buffer_init(RingBuffer *ring_buffer,
-        size_t buffer_size,
-        size_t element_size);
+void ring_buffer_init(
+        RingBuffer *ring_buffer, size_t buffer_size, size_t element_size);
 
 void ring_buffer_destroy(RingBuffer *ring_buffer);
 

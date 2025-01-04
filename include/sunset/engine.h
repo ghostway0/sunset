@@ -66,5 +66,4 @@ int engine_run(Game const *game);
 
 int engine_load_scene(EngineContext *engine_context, struct scene *scene);
 
-void engine_set_mouse_mode(
-        EngineContext *engine_context, MouseMode mode);
+void engine_set_mouse_mode(EngineContext *engine_context, MouseMode mode);

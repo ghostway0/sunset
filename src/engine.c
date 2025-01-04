@@ -117,7 +117,7 @@ int engine_run(Game const *game) {
     // TODO: setup
 
     if ((retval = backend_setup(&context.render_context,
-                 (struct render_config){.window_width = 1920,
+                 (RenderConfig){.window_width = 1920,
                          .window_height = 1080,
                          .window_title = "Test"}))) {
         return retval;

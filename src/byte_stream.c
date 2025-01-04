@@ -46,7 +46,7 @@ ssize_t byte_stream_read(void *ctx, size_t count, void *buf) {
 
 void byte_stream_from_buf(
         uint8_t const *buf, size_t size, struct byte_stream *stream_out) {
-    stream_out->data = data;
+    stream_out->data = buf;
     stream_out->size = size;
     stream_out->cursor = 0;
 }

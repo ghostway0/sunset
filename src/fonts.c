@@ -38,8 +38,8 @@ struct psf2_header {
 };
 
 static void flip_image(struct image *image) {
-    struct color *flipped_pixels =
-            sunset_malloc(image->w * image->h * sizeof(struct color));
+    Color *flipped_pixels =
+            sunset_malloc(image->w * image->h * sizeof(Color));
 
     for (size_t y = 0; y < image->h; y++) {
         for (size_t x = 0; x < image->w; x++) {
@@ -63,7 +63,7 @@ static int load_glyphs(VfsFile *file,
         font_out->glyphs[i].image.w = header->width;
         font_out->glyphs[i].image.h = header->height;
         font_out->glyphs[i].image.pixels = sunset_calloc(
-                header->width * header->height, sizeof(struct color));
+                header->width * header->height, sizeof(Color));
 
         font_out->glyphs[i].bounds = (struct rect){
                 .x = 0,

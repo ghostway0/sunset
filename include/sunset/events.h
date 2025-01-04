@@ -73,17 +73,15 @@ void event_queue_init(EventQueue *queue);
 
 void event_queue_destroy(EventQueue *queue);
 
-void event_queue_add_handler(EventQueue *queue,
-        uint32_t type_id,
-        struct event_handler handler);
+void event_queue_add_handler(
+        EventQueue *queue, uint32_t type_id, struct event_handler handler);
 
 void event_queue_push(EventQueue *queue, struct event const event);
 
 void event_queue_process(EventQueue *queue, void *global_context);
 
-void event_queue_process_one(void *global_context,
-        EventQueue *queue,
-        struct event const event);
+void event_queue_process_one(
+        void *global_context, EventQueue *queue, struct event const event);
 
 int event_queue_pop(EventQueue *queue, struct event *event);
 

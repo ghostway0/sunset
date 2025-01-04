@@ -288,7 +288,7 @@ static void apply_collision_impulse(
 static void handle_object_collision(struct object *object,
         struct object *other,
         vec3 direction,
-        struct event_queue *event_queue,
+        EventQueue *event_queue,
         vec3 direction_out) {
     glm_vec3_copy(direction, direction_out);
 
@@ -350,7 +350,7 @@ static void resolve_object_overlap(
     }
 }
 
-static void generate_collision_event(struct event_queue *event_queue,
+static void generate_collision_event(EventQueue *event_queue,
         struct collision_pair collision,
         enum collision_type collision_type) {
     struct physics_object a_attr = collision.a->physics;
@@ -382,7 +382,7 @@ static void generate_collision_event(struct event_queue *event_queue,
 static bool physics_move_object_with_collisions(struct scene *scene,
         struct object *object,
         vec3 direction,
-        struct event_queue *event_queue,
+        EventQueue *event_queue,
         map(struct collision_pair) new_collisions_out) {
     bool found_collision = false;
 
@@ -436,7 +436,7 @@ static bool physics_move_object_with_collisions(struct scene *scene,
 }
 
 static void generate_collider_events(struct physics const *physics,
-        struct event_queue *event_queue,
+        EventQueue *event_queue,
         map(const struct collision_pair) new_collisions) {
     size_t old_index = 0;
     size_t new_index = 0;
@@ -512,14 +512,14 @@ void physics_add_constraint(struct physics *physics,
 bool physics_move_object(struct scene *scene,
         struct object *object,
         vec3 direction,
-        struct event_queue *event_queue) {
+        EventQueue *event_queue) {
     return physics_move_object_with_collisions(
             scene, object, direction, event_queue, NULL);
 }
 
 void physics_step(struct physics *physics,
         struct scene *scene,
-        struct event_queue *event_queue,
+        EventQueue *event_queue,
         float dt) {
     apply_constraint_forces(physics, dt);
 

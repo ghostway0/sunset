@@ -10,11 +10,11 @@
 
 #include "sunset/images.h"
 
-struct color color_from_rgb(uint8_t r, uint8_t g, uint8_t b) {
-    return (struct color){r, g, b, 255};
+Color color_from_rgb(uint8_t r, uint8_t g, uint8_t b) {
+    return (Color){r, g, b, 255};
 }
 
-struct color color_from_16bit(uint16_t color) {
+Color color_from_16bit(uint16_t color) {
     uint8_t r = (color >> 11) & 0x1F;
     uint8_t g = (color >> 5) & 0x3F;
     uint8_t b = color & 0x1F;
@@ -23,14 +23,14 @@ struct color color_from_16bit(uint16_t color) {
     g = (g << 2) | (g >> 4);
     b = (b << 3) | (b >> 2);
 
-    return (struct color){r, g, b, 255};
+    return (Color){r, g, b, 255};
 }
 
-struct color color_from_hex(char const *hex_str) {
+Color color_from_hex(char const *hex_str) {
     uint32_t hex;
 
     sscanf(hex_str, "#%x", &hex);
-    return (struct color){
+    return (Color){
             .r = (hex >> 16) & 0xFF,
             .g = (hex >> 8) & 0xFF,
             .b = hex & 0xFF,
@@ -38,16 +38,16 @@ struct color color_from_hex(char const *hex_str) {
     };
 }
 
-bool colors_equal(struct color a, struct color b) {
+bool colors_equal(Color a, Color b) {
     return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
 }
 
-uint8_t color_to_grayscale(struct color color) {
+uint8_t color_to_grayscale(Color color) {
     return 0.299 * color.r + 0.587 * color.g + 0.114 * color.b;
 }
 
-struct color color_from_grayscale(uint8_t value) {
-    return (struct color){value, value, value, 255};
+Color color_from_grayscale(uint8_t value) {
+    return (Color){value, value, value, 255};
 }
 
 int load_image_file(char const *path, struct image *image_out) {
@@ -70,7 +70,7 @@ int load_image_file(char const *path, struct image *image_out) {
     }
 
     struct byte_stream stream;
-    byte_stream_from_data(data, file_size, &stream);
+    byte_stream_from_buf(data, file_size, &stream);
 
     Reader reader = {.read = (ReadFn)byte_stream_read, .ctx = &stream};
 

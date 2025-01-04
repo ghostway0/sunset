@@ -85,7 +85,7 @@ WorldIterator ecs_iterator_create(World const *world, Bitmask mask) {
 void ecs_iterator_advance(WorldIterator *iterator) {
     if (iterator->current_element + 1
             < iterator->world->archetypes[iterator->current_archetype]
-                      .num_elements) {
+                    .num_elements) {
         iterator->current_element++;
     } else {
         iterator->current_archetype++;

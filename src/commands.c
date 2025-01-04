@@ -15,13 +15,13 @@ void command_line_init(
 }
 
 void command_rect_init(
-        struct command *command, struct rect rect, struct color color) {
+        struct command *command, struct rect rect, Color color) {
     command->type = COMMAND_RECT;
     command->data.rect = (struct command_rect){rect, color};
 }
 
 void command_filled_rect_init(
-        struct command *command, struct rect rect, struct color color) {
+        struct command *command, struct rect rect, Color color) {
     command->type = COMMAND_FILLED_RECT;
     command->data.filled_rect = (struct command_filled_rect){rect, color};
 }
@@ -50,7 +50,7 @@ void command_text_init(struct command *command,
         struct font *font,
         char const *text,
         uint32_t text_len,
-        enum window_point alignment) {
+        WindowPoint alignment) {
     command->type = COMMAND_TEXT;
     command->data.text =
             (struct command_text){start, font, text, text_len, alignment};
@@ -104,7 +104,7 @@ void command_buffer_add_line(struct command_buffer *command_buffer,
 
 void command_buffer_add_rect(struct command_buffer *command_buffer,
         struct rect rect,
-        struct color color) {
+        Color color) {
     struct command command;
     command_rect_init(&command, rect, color);
     command_buffer_append(command_buffer, &command);
@@ -112,7 +112,7 @@ void command_buffer_add_rect(struct command_buffer *command_buffer,
 
 void command_buffer_add_filled_rect(struct command_buffer *command_buffer,
         struct rect rect,
-        struct color color) {
+        Color color) {
     struct command command;
     command_filled_rect_init(&command, rect, color);
     command_buffer_append(command_buffer, &command);
@@ -143,7 +143,7 @@ void command_buffer_add_text(struct command_buffer *command_buffer,
         struct font *font,
         char const *text,
         uint32_t text_len,
-        enum window_point alignment) {
+        WindowPoint alignment) {
     struct command command;
     command_text_init(&command, start, font, text, text_len, alignment);
     command_buffer_append(command_buffer, &command);

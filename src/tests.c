@@ -46,7 +46,7 @@ static void test_ring_buffer(void **state) {
 void test_color_from_hex(void **state) {
     unused(state);
 
-    struct color c = color_from_hex("#FF0000");
+    Color c = color_from_hex("#FF0000");
     assert_int_equal(c.r, 255);
     assert_int_equal(c.g, 0);
     assert_int_equal(c.b, 0);
@@ -61,16 +61,16 @@ void test_color_from_hex(void **state) {
 void test_camera_movement(void **state) {
     unused(state);
 
-    struct camera camera;
+    Camera camera;
     camera_init(
-            (struct camera_state){
+            (CameraState){
                     {0.0f, 0.0f, 0.0f},
                     {0.0f, 1.0f, 0.0f},
                     0.0f,
                     0.0f,
 
             },
-            (struct camera_options){
+            (CameraOptions){
                     0.1f,
                     100.0f,
                     45.0f,

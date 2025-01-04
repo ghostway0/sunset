@@ -17,16 +17,16 @@ struct OcTreeNode {
 } typedef OcTreeNode;
 
 struct OcTree {
-    struct octree_node *root;
+    struct OcTreeNode *root;
     size_t max_depth;
 
-    bool (*should_split)(struct OcTree *tree, struct octree_node *node);
+    bool (*should_split)(struct OcTree *tree, OcTreeNode *node);
     void *(*split_i)(struct OcTree *tree, void *data, AABB bounds);
     void (*destroy_data)(void *data);
 } typedef OcTree;
 
 void octr_init(size_t max_depth,
-        bool (*should_split)(OcTree *, struct octree_node *),
+        bool (*should_split)(OcTree *, OcTreeNode *),
         void *(*split)(OcTree *, void *, AABB bounds),
         void (*destroy_data)(void *),
         void *node_data,
@@ -37,7 +37,7 @@ void octr_destroy(OcTree *tree);
 
 void octnode_init(size_t depth,
         void *data,
-        struct octree_node *parent,
+        OcTreeNode *parent,
         AABB bounds,
         OcTreeNode *node_out);
 
@@ -46,28 +46,27 @@ void *octr_query(OcTree const *tree, vec3 position);
 void *octr_get_mutable(OcTree *tree, vec3 position);
 
 // post-order traversal iterator
-struct octree_iterator {
-    struct octree *tree;
-    struct octree_node *current;
+struct OcTreeIterator {
+    OcTree *tree;
+    OcTreeNode *current;
     size_t index;
-};
+} typedef OcTreeIterator;
 
-struct const_octree_iterator {
-    struct octree const *tree;
-    struct octree_node const *current;
+struct ConstOcTreeIterator {
+    OcTree const *tree;
+    OcTreeNode const *current;
     size_t index;
-};
+} typedef ConstOcTreeIterator;
 
-void octree_iterator_init(
-        struct octree *tree, struct octree_iterator *iterator_out);
+void octree_iterator_init(OcTree *tree, OcTreeIterator *iterator_out);
 
-void octree_iterator_destroy(struct octree_iterator *iterator);
+void octree_iterator_destroy(struct OcTreeIterator *iterator);
 
-void *octree_iterator_next(struct octree_iterator *iterator);
+void *octree_iterator_next(OcTreeIterator *iterator);
 
-void octree_const_iterator_destroy(struct const_octree_iterator *iterator);
+void octree_const_iterator_destroy(ConstOcTreeIterator *iterator);
 
-void octree_const_iterator_init(struct octree const *tree,
-        struct const_octree_iterator *iterator_out);
+void octree_const_iterator_init(
+        OcTree const *tree, ConstOcTreeIterator *iterator_out);
 
-void *octree_const_iterator_next(struct const_octree_iterator *iterator);
+void *octree_const_iterator_next(ConstOcTreeIterator *iterator);

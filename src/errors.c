@@ -12,9 +12,6 @@ void error_print(char const *scope, int retval) {
         case ERROR_INVALID_FORMAT:
             log_error("%s: parse error\n", scope);
             break;
-        case ERROR_RINGBUFFER_PTR_OVERRUN:
-            log_error("%s: ringbuffer ptr overrun\n", scope);
-            break;
         default:
             log_error("%s: unknown error\n", scope);
             break;

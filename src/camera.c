@@ -5,12 +5,13 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
+#include "sunset/geometry.h"
 #include "sunset/math.h"
 
 #include "sunset/camera.h"
 
 // world->camera transformation matrix
-static void calculate_view_matrix(struct camera *camera, mat4 dest) {
+static void calculate_view_matrix(Camera *camera, mat4 dest) {
     vec3 center;
 
     glm_vec3_add(camera->position, camera->direction, center);
@@ -19,13 +20,12 @@ static void calculate_view_matrix(struct camera *camera, mat4 dest) {
 
 // camera->clip transformation matrix
 static void calculate_projection_matrix(
-        const struct camera *camera, float aspect, mat4 dest) {
+        Camera const *camera, float aspect, mat4 dest) {
     glm_perspective(camera->fov, aspect, 0.1f, 100.0f, dest);
 }
 
-void camera_init(struct camera_state state,
-        struct camera_options options,
-        struct camera *camera_out) {
+void camera_init(
+        CameraState state, CameraOptions options, Camera *camera_out) {
     memcpy(&camera_out->position, &state.position, sizeof(vec3));
     memcpy(&camera_out->up, &state.up, sizeof(vec3));
     camera_out->yaw = state.yaw;
@@ -43,8 +43,7 @@ void camera_init(struct camera_state state,
             camera_out->projection_matrix);
 }
 
-void camera_rotate_absolute(
-        struct camera *camera, float x_angle, float y_angle) {
+void camera_rotate_absolute(Camera *camera, float x_angle, float y_angle) {
     // NOTE: when pitch is clamped, camera is flipped
     camera->pitch = clamp(camera->pitch + y_angle, -GLM_PI_2, GLM_PI_2);
     camera->yaw = fmodf(camera->yaw + x_angle, 2 * GLM_PI);
@@ -68,8 +67,7 @@ void camera_rotate_absolute(
     calculate_view_matrix(camera, camera->view_matrix);
 }
 
-void camera_set_rotation(
-        struct camera *camera, float x_angle, float y_angle) {
+void camera_set_rotation(Camera *camera, float x_angle, float y_angle) {
     camera->yaw = x_angle;
     camera->pitch = y_angle;
 
@@ -98,38 +96,36 @@ void camera_set_rotation(
     calculate_view_matrix(camera, camera->view_matrix);
 }
 
-void camera_rotate_scaled(
-        struct camera *camera, float x_angle, float y_angle) {
+void camera_rotate_scaled(Camera *camera, float x_angle, float y_angle) {
     camera_rotate_absolute(camera,
             x_angle * camera->sensitivity,
             y_angle * camera->sensitivity);
 }
 
 // camera direction to world space
-void camera_vec_to_world(struct camera *camera, vec3 direction) {
+void camera_vec_to_world(Camera *camera, vec3 direction) {
     glm_vec3_rotate(direction, camera->yaw, camera->world_up);
     glm_vec3_rotate(direction, camera->pitch, camera->right);
 }
 
-void camera_move_absolute(struct camera *camera, vec3 direction) {
+void camera_move_absolute(Camera *camera, vec3 direction) {
     glm_vec3_add(camera->position, direction, camera->position);
 
     calculate_view_matrix(camera, camera->view_matrix);
 }
 
-void camera_move_scaled(struct camera *camera, vec3 direction) {
+void camera_move_scaled(Camera *camera, vec3 direction) {
     glm_vec3_scale(direction, camera->speed, direction);
     camera_move_absolute(camera, direction);
 }
 
-void camera_recalculate_vectors(struct camera *camera) {
+void camera_recalculate_vectors(Camera *camera) {
     camera_set_rotation(camera, camera->yaw, camera->pitch);
     calculate_projection_matrix(
             camera, camera->aspect_ratio, camera->projection_matrix);
 }
 
-bool camera_sphere_in_frustum(
-        struct camera *camera, vec3 center, float radius) {
+bool camera_sphere_in_frustum(Camera *camera, vec3 center, float radius) {
     vec4 sphere_center = {center[0], center[1], center[2], 1.0f};
     mat4 view_projection;
     vec4 clip;
@@ -144,7 +140,7 @@ bool camera_sphere_in_frustum(
             || within(clip[2], -clip[3] - radius, clip[3] + radius);
 }
 
-bool camera_point_in_frustum(struct camera *camera, vec3 point) {
+bool camera_point_in_frustum(Camera *camera, vec3 point) {
     vec4 quat_point = {point[0], point[1], point[2], 1.0f};
     mat4 view_projection;
     vec4 clip;
@@ -159,7 +155,7 @@ bool camera_point_in_frustum(struct camera *camera, vec3 point) {
             && within(clip[2], -clip[3], clip[3]);
 }
 
-bool camera_box_within_frustum(struct camera *camera, AABB aabb) {
+bool camera_box_within_frustum(Camera *camera, AABB aabb) {
     vec3 center;
     float radius = aabb_get_radius(&aabb);
     aabb_get_center(&aabb, center);
