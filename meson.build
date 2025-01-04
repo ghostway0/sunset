@@ -1,7 +1,7 @@
 project(
   'gaming',
   'c',
-  default_options: ['c_std=gnu2x', 'warning_level=3', 'werror=true'],
+  default_options: ['c_std=gnu2x', 'warning_level=2', 'werror=true'],
 )
 
 add_project_arguments(
@@ -14,7 +14,7 @@ add_project_arguments(
     '-Wno-gnu-alignof-expression',
     '-Wno-zero-length-array',
     '-Wimplicit-fallthrough',
-    '-D_GNU_SOURCE',
+    # '-D_GNU_SOURCE',
     '-g',
   ],
   language: 'c',

@@ -1,0 +1,13 @@
+Big:
+* Animation system
+* World builder
+* UI
+
+todo:
+ [ ] fix physics to be a system
+ [ ] find how octree should be handled
+ [ ] mtl and obj file parsing should output standard types
+ [ ] animation file format
+ [ ] 3d mesh commands
+ [ ] save a `World`
+ [ ] get rid of `Scene`

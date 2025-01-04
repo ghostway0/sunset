@@ -18,7 +18,7 @@ struct Transform {
     enum physics_object_type type;
     struct physics_material material;
 
-    struct aabb bounding_box;
+    AABB bounding_box;
     vec3 position;
     vec3 rotation;
     float scale;
@@ -45,31 +45,11 @@ enum keyboard_key {
     NUM_KEYBOARD_KEYS,
 };
 
-struct player_controller {
-    handler handlers[NUM_KEYBOARD_KEYS];
-};
-
-struct ai_controller {};
-
-enum controller_type {
-    CONTROLLER_NONE,
-    CONTROLLER_PLAYER,
-    CONTROLLER_AI,
-};
-
-struct controller {
-    enum controller_type type;
-    union {
-        struct player_controller player;
-        struct ai_controller ai;
-    };
-};
-
 typedef void (*move_callback)(struct object *, vec3 direction);
 
 struct object {
     uint32_t entity_id;
-    struct aabb bounding_box;
+    AABB bounding_box;
     uint32_t mesh_id;
     uint32_t texture_id;
     // struct material material;
@@ -112,27 +92,25 @@ struct light {
     float intensity;
 };
 
-struct chunk {
-    struct aabb bounds;
-    vector(struct object *) objects;
+struct Chunk {
+    AABB bounds;
+    vector(Index) entities;
     size_t id;
-};
+} typedef Chunk;
 
-struct scene {
-    vector(struct object) objects;
-    vector(struct light) lights;
-    vector(struct camera) cameras;
-    struct octree octree;
-
-    struct image skybox;
+struct Scene {
+    // vector(struct object) objects;
+    // vector(struct light) lights;
+    // vector(struct camera) cameras;
+    OcTree octree;
     World world;
-};
+} typedef Scene;
 
 void scene_init(
-        struct image skybox, struct aabb bounds, struct scene *scene_out);
+        struct image skybox, AABB bounds, struct scene *scene_out);
 
 void scene_load_chunks(
-        struct scene *scene, struct chunk *chunks, size_t num_chunks);
+        struct scene *scene, Chunk *chunks, size_t num_chunks);
 
 void scene_destroy(struct scene *scene);
 
@@ -157,4 +135,4 @@ void scene_move_object(
 
 void scene_add_object(struct scene *scene, struct object object);
 
-void scene_set_size(struct scene *scene, struct aabb new_bounds);
+void scene_set_size(struct scene *scene, AABB new_bounds);

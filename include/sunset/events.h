@@ -8,12 +8,12 @@
 #include "sunset/geometry.h"
 #include "sunset/vector.h"
 
-struct engine_context;
+typedef struct EngineContext EngineContext;
 struct event;
 
 struct event_handler {
     void *local_context;
-    void (*handler_fn)(struct engine_context *engine_context,
+    void (*handler_fn)(EngineContext *engine_context,
             void *local_context,
             struct event event);
 };
@@ -27,13 +27,13 @@ enum system_event {
     SYSTEM_EVENT_KEY_UP,
 };
 
-struct event_queue {
+struct EventQueue {
     vector(struct event) events;
     /// maps event type to a Vector of event handlers
     vector(vector(struct event_handler)) handlers;
 
     pthread_mutex_t *lock;
-};
+} typedef EventQueue;
 
 enum collision_type {
     COLLISION_ENTER_COLLIDER,
@@ -69,22 +69,22 @@ struct event {
     };
 };
 
-void event_queue_init(struct event_queue *queue);
+void event_queue_init(EventQueue *queue);
 
-void event_queue_destroy(struct event_queue *queue);
+void event_queue_destroy(EventQueue *queue);
 
-void event_queue_add_handler(struct event_queue *queue,
+void event_queue_add_handler(EventQueue *queue,
         uint32_t type_id,
         struct event_handler handler);
 
-void event_queue_push(struct event_queue *queue, struct event const event);
+void event_queue_push(EventQueue *queue, struct event const event);
 
-void event_queue_process(struct event_queue *queue, void *global_context);
+void event_queue_process(EventQueue *queue, void *global_context);
 
 void event_queue_process_one(void *global_context,
-        struct event_queue *queue,
+        EventQueue *queue,
         struct event const event);
 
-int event_queue_pop(struct event_queue *queue, struct event *event);
+int event_queue_pop(EventQueue *queue, struct event *event);
 
-size_t event_queue_remaining(struct event_queue const *queue);
+size_t event_queue_remaining(EventQueue const *queue);

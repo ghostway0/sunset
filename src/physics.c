@@ -47,7 +47,7 @@ enum order compare_collisions(void const *a, void const *b) {
 }
 
 static void aabb_collision_normal(
-        struct aabb aabb, vec3 direction, vec3 normal_out) {
+        AABB aabb, vec3 direction, vec3 normal_out) {
     vec3 center, inv_dir;
     aabb_get_center(&aabb, center);
 
@@ -87,7 +87,7 @@ static void aabb_collision_normal(
     normal_out[axis] = (tmin < tmax) ? 1.0 : -1.0;
 }
 
-static void calculate_mtv(struct aabb a, struct aabb b, vec3 mtv_out) {
+static void calculate_mtv(AABB a, AABB b, vec3 mtv_out) {
     vec3 overlap_min, overlap_max;
 
     assert(aabb_collide(&a, &b));
@@ -389,7 +389,7 @@ static bool physics_move_object_with_collisions(struct scene *scene,
     vec3 moved;
     glm_vec3_add(object->transform.position, direction, moved);
 
-    struct aabb path_box = object->bounding_box;
+    AABB path_box = object->bounding_box;
     aabb_extend_to(&path_box, moved);
 
     struct chunk *chunk = scene_get_chunk_for(scene, moved);

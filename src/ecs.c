@@ -12,14 +12,6 @@ static size_t archetype_num_columns(Archetype const *archetype) {
     return bitmask_popcount(&archetype->mask);
 }
 
-size_t ecs_register_component(World *world, size_t component_size) {
-    size_t id = world->next_component_id++;
-    assert(id < ECS_MAX_COMPONENTS);
-
-    vector_append(world->component_sizes, component_size);
-    return id;
-}
-
 static Archetype *get_archetype(World *world, Bitmask const *mask) {
     for (size_t i = 0; i < vector_size(world->archetypes); i++) {
         Archetype *archetype = &world->archetypes[i];
@@ -50,8 +42,14 @@ static void iterator_advance_internal(WorldIterator *iterator) {
     }
 }
 
+size_t _ecs_register_component(World *world, size_t component_size) {
+    assert(vector_size(world->component_sizes) < ECS_MAX_COMPONENTS);
+
+    vector_append(world->component_sizes, component_size);
+    return vector_size(world->component_sizes) - 1;
+}
+
 void ecs_init(World *world) {
-    world->next_component_id = 0;
     vector_init(world->archetypes);
     vector_init(world->component_sizes);
     vector_init(world->entity_ptrs);
@@ -137,7 +135,7 @@ void archetype_init(World *world, Bitmask mask, Archetype *archetype_out) {
 
             Column *column = vector_back(archetype_out->columns);
 
-            bitmask_init_empty(world->next_component_id, &column->mask);
+            bitmask_init_empty(ECS_MAX_COMPONENTS, &column->mask);
             bitmask_set(&column->mask, i);
 
             column->element_size = world->component_sizes[i];
@@ -152,16 +150,16 @@ uint32_t ecs_add_entity(World *world, Bitmask mask) {
             : vector_size(world->entity_ptrs);
 
     Archetype *archetype = get_archetype(world, &mask);
-    size_t entity_index = 0;
+    size_t element_index = 0;
 
-    if (archetype == NULL) {
+    if (!archetype) {
         vector_resize(
                 world->archetypes, vector_size(world->archetypes) + 1);
         archetype = vector_back(world->archetypes);
         archetype_init(world, mask, archetype);
     }
 
-    entity_index = archetype->num_elements;
+    element_index = archetype->num_elements;
     archetype->num_elements++;
 
     if (entity_id >= vector_size(world->entity_ptrs)) {
@@ -169,8 +167,8 @@ uint32_t ecs_add_entity(World *world, Bitmask mask) {
     }
 
     EntityPtr new_eptr = {
-            .archetype = archetype,
-            .index = entity_index,
+            .archetype = archetype - world->archetypes,
+            .element = element_index,
     };
 
     world->entity_ptrs[entity_id] = new_eptr;
@@ -219,12 +217,8 @@ void entity_builder_add_component(
 void entity_builder_finish(EntityBuilder *builder) {
     uint32_t entity_id = ecs_add_entity(builder->world, builder->mask);
 
-    Archetype *archetype = get_archetype(builder->world, &builder->mask);
     EntityPtr *eptr = &builder->world->entity_ptrs[entity_id];
-
-    // sanity checks
-    assert(archetype && "ecs_add_entity should've added the archetype");
-    assert(eptr->archetype == archetype);
+    Archetype *archetype = &builder->world->archetypes[eptr->archetype];
 
     for (size_t i = 0; i < vector_size(builder->components); i++) {
         size_t component_id = builder->component_ids[i];
@@ -240,7 +234,7 @@ void entity_builder_finish(EntityBuilder *builder) {
 
         assert(column && "columns should've been added earlier");
 
-        memcpy(&column->data[eptr->index * column->element_size],
+        memcpy(&column->data[eptr->element * column->element_size],
                 component_data,
                 column->element_size);
     }
@@ -256,13 +250,12 @@ void *ecs_get_component(
     }
 
     EntityPtr eptr = world->entity_ptrs[entity_id];
-    assert(eptr.archetype);
+    Archetype *archetype = &world->archetypes[eptr.archetype];
 
-    for (size_t i = 0; i < vector_size(eptr.archetype->columns); i++) {
-        if (bitmask_is_set(
-                    &eptr.archetype->columns[i].mask, component_id)) {
-            Column *column = &eptr.archetype->columns[i];
-            return column->data + eptr.index * column->element_size;
+    for (size_t i = 0; i < vector_size(archetype->columns); i++) {
+        if (bitmask_is_set(&archetype->columns[i].mask, component_id)) {
+            Column *column = &archetype->columns[i];
+            return column->data + eptr.element * column->element_size;
         }
     }
 

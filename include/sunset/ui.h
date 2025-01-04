@@ -7,7 +7,7 @@
 #include "sunset/images.h"
 #include "sunset/vector.h"
 
-struct engine_context;
+typedef struct EngineContext EngineContext;
 struct input_state;
 
 struct style {
@@ -37,15 +37,15 @@ struct widget {
             vector(char) text;
         } input;
         struct {
-            void (*clicked_callback)(struct engine_context *);
+            void (*clicked_callback)(EngineContext *);
         } button;
     };
 };
 
-struct ui_context {
+struct UIContext {
     vector(struct widget) widgets;
     struct widget *root;
     struct widget *current_widget;
-};
+} typedef UIContext;
 
-void ui_setup(struct engine_context *context);
+void ui_setup(EngineContext *context);

@@ -7,43 +7,43 @@
 
 #define DEFAULT_MAX_OCTREE_DEPTH 8
 
-struct octree_node {
-    struct octree_node *children[8];
-    struct octree_node *parent;
-    struct aabb bounds;
+struct OcTreeNode {
+    struct OcTreeNode *children[8];
+    struct OcTreeNode *parent;
+    AABB bounds;
     size_t depth;
     void *data;
     bool dirty;
-};
+} typedef OcTreeNode;
 
-struct octree {
+struct OcTree {
     struct octree_node *root;
     size_t max_depth;
 
-    bool (*should_split)(struct octree *tree, struct octree_node *node);
-    void *(*split_i)(struct octree *tree, void *data, struct aabb bounds);
+    bool (*should_split)(struct OcTree *tree, struct octree_node *node);
+    void *(*split_i)(struct OcTree *tree, void *data, AABB bounds);
     void (*destroy_data)(void *data);
-};
+} typedef OcTree;
 
-void octree_create(size_t max_depth,
-        bool (*should_split)(struct octree *, struct octree_node *),
-        void *(*split)(struct octree *, void *, struct aabb bounds),
+void octr_init(size_t max_depth,
+        bool (*should_split)(OcTree *, struct octree_node *),
+        void *(*split)(OcTree *, void *, AABB bounds),
         void (*destroy_data)(void *),
         void *node_data,
-        struct aabb root_bounds,
-        struct octree *tree_out);
+        AABB root_bounds,
+        OcTree *tree_out);
 
-void octree_destroy(struct octree *tree);
+void octr_destroy(OcTree *tree);
 
-void octree_node_init(struct octree_node *node,
-        size_t depth,
+void octnode_init(size_t depth,
         void *data,
         struct octree_node *parent,
-        struct aabb bounds);
+        AABB bounds,
+        OcTreeNode *node_out);
 
-void *octree_query(struct octree const *tree, vec3 position);
+void *octr_query(OcTree const *tree, vec3 position);
 
-void *octree_get_mutable(struct octree *tree, vec3 position);
+void *octr_get_mutable(OcTree *tree, vec3 position);
 
 // post-order traversal iterator
 struct octree_iterator {

@@ -17,7 +17,7 @@ bool maybe_split_node(struct octree *tree, struct octree_node *node) {
     }
 
     for (size_t i = 0; i < 8; ++i) {
-        struct aabb bounds = aabb_subdivide_i(node->bounds, i, 8);
+        AABB bounds = aabb_subdivide_i(node->bounds, i, 8);
         node->children[i] = sunset_malloc(sizeof(struct octree_node));
 
         void *data = tree->split_i(tree, node->data, bounds);
@@ -41,10 +41,10 @@ bool maybe_split_node(struct octree *tree, struct octree_node *node) {
 
 void octree_create(size_t max_depth,
         bool (*should_split)(struct octree *, struct octree_node *),
-        void *(*split)(struct octree *, void *, struct aabb bounds),
+        void *(*split)(struct octree *, void *, AABB bounds),
         void (*destroy_data)(void *),
         void *node_data,
-        struct aabb root_bounds,
+        AABB root_bounds,
         struct octree *tree_out) {
     assert(should_split != NULL);
     assert(split != NULL);
@@ -65,7 +65,7 @@ void octree_node_init(struct octree_node *node,
         size_t depth,
         void *data,
         struct octree_node *parent,
-        struct aabb bounds) {
+        AABB bounds) {
     assert(node != NULL);
 
     node->depth = depth;

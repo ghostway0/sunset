@@ -34,7 +34,7 @@ static struct widget *find_active_widget(
 }
 
 static void mouse_click_handler(
-        struct engine_context *context, void *, struct event event) {
+        EngineContext *context, void *, struct event event) {
     unused(event);
 
     struct widget *current = context->active_ui->current_widget;
@@ -45,7 +45,7 @@ static void mouse_click_handler(
 }
 
 static void key_up_handler(
-        struct engine_context *context, void *, struct event event) {
+        EngineContext *context, void *, struct event event) {
     struct widget *current = context->active_ui->current_widget;
 
     if (!current || current->tag != WIDGET_INPUT) {
@@ -64,7 +64,7 @@ static void key_up_handler(
 }
 
 static void mouse_move_handler(
-        struct engine_context *context, void *, struct event event) {
+        EngineContext *context, void *, struct event event) {
     struct widget *current = context->active_ui->current_widget;
 
     if (!current) {
@@ -75,7 +75,7 @@ static void mouse_move_handler(
             find_active_widget(current, event.mouse_move.absolute);
 }
 
-void ui_setup(struct engine_context *context) {
+void ui_setup(EngineContext *context) {
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_MOUSE_MOVE,
             (struct event_handler){context, mouse_move_handler});

@@ -50,14 +50,16 @@ struct vector_metadata {
         }                                                                  \
     } while (0)
 
+#define PRAGMA_DISABLE_PTR_WARN                                            \
+    _Pragma("GCC diagnostic ignored \"-Wsizeof-pointer-memaccess\"");
+
 #define vector_append(v, ...)                                              \
     do {                                                                   \
         struct vector_metadata *meta = _vector_metadata(v);                \
         if (meta->size == meta->capacity) {                                \
             meta->capacity *= 2;                                           \
             _Pragma("GCC diagnostic push");                                \
-            _Pragma("GCC diagnostic ignored "                              \
-                    "\"-Wsizeof-pointer-memaccess\"");                     \
+            PRAGMA_DISABLE_PTR_WARN                                        \
             meta = (struct vector_metadata *)sunset_realloc(meta,          \
                     sizeof(struct vector_metadata)                         \
                             + meta->capacity * sizeof(*(v)));              \
@@ -74,8 +76,7 @@ struct vector_metadata {
         if (meta->size == meta->capacity) {                                \
             meta->capacity *= 2;                                           \
             _Pragma("GCC diagnostic push");                                \
-            _Pragma("GCC diagnostic ignored "                              \
-                    "\"-Wsizeof-pointer-memaccess\"");                     \
+            PRAGMA_DISABLE_PTR_WARN                                        \
             meta = (struct vector_metadata *)realloc(meta,                 \
                     sizeof(struct vector_metadata)                         \
                             + sizeof(*(v)) * meta->capacity);              \

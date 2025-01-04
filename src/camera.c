@@ -159,7 +159,7 @@ bool camera_point_in_frustum(struct camera *camera, vec3 point) {
             && within(clip[2], -clip[3], clip[3]);
 }
 
-bool camera_box_within_frustum(struct camera *camera, struct aabb aabb) {
+bool camera_box_within_frustum(struct camera *camera, AABB aabb) {
     vec3 center;
     float radius = aabb_get_radius(&aabb);
     aabb_get_center(&aabb, center);

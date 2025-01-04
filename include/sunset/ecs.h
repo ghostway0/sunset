@@ -1,6 +1,7 @@
 #ifndef SUNSET_ECS_H_
 #define SUNSET_ECS_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -10,11 +11,16 @@
 #define ECS_MAX_COMPONENTS 64
 
 #define COMPONENT_ID(type) _component_id_##type
-#define DECLARE_COMPONENT_ID(type) extern size_t COMPONENT_ID(type)
-#define DEFINE_COMPONENT_ID(type, id) size_t COMPONENT_ID(type) = id
+#define DECLARE_COMPONENT_ID(type) size_t COMPONENT_ID(type)
+#define DEFINE_COMPONENT_ID(type, id) COMPONENT_ID(type) = id;
+
+typedef uint32_t Index;
+typedef struct World World;
+
+size_t _ecs_register_component(World *world, size_t component_size);
 
 #define REGISTER_COMPONENT(world, type)                                    \
-    DEFINE_COMPONENT_ID(type, ecs_register_component(world, sizeof(type)))
+    DEFINE_COMPONENT_ID(type, _ecs_register_component(world, sizeof(type)))
 
 struct Column {
     Bitmask mask;
@@ -29,43 +35,16 @@ struct Archetype {
 } typedef Archetype;
 
 struct EntityPtr {
-    Archetype *archetype;
-    size_t index;
+    size_t archetype;
+    size_t element;
 } typedef EntityPtr;
 
 struct World {
-    size_t next_component_id;
     vector(size_t) component_sizes;
     vector(Archetype) archetypes;
     vector(EntityPtr) entity_ptrs;
     vector(uint32_t) free_ids;
 } typedef World;
-
-size_t ecs_register_component(World *world, size_t component_size);
-
-void *ecs_get_component(
-        World *world, uint32_t entity_id, uint32_t component_id);
-void ecs_remove_entity(World *world, uint32_t entity_id);
-
-struct WorldIterator {
-    World const *world;
-    Bitmask mask;
-    size_t current_archetype;
-    size_t current_element;
-} typedef WorldIterator;
-
-void ecs_iterator_advance(WorldIterator *iterator);
-
-uint32_t ecs_add_entity(World *world, Bitmask mask);
-
-bool ecs_iterator_is_valid(WorldIterator const *iterator);
-
-void *ecs_iterator_get_component(
-        WorldIterator *iterator, size_t component_id);
-
-WorldIterator ecs_iterator_create(World const *world, Bitmask mask);
-
-void ecs_iterator_destroy(WorldIterator *iterator);
 
 struct EntityBuilder {
     World *world;
@@ -74,13 +53,31 @@ struct EntityBuilder {
     vector(size_t) component_ids;
 } typedef EntityBuilder;
 
-void entity_builder_init(EntityBuilder *builder, World *world);
-
-void entity_builder_add_component(
-        EntityBuilder *builder, size_t id, void *component);
-
-void entity_builder_finish(EntityBuilder *builder);
+struct WorldIterator {
+    World const *world;
+    Bitmask mask;
+    size_t current_archetype;
+    size_t current_element;
+} typedef WorldIterator;
 
 void ecs_init(World *world);
+
+uint32_t ecs_add_entity(World *world, Bitmask mask);
+void ecs_remove_entity(World *world, uint32_t entity_id);
+
+void *ecs_get_component(
+        World *world, uint32_t entity_id, uint32_t component_id);
+
+void entity_builder_init(EntityBuilder *builder, World *world);
+void entity_builder_add_component(
+        EntityBuilder *builder, size_t id, void *component);
+void entity_builder_finish(EntityBuilder *builder);
+
+WorldIterator ecs_iterator_create(World const *world, Bitmask mask);
+bool ecs_iterator_is_valid(WorldIterator const *iterator);
+void ecs_iterator_advance(WorldIterator *iterator);
+void *ecs_iterator_get_component(
+        WorldIterator *iterator, size_t component_id);
+void ecs_iterator_destroy(WorldIterator *iterator);
 
 #endif // SUNSET_ECS_H_

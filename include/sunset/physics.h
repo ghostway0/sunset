@@ -11,6 +11,7 @@
 #include "sunset/vector.h"
 
 struct scene;
+typedef struct EngineContext EngineContext;
 
 struct constraint {
     struct object *a;
@@ -84,6 +85,6 @@ bool physics_move_object(struct scene *scene,
         vec3 direction,
         struct event_queue *event_queue);
 
-void physics_callback(struct engine_context *engine_context,
+void physics_callback(EngineContext *engine_context,
         void *physics,
         struct event /* engine tick */);

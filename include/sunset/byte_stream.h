@@ -17,7 +17,7 @@ int byte_stream_read_vector(
 
 ssize_t byte_stream_read(void *ctx, size_t count, void *out);
 
-void byte_stream_from_data(
+void byte_stream_from_buf(
         uint8_t const *data, size_t size, struct byte_stream *stream_out);
 
 bool byte_stream_is_eof(struct byte_stream const *stream);

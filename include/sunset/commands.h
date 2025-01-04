@@ -157,7 +157,7 @@ struct command_buffer_options {
     }
 
 struct command_buffer {
-    struct ring_buffer ring_buffer;
+    RingBuffer ring_buffer;
 };
 
 void command_buffer_init(struct command_buffer *command_buffer,

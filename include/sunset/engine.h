@@ -2,38 +2,34 @@
 
 #include <stdbool.h>
 
-#include "geometry.h"
 #include "sunset/backend.h"
 #include "sunset/commands.h"
+#include "sunset/crypto.h"
+#include "sunset/ecs.h"
 #include "sunset/physics.h"
+#include "sunset/rman.h"
 #include "sunset/vector.h"
-#include "vector.h"
 
-struct event_queue;
-struct scene;
-struct button;
-struct ui_context;
+typedef struct UIContext UIContext;
+typedef struct EventQueue EventQueue;
 
-struct rmanager {
-    // map texture/mesh names to texture/mesh ids
-    // fonts
-    // images
-    // atlases
-};
+typedef void *PluginHandle;
 
-struct engine_context {
-    vector(struct ui_context) ui_contexts;
-    struct ui_context *active_ui;
+struct EngineContext {
+    vector(UIContext) ui_contexts;
+    UIContext *active_ui;
+
+    vector(PluginHandle) loaded_plugins;
 
     struct command_buffer command_buffer;
     struct render_context render_context;
-    struct rmanager rmanager;
-    struct scene *scene;
+    ResourceManager rman;
 
-    struct event_queue event_queue;
+    EventQueue event_queue;
+    World world;
 
     float dt;
-};
+} typedef EngineContext;
 
 // engine context setup:
 // 1. default ui_context
@@ -42,35 +38,33 @@ struct engine_context {
 // 4. event_queue
 // 5. dt (60 fps default for now?)
 
-enum mouse_mode {
+enum MouseMode {
     MOUSE_MODE_DISABLED,
     MOUSE_MODE_SHOW,
-};
+} typedef MouseMode;
 
-// a game is a collection of plugins.
-// to load a game, setup engine_context based on the json and
-// load all shared objects. call plugin_init within the objects
-// with the engine_context.
+struct Plugin {
+    char const *object_path;
+    Digest expected_digest;
+} typedef Plugin;
 
-struct game_config {
-    struct rect bounds;
-    // game objects
-    // scene stuff (bounds, objects)
+struct Game {
+    AABB bounds;
 
-    // the scene can be saved
+    World world;
 
-    // resources
-    vector(char const *) plugins;
-    vector(char const *) atlases;
-    vector(char const *) meshes;
-};
+    vector(Plugin) plugins;
+
+    vector(char const *) resources;
+
+    Signature sig;
+} typedef Game;
 
 // external API
 
-int engine_run(struct game_config *game);
+int engine_run(Game const *game);
 
-int engine_load_scene(
-        struct engine_context *engine_context, struct scene *scene);
+int engine_load_scene(EngineContext *engine_context, struct scene *scene);
 
 void engine_set_mouse_mode(
-        struct engine_context *engine_context, enum mouse_mode mode);
+        EngineContext *engine_context, MouseMode mode);

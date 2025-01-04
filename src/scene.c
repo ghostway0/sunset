@@ -20,7 +20,7 @@ static bool should_split(struct octree *tree, struct octree_node *node) {
     return vector_size(chunk->objects) > 5;
 }
 
-static void *split(struct octree *, void *data, struct aabb bounds) {
+static void *split(struct octree *, void *data, AABB bounds) {
     struct chunk *chunk = (struct chunk *)data;
     struct chunk *new_chunk = sunset_malloc(sizeof(struct chunk));
 
@@ -60,7 +60,7 @@ static void move_object_chunk(
     map_insert(new_chunk->objects, object, compare_ptrs);
 }
 
-void scene_set_size(struct scene *scene, struct aabb new_bounds) {
+void scene_set_size(struct scene *scene, AABB new_bounds) {
     struct chunk *root_chunk = sunset_malloc(sizeof(struct chunk));
 
     root_chunk->bounds = new_bounds;
@@ -81,7 +81,7 @@ void scene_set_size(struct scene *scene, struct aabb new_bounds) {
 }
 
 void scene_init(
-        struct image skybox, struct aabb bounds, struct scene *scene_out) {
+        struct image skybox, AABB bounds, struct scene *scene_out) {
     vector_init(scene_out->cameras);
     vector_init(scene_out->objects);
 
@@ -229,7 +229,7 @@ int scene_render(
                 octree_query(&scene->octree, camera->position);
 
         for (size_t i = 0; i < vector_size(chunk->objects); ++i) {
-            struct aabb object_bounds = chunk->objects[i]->bounding_box;
+            AABB object_bounds = chunk->objects[i]->bounding_box;
 
             if (camera_box_within_frustum(camera, object_bounds)) {
                 render_object(
