@@ -21,7 +21,7 @@ struct EngineContext {
 
     vector(PluginHandle) loaded_plugins;
 
-    struct command_buffer cmdbuf;
+    CommandBuffer cmdbuf;
     struct render_context render_context;
     ResourceManager rman;
 

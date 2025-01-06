@@ -5,6 +5,7 @@
 #include "sunset/commands.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
+#include "sunset/scene.h"
 #include "sunset/shader.h"
 #include "sunset/vector.h"
 
@@ -77,7 +78,7 @@ struct compiled_font {
 };
 
 // backend-specific data
-struct render_context {
+struct RenderContext {
     size_t screen_width, screen_height;
     GLFWwindow *window;
     GLFWcursor *cursor;
@@ -96,19 +97,19 @@ struct render_context {
 
     EventQueue *event_queue;
 
-    struct command_buffer command_buffer;
-};
+    CommandBuffer command_buffer;
+} typedef RenderContext;
 
-uint32_t backend_register_mesh(struct render_context *context, Mesh mesh);
+uint32_t backend_register_mesh(RenderContext *context, Mesh mesh);
 
 void backend_draw_mesh(struct compiled_mesh *mesh);
 
-void backend_draw(struct render_context *context,
-        struct command_buffer *command_buffer,
+void backend_draw(RenderContext *context,
+        CommandBuffer *command_buffer,
         mat4 view,
         mat4 projection);
 
-void backend_destroy(struct render_context *context);
+void backend_destroy(RenderContext *context);
 
 void backend_destroy_program(struct program *program);
 

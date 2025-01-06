@@ -283,7 +283,7 @@ static int setup_default_shaders(struct render_context *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -308,11 +308,11 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
     }
 
     event_queue_push(context->event_queue,
-            (struct event){.mouse_move = {
-                                   .offset = {xpos - context->mouse.x,
-                                           ypos - context->mouse.y},
-                                   .absolute = {xpos, ypos},
-                           }});
+            (Event){.mouse_move = {
+                            .offset = {xpos - context->mouse.x,
+                                    ypos - context->mouse.y},
+                            .absolute = {xpos, ypos},
+                    }});
 }
 
 static int setup_mouse(struct render_context *context) {
@@ -930,7 +930,7 @@ static void run_fill_rect_command(struct render_context *context,
 }
 
 void backend_draw(struct render_context *context,
-        struct command_buffer *command_buffer,
+        CommandBuffer *command_buffer,
         mat4 view,
         mat4 projection) {
     backend_start_frame(context, view, projection);
@@ -940,7 +940,7 @@ void backend_draw(struct render_context *context,
 
     while (true) {
         struct command command;
-        if (command_buffer_pop(command_buffer, &command)) {
+        if (cmdbuf_pop(command_buffer, &command)) {
             break;
         }
 
@@ -963,12 +963,13 @@ void backend_draw(struct render_context *context,
             case COMMAND_TEXT:
                 run_text_command(context, command.data.text);
                 break;
-            case COMMAND_SET_ZINDEX:
+            case COMMAND_SET_ZINDEX: {
                 size_t zindex = command.data.set_zindex.zindex;
                 float depth_offset = zindex * 0.1;
                 glDepthRange(0.0 + depth_offset, 1.0 - depth_offset);
 
                 break;
+            }
             default:
                 log_error("unhandled command type %d", command.type);
                 break;

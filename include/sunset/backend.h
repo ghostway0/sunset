@@ -6,6 +6,7 @@
 #include "byte_stream.h"
 #include "render.h"
 #include "shader.h"
+#include "sunset/input.h"
 
 #ifdef SUNSET_BACKEND_OPENGL
 
@@ -25,7 +26,7 @@ struct shader_arguments {
     size_t num_ssbos;
 };
 
-int backend_setup(struct render_context *context, RenderConfig config);
+int backend_setup(RenderContext *context, RenderConfig config);
 
 int backend_create_program(struct program *program_out);
 
@@ -44,13 +45,13 @@ int backend_setup_shader(struct program *program,
         size_t num_arguments);
 
 struct instanced_mesh *backend_create_instanced_mesh(
-        struct render_context *context,
+        RenderContext *context,
         struct compiled_mesh const *compiled_mesh);
 
 void backend_set_user_context(
-        struct render_context *context, void *user_context);
+        RenderContext *context, void *user_context);
 
-int backend_register_texture_atlas(struct render_context *context,
+int backend_register_texture_atlas(RenderContext *context,
         struct image const *atlas_image,
         struct rect *bounds,
         size_t num_textures,
@@ -58,8 +59,10 @@ int backend_register_texture_atlas(struct render_context *context,
 
 struct render_config backend_build_render_config(char const *title);
 
-bool backend_should_stop(struct render_context *context);
+bool backend_should_stop(RenderContext *context);
 
-void backend_hide_mouse(struct render_context *context);
+void backend_hide_mouse(RenderContext *context);
 
-void backend_show_mouse(struct render_context *context);
+void backend_show_mouse(RenderContext *context);
+
+InputState backend_capture_input(RenderContext *context);

@@ -63,82 +63,75 @@ void command_image_init(struct command *command,
     command->data.image = (struct command_image){pos, *image};
 }
 
-void command_buffer_init(struct command_buffer *command_buffer,
-        struct command_buffer_options options) {
-    ring_buffer_init(&command_buffer->ring_buffer,
+void cmdbuf_init(CommandBuffer *cmdbuf, CommandBufferOptions options) {
+    ring_buffer_init(&cmdbuf->ring_buffer,
             options.buffer_size,
             sizeof(struct command));
 }
 
-void command_buffer_destroy(struct command_buffer *command_buffer) {
-    ring_buffer_destroy(&command_buffer->ring_buffer);
+void cmdbuf_destroy(CommandBuffer *cmdbuf) {
+    ring_buffer_destroy(&cmdbuf->ring_buffer);
 }
 
-void command_buffer_append(struct command_buffer *command_buffer,
-        struct command const *command) {
-    ring_buffer_append(&command_buffer->ring_buffer, command);
+void cmdbuf_append(CommandBuffer *cmdbuf, struct command const *command) {
+    ring_buffer_append(&cmdbuf->ring_buffer, command);
 }
 
-int command_buffer_pop(struct command_buffer *command_buffer,
-        struct command *command_out) {
-    return ring_buffer_pop(&command_buffer->ring_buffer, command_out);
+int cmdbuf_pop(CommandBuffer *cmdbuf, struct command *command_out) {
+    return ring_buffer_pop(&cmdbuf->ring_buffer, command_out);
 }
 
-void command_buffer_clear(struct command_buffer *command_buffer) {
-    ring_buffer_clear(&command_buffer->ring_buffer);
+void cmdbuf_clear(CommandBuffer *cmdbuf) {
+    ring_buffer_clear(&cmdbuf->ring_buffer);
 }
 
-void command_buffer_add_nop(struct command_buffer *command_buffer) {
+void cmdbuf_add_nop(CommandBuffer *cmdbuf) {
     struct command command;
     command_nop_init(&command);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-void command_buffer_add_line(struct command_buffer *command_buffer,
-        struct point from,
-        struct point to) {
+void cmdbuf_add_line(
+        CommandBuffer *cmdbuf, struct point from, struct point to) {
     struct command command;
     command_line_init(&command, from, to);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-void command_buffer_add_rect(struct command_buffer *command_buffer,
-        struct rect rect,
-        Color color) {
+void cmdbuf_add_rect(CommandBuffer *cmdbuf, struct rect rect, Color color) {
     struct command command;
     command_rect_init(&command, rect, color);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-void command_buffer_add_filled_rect(struct command_buffer *command_buffer,
-        struct rect rect,
-        Color color) {
+void cmdbuf_add_filled_rect(
+        CommandBuffer *cmdbuf, struct rect rect, Color color) {
     struct command command;
     command_filled_rect_init(&command, rect, color);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-void command_buffer_add_arc(struct command_buffer *command_buffer,
+void cmdbuf_add_arc(CommandBuffer *cmdbuf,
         struct point center,
         int r,
         float a0,
         float a1) {
     struct command command;
     command_arc_init(&command, center, r, a0, a1);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-void command_buffer_add_filled_arc(struct command_buffer *command_buffer,
+void cmdbuf_add_filled_arc(CommandBuffer *cmdbuf,
         struct point center,
         uint32_t r,
         float a0,
         float a1) {
     struct command command;
     command_filled_arc_init(&command, center, r, a0, a1);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-void command_buffer_add_text(struct command_buffer *command_buffer,
+void cmdbuf_add_text(CommandBuffer *cmdbuf,
         struct point start,
         struct font *font,
         char const *text,
@@ -146,19 +139,18 @@ void command_buffer_add_text(struct command_buffer *command_buffer,
         WindowPoint alignment) {
     struct command command;
     command_text_init(&command, start, font, text, text_len, alignment);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-void command_buffer_add_image(struct command_buffer *command_buffer,
+void cmdbuf_add_image(CommandBuffer *cmdbuf,
         struct point pos,
         struct image const *image) {
     struct command command;
     command_image_init(&command, pos, image);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-void command_buffer_add_custom_command(
-        struct command_buffer *command_buffer,
+void cmdbuf_add_custom_command(CommandBuffer *cmdbuf,
         uint8_t command_type,
         uint8_t seq_num,
         void *data) {
@@ -166,7 +158,7 @@ void command_buffer_add_custom_command(
     command.type = command_type;
     command.seq_num = seq_num;
     memcpy(&command.data, data, sizeof(command.data));
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
 // TODO: add arguments
@@ -191,17 +183,17 @@ void command_mesh_init(struct command *command,
     glm_mat4_copy(transform, command->data.mesh.transform);
 }
 
-void command_buffer_add_mesh(struct command_buffer *command_buffer,
+void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform) {
     struct command command;
     command_mesh_init(&command, mesh_id, texture_id, transform);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }
 
-bool command_buffer_empty(struct command_buffer *command_buffer) {
-    return ring_buffer_empty(&command_buffer->ring_buffer);
+bool cmdbuf_empty(CommandBuffer *cmdbuf) {
+    return ring_buffer_empty(&cmdbuf->ring_buffer);
 }
 
 void command_set_zindex_init(struct command *command, size_t z) {
@@ -209,9 +201,8 @@ void command_set_zindex_init(struct command *command, size_t z) {
     command->data.set_zindex = (struct command_set_zindex){z};
 }
 
-void command_buffer_add_set_zindex(
-        struct command_buffer *command_buffer, size_t z) {
+void cmdbuf_add_set_zindex(CommandBuffer *cmdbuf, size_t z) {
     struct command command;
     command_set_zindex_init(&command, z);
-    command_buffer_append(command_buffer, &command);
+    cmdbuf_append(cmdbuf, &command);
 }

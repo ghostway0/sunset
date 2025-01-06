@@ -63,7 +63,7 @@ struct WorldIterator {
 
 void ecs_init(World *world);
 
-uint32_t ecs_add_entity(World *world, Bitmask mask);
+Index ecs_add_entity(World *world, Bitmask mask);
 void ecs_remove_entity(World *world, uint32_t entity_id);
 
 void *ecs_get_component(
@@ -72,13 +72,12 @@ void *ecs_get_component(
 void entity_builder_init(EntityBuilder *builder, World *world);
 void entity_builder_add_component(
         EntityBuilder *builder, size_t id, void *component);
-void entity_builder_finish(EntityBuilder *builder);
+Index entity_builder_finish(EntityBuilder *builder);
 
-WorldIterator ecs_iterator_create(World const *world, Bitmask mask);
-bool ecs_iterator_is_valid(WorldIterator const *iterator);
-void ecs_iterator_advance(WorldIterator *iterator);
-void *ecs_iterator_get_component(
-        WorldIterator *iterator, size_t component_id);
-void ecs_iterator_destroy(WorldIterator *iterator);
+WorldIterator worldit_create(World const *world, Bitmask mask);
+bool worldit_is_valid(WorldIterator const *iterator);
+void worldit_advance(WorldIterator *iterator);
+void *worldit_get_component(WorldIterator *iterator, size_t component_id);
+void worldit_destroy(WorldIterator *iterator);
 
 #endif // SUNSET_ECS_H_

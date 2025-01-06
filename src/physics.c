@@ -3,13 +3,13 @@
 
 #include <cglm/vec3.h>
 
+#include "sunset/bitmask.h"
 #include "sunset/ecs.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
 #include "sunset/math.h"
-#include "sunset/scene.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
@@ -293,7 +293,7 @@ static void handle_object_collision(struct object *object,
     glm_vec3_copy(direction, direction_out);
 
     struct event event = {
-            .type_id = SYSTEM_EVENT_COLLISION,
+            .type_id = SYSEV_COLLISION,
             .collision =
                     {
                             .a = object,
@@ -365,7 +365,7 @@ static void generate_collision_event(EventQueue *event_queue,
                "other.");
 
     struct event event = {
-            .type_id = SYSTEM_EVENT_COLLISION,
+            .type_id = SYSEV_COLLISION,
             .collision = {.a = collision.a,
                     .b = collision.b,
                     .type = collision_type},
@@ -547,12 +547,26 @@ void physics_step(struct physics *physics,
     physics->collision_pairs = new_collisions;
 }
 
-// TODO: merge physics_step and physics_callback
-void physics_callback(struct engine_context *engine_context,
+DECLARE_COMPONENT_ID(PhysicsState);
+
+void physics_callback(EngineContext *engine_context,
         void *physics,
         struct event /* engine tick */) {
-    physics_step(physics,
-            engine_context->scene,
-            &engine_context->event_queue,
-            engine_context->dt);
+    Bitmask bitmask;
+    bitmask_init_empty(ECS_MAX_COMPONENTS, &bitmask);
+
+    bitmask_set(&bitmask, COMPONENT_ID(PhysicsState));
+    bitmask_set(&bitmask, COMPONENT_ID(Transform));
+
+    WorldIterator it = worldit_create(&engine_context->world, bitmask);
+
+    while (worldit_is_valid(&it)) {
+        PhysicsState *ps =
+                worldit_get_component(&it, COMPONENT_ID(PhysicsState));
+        Transform *t = worldit_get_component(&it, COMPONENT_ID(Transform));
+
+        // TODO: use these
+
+        worldit_advance(&it);
+    }
 }

@@ -572,7 +572,7 @@ void test_ecs(void **state) {
     entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel2);
     entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos2);
     entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea2);
-    entity_builder_finish(&builder);
+    Index e2 = entity_builder_finish(&builder);
 
     Position pos3 = {4.0f, 5.0f};
     Velocity vel3 = {0.0f, 0.0f};
@@ -587,13 +587,13 @@ void test_ecs(void **state) {
     bitmask_set(&system_mask, COMPONENT_ID(Position));
     bitmask_set(&system_mask, COMPONENT_ID(Velocity));
 
-    WorldIterator it = ecs_iterator_create(&ecs, system_mask);
+    WorldIterator it = worldit_create(&ecs, system_mask);
 
     // we assume ordering for now
     {
-        Position *p = (Position *)ecs_iterator_get_component(
+        Position *p = (Position *)worldit_get_component(
                 &it, COMPONENT_ID(Position));
-        Velocity *v = (Velocity *)ecs_iterator_get_component(
+        Velocity *v = (Velocity *)worldit_get_component(
                 &it, COMPONENT_ID(Velocity));
 
         assert_float_equal(p->x, 1.0f, EPSILON);
@@ -603,12 +603,12 @@ void test_ecs(void **state) {
         assert_float_equal(v->y, 0.2f, EPSILON);
     }
 
-    ecs_iterator_advance(&it);
+    worldit_advance(&it);
 
     {
-        Position *p = (Position *)ecs_iterator_get_component(
+        Position *p = (Position *)worldit_get_component(
                 &it, COMPONENT_ID(Position));
-        Velocity *v = (Velocity *)ecs_iterator_get_component(
+        Velocity *v = (Velocity *)worldit_get_component(
                 &it, COMPONENT_ID(Velocity));
 
         assert_float_equal(p->x, 3.0f, EPSILON);
@@ -618,12 +618,12 @@ void test_ecs(void **state) {
         assert_float_equal(v->y, 0.3f, EPSILON);
     }
 
-    ecs_iterator_advance(&it);
+    worldit_advance(&it);
 
     {
-        Position *p = (Position *)ecs_iterator_get_component(
+        Position *p = (Position *)worldit_get_component(
                 &it, COMPONENT_ID(Position));
-        Velocity *v = (Velocity *)ecs_iterator_get_component(
+        Velocity *v = (Velocity *)worldit_get_component(
                 &it, COMPONENT_ID(Velocity));
 
         assert_float_equal(p->x, 4.0f, EPSILON);
@@ -633,7 +633,25 @@ void test_ecs(void **state) {
         assert_float_equal(v->y, 0.0f, EPSILON);
     }
 
-    ecs_iterator_destroy(&it);
+    worldit_destroy(&it);
+
+    ecs_remove_entity(&ecs, e2);
+
+    Position pos4 = {5.0f, 6.0f};
+    Velocity vel4 = {1.0f, 1.0f};
+    Health hea4 = {1.0f};
+
+    entity_builder_init(&builder, &ecs);
+    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel4);
+    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos4);
+    entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea4);
+    Index e4 = entity_builder_finish(&builder);
+
+    {
+        Velocity *v = ecs_get_component(&ecs, e4, COMPONENT_ID(Velocity));
+        assert_float_equal(v->x, vel4.x, EPSILON);
+        assert_float_equal(v->x, vel4.y, EPSILON);
+    }
 }
 
 int main(void) {

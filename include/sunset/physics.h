@@ -5,12 +5,12 @@
 #include <cglm/vec3.h>
 #include <stdint.h>
 
+#include "ecs.h"
 #include "sunset/ecs.h"
 #include "sunset/events.h"
 #include "sunset/utils.h"
 #include "sunset/vector.h"
 
-struct scene;
 typedef struct EngineContext EngineContext;
 
 struct constraint {
@@ -51,10 +51,10 @@ struct PhysicsObject {
 
 DECLARE_COMPONENT_ID(PhysicsObject);
 
-struct collision_pair {
-    struct object *a;
-    struct object *b;
-};
+struct CollisionPair {
+    Index a;
+    Index b;
+} typedef CollisionPair;
 
 struct physics {
     vector(struct object *) objects;
@@ -87,11 +87,13 @@ bool physics_move_object(struct scene *scene,
 
 void physics_callback(EngineContext *engine_context,
         void *physics,
-        struct event /* engine tick */);
+        Event /* engine tick */);
 
 struct PhysicsState {
     enum physics_object_type type;
     struct physics_material material;
+
+    enum physics_flags flags;
 
     vec3 acceleration;
     vec3 velocity;

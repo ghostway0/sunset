@@ -9,28 +9,27 @@
 #include "sunset/vector.h"
 
 typedef struct EngineContext EngineContext;
-struct event;
+typedef struct Event Event;
 
-struct event_handler {
+struct EventHandler {
     void *local_context;
     void (*handler_fn)(EngineContext *engine_context,
             void *local_context,
-            struct event event);
-};
+            Event event);
+} typedef EventHandler;
 
-enum system_event {
-    SYSTEM_EVENT_TICK,
-    SYSTEM_EVENT_COLLISION,
-    SYSTEM_EVENT_MOUSE_MOVE,
-    SYSTEM_EVENT_MOUSE_CLICK,
-    SYSTEM_EVENT_KEY_DOWN,
-    SYSTEM_EVENT_KEY_UP,
+enum {
+    SYSEV_TICK,
+    SYSEV_RENDER,
+    SYSEV_COLLISION,
+    SYSEV_MOUSE_MOVE,
+    SYSEV_MOUSE_CLICK,
 };
 
 struct EventQueue {
-    vector(struct event) events;
+    vector(Event) events;
     /// maps event type to a Vector of event handlers
-    vector(vector(struct event_handler)) handlers;
+    vector(vector(EventHandler)) handlers;
 
     pthread_mutex_t *lock;
 } typedef EventQueue;
@@ -57,7 +56,7 @@ struct mouse_move_event {
     struct point absolute;
 };
 
-struct event {
+struct Event {
     uint32_t type_id;
     union {
         struct collision_event collision;
@@ -67,22 +66,22 @@ struct event {
         char key_down;
         uint8_t other[60];
     };
-};
+} typedef Event;
 
 void event_queue_init(EventQueue *queue);
 
 void event_queue_destroy(EventQueue *queue);
 
 void event_queue_add_handler(
-        EventQueue *queue, uint32_t type_id, struct event_handler handler);
+        EventQueue *queue, uint32_t type_id, EventHandler handler);
 
-void event_queue_push(EventQueue *queue, struct event const event);
+void event_queue_push(EventQueue *queue, Event const event);
 
 void event_queue_process(EventQueue *queue, void *global_context);
 
 void event_queue_process_one(
-        void *global_context, EventQueue *queue, struct event const event);
+        void *global_context, EventQueue *queue, Event const event);
 
-int event_queue_pop(EventQueue *queue, struct event *event);
+int event_queue_pop(EventQueue *queue, Event *event);
 
 size_t event_queue_remaining(EventQueue const *queue);

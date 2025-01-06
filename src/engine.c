@@ -1,8 +1,10 @@
 #include <dlfcn.h>
 #include <stdint.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "sunset/backend.h"
+#include "sunset/commands.h"
 #include "sunset/ecs.h"
 #include "sunset/errors.h"
 #include "sunset/events.h"
@@ -14,12 +16,12 @@
 #include "sunset/engine.h"
 
 static float const FRAME_TIME_S = 1.0f / 60.0f;
+static float const TICK_TIME_S = 1.0f / 60.0f;
 
 static int engine_tick(EngineContext *context) {
     // send tick event
-    event_queue_process_one(context,
-            &context->event_queue,
-            (struct event){.type_id = SYSTEM_EVENT_TICK});
+    event_queue_process_one(
+            context, &context->event_queue, (Event){.type_id = SYSEV_TICK});
 
     // process all generated events
     event_queue_process(&context->event_queue, context);
@@ -40,7 +42,7 @@ void example_setup_physics(EngineContext *engine_context) {
     physics_init(physics);
 
     event_queue_add_handler(&engine_context->event_queue,
-            SYSTEM_EVENT_TICK,
+            SYSEV_TICK,
             (struct event_handler){.local_context = physics,
                     .handler_fn = physics_callback});
 }
@@ -73,7 +75,7 @@ static int unload_plugin(EngineContext *context, void *handle) {
     return unload_fn(context);
 }
 
-DECLARE_RESOURCE_ID(octree);
+DECLARE_RESOURCE_ID(OcTree);
 
 static int engine_setup(EngineContext *context, Game const *game) {
     int err;
@@ -83,7 +85,7 @@ static int engine_setup(EngineContext *context, Game const *game) {
 
     ecs_init(&context->world);
 
-    // cmdbuf_init(&context->cmdbuf);
+    cmdbuf_init(&context->cmdbuf, COMMAND_BUFFER_DEFAULT);
 
     if ((err = backend_setup(&context->render_context,
                  (RenderConfig){.window_width = 1920,
@@ -118,29 +120,32 @@ int engine_run(Game const *game) {
     }
 
     // TODO: figure out who's responsible for this init
-    OcTree octree;
+    OcTree *octree = sunset_malloc(sizeof(OcTree));
 
-    REGISTER_RESOURCE(&context.rman, /* rname = */ octree, &octree);
+    REGISTER_RESOURCE(&context.rman, /* rname = */ OcTree, octree);
 
     for (size_t i = 0; i < vector_size(game->plugins); i++) {
         load_plugin(&context, &game->plugins[i]);
     }
 
+    struct timespec last_tick = get_time();
+
     while (!backend_should_stop(&context.render_context)) {
         struct timespec timespec = get_time();
 
         // TODO: handle input using backend
-        // backend_capture_input_snippet(context.render_context,
+        // backend_capture_input(context.render_context,
         // &context.input_snippet);
 
-        if ((retval = engine_tick(&context))) {
-            goto cleanup;
+        if (time_since_s(last_tick) >= TICK_TIME_S) {
+            if ((retval = engine_tick(&context))) {
+                goto cleanup;
+            }
+
+            last_tick = get_time();
         }
 
-        // if ((retval = scene_render(
-        //              context.scene, &context.render_context))) {
-        //     goto cleanup;
-        // }
+        // render
 
         if (time_since_s(timespec) < FRAME_TIME_S) {
             usleep(FRAME_TIME_S - time_since_s(timespec));

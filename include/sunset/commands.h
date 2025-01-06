@@ -148,73 +148,66 @@ void command_mesh_init(struct command *command,
 
 void command_set_zindex_init(struct command *command, size_t zindex);
 
-struct command_buffer_options {
+struct CommandBufferOptions {
     size_t buffer_size;
-};
+} typedef CommandBufferOptions;
 
 #define COMMAND_BUFFER_DEFAULT                                             \
-    (struct command_buffer_options){.buffer_size = 1024}
+    (CommandBufferOptions) {                                               \
+        .buffer_size = 1024                                                \
+    }
 
-struct command_buffer {
+struct CommandBuffer {
     RingBuffer ring_buffer;
-};
+} typedef CommandBuffer;
 
-void command_buffer_init(struct command_buffer *command_buffer,
-        struct command_buffer_options options);
+void cmdbuf_init(CommandBuffer *cmdbuf, CommandBufferOptions options);
 
-void command_buffer_destroy(struct command_buffer *command_buffer);
+void cmdbuf_destroy(CommandBuffer *cmdbuf);
 
-void command_buffer_append(struct command_buffer *command_buffer,
-        struct command const *command);
+void cmdbuf_append(CommandBuffer *cmdbuf, struct command const *command);
 
-int command_buffer_pop(
-        struct command_buffer *command_buffer, struct command *command_out);
+int cmdbuf_pop(CommandBuffer *cmdbuf, struct command *command_out);
 
-void command_buffer_clear(struct command_buffer *command_buffer);
+void cmdbuf_clear(CommandBuffer *cmdbuf);
 
-void command_buffer_add_nop(struct command_buffer *command_buffer);
+void cmdbuf_add_nop(CommandBuffer *cmdbuf);
 
-void command_buffer_add_line(struct command_buffer *command_buffer,
-        struct point from,
-        struct point to);
+void cmdbuf_add_line(
+        CommandBuffer *cmdbuf, struct point from, struct point to);
 
-void command_buffer_add_rect(struct command_buffer *command_buffer,
-        struct rect rect,
-        Color color);
+void cmdbuf_add_rect(CommandBuffer *cmdbuf, struct rect rect, Color color);
 
-void command_buffer_add_filled_rect(struct command_buffer *command_buffer,
-        struct rect rect,
-        Color color);
+void cmdbuf_add_filled_rect(
+        CommandBuffer *cmdbuf, struct rect rect, Color color);
 
-void command_buffer_add_arc(struct command_buffer *command_buffer,
+void cmdbuf_add_arc(CommandBuffer *cmdbuf,
         struct point center,
         int r,
         float a0,
         float a1);
 
-void command_buffer_add_filled_arc(struct command_buffer *command_buffer,
+void cmdbuf_add_filled_arc(CommandBuffer *cmdbuf,
         struct point center,
         uint32_t r,
         float a0,
         float a1);
 
-void command_buffer_add_text(struct command_buffer *command_buffer,
+void cmdbuf_add_text(CommandBuffer *cmdbuf,
         struct point start,
         struct font *font,
         char const *text,
         uint32_t text_len,
         WindowPoint alignment);
 
-void command_buffer_add_image(struct command_buffer *command_buffer,
-        struct point pos,
-        struct image const *image);
+void cmdbuf_add_image(
+        CommandBuffer *cmdbuf, struct point pos, struct image const *image);
 
-void command_buffer_add_mesh(struct command_buffer *command_buffer,
+void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform);
 
-void command_buffer_add_set_zindex(
-        struct command_buffer *command_buffer, size_t zindex);
+void cmdbuf_add_set_zindex(CommandBuffer *cmdbuf, size_t zindex);
 
-bool command_buffer_empty(struct command_buffer *command_buffer);
+bool cmdbuf_empty(CommandBuffer *cmdbuf);

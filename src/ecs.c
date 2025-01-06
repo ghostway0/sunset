@@ -71,7 +71,7 @@ void ecs_destroy(World *world) {
     vector_destroy(world->free_ids);
 }
 
-WorldIterator ecs_iterator_create(World const *world, Bitmask mask) {
+WorldIterator worldit_create(World const *world, Bitmask mask) {
     WorldIterator iterator = {
             .world = world,
             .mask = mask,
@@ -82,7 +82,7 @@ WorldIterator ecs_iterator_create(World const *world, Bitmask mask) {
     return iterator;
 }
 
-void ecs_iterator_advance(WorldIterator *iterator) {
+void worldit_advance(WorldIterator *iterator) {
     if (iterator->current_element + 1
             < iterator->world->archetypes[iterator->current_archetype]
                       .num_elements) {
@@ -94,13 +94,12 @@ void ecs_iterator_advance(WorldIterator *iterator) {
     }
 }
 
-bool ecs_iterator_is_valid(WorldIterator const *iterator) {
+bool worldit_is_valid(WorldIterator const *iterator) {
     return iterator->current_archetype
             < vector_size(iterator->world->archetypes);
 }
 
-void *ecs_iterator_get_component(
-        WorldIterator *iterator, size_t component_id) {
+void *worldit_get_component(WorldIterator *iterator, size_t component_id) {
     Archetype *archetype =
             &iterator->world->archetypes[iterator->current_archetype];
 
@@ -118,7 +117,7 @@ void *ecs_iterator_get_component(
     return &column->data[iterator->current_element * column->element_size];
 }
 
-void ecs_iterator_destroy(WorldIterator *iterator) {
+void worldit_destroy(WorldIterator *iterator) {
     bitmask_destroy(&iterator->mask);
 }
 
@@ -146,7 +145,7 @@ void archetype_init(World *world, Bitmask mask, Archetype *archetype_out) {
     }
 }
 
-uint32_t ecs_add_entity(World *world, Bitmask mask) {
+Index ecs_add_entity(World *world, Bitmask mask) {
     uint32_t entity_id = vector_size(world->free_ids) > 0
             ? vector_pop_back(world->free_ids)
             : vector_size(world->entity_ptrs);
@@ -168,12 +167,10 @@ uint32_t ecs_add_entity(World *world, Bitmask mask) {
         vector_resize(world->entity_ptrs, entity_id + 1);
     }
 
-    EntityPtr new_eptr = {
+    world->entity_ptrs[entity_id] = (EntityPtr){
             .archetype = archetype - world->archetypes,
             .element = element_index,
     };
-
-    world->entity_ptrs[entity_id] = new_eptr;
 
     for (size_t i = 0; i < vector_size(archetype->columns); i++) {
         Column *column = &archetype->columns[i];
@@ -224,8 +221,8 @@ void entity_builder_add_component(
     vector_append(builder->component_ids, id);
 }
 
-void entity_builder_finish(EntityBuilder *builder) {
-    uint32_t entity_id = ecs_add_entity(builder->world, builder->mask);
+Index entity_builder_finish(EntityBuilder *builder) {
+    Index entity_id = ecs_add_entity(builder->world, builder->mask);
 
     EntityPtr *eptr = &builder->world->entity_ptrs[entity_id];
     Archetype *archetype = &builder->world->archetypes[eptr->archetype];
@@ -251,6 +248,8 @@ void entity_builder_finish(EntityBuilder *builder) {
 
     vector_destroy(builder->components);
     vector_destroy(builder->component_ids);
+
+    return entity_id;
 }
 
 void *ecs_get_component(
