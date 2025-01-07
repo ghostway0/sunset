@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "sunset/utils.h"
+#include "internal/utils.h"
 
 uint64_t get_time_ms() {
     struct timespec ts;
@@ -38,4 +38,17 @@ float time_since_s(struct timespec start) {
     struct timespec now = get_time();
     return (float)(now.tv_sec - start.tv_sec)
             + (float)(now.tv_nsec - start.tv_nsec) / 1000000000.0;
+}
+
+void memswap(void *a, void *b, size_t n) {
+    uint8_t *mem_a = a;
+    uint8_t *mem_b = b;
+    uint8_t scratch;
+
+    // let's hope this vectorizes!
+    for (size_t i = 0; i < n; i++) {
+        scratch = *mem_a;
+        *mem_a = *mem_b;
+        *mem_b = scratch;
+    }
 }

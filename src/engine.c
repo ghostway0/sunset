@@ -11,7 +11,7 @@
 #include "sunset/octree.h"
 #include "sunset/rman.h"
 #include "sunset/ui.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 
 #include "sunset/engine.h"
 
@@ -134,8 +134,9 @@ int engine_run(Game const *game) {
         struct timespec timespec = get_time();
 
         // TODO: handle input using backend
-        // backend_capture_input(context.render_context,
-        // &context.input_snippet);
+        // InputState instate = backend_capture_input(context.render_context);
+        // event_queue_process_one(..., SYSEV_INPUT_SNIPPET);
+        // ? event_queue_process()
 
         if (time_since_s(last_tick) >= TICK_TIME_S) {
             if ((retval = engine_tick(&context))) {

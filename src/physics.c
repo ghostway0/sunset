@@ -9,15 +9,15 @@
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
-#include "sunset/math.h"
-#include "sunset/utils.h"
+#include "internal/math.h"
+#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #include "sunset/physics.h"
 
 #define VELOCITY_EPSILON 0.1
 
-enum order compare_collisions(void const *a, void const *b) {
+Order compare_collisions(void const *a, void const *b) {
     const struct collision_pair *col_a = (const struct collision_pair *)a;
     const struct collision_pair *col_b = (const struct collision_pair *)b;
 
@@ -447,7 +447,7 @@ static void generate_collider_events(struct physics const *physics,
                 physics->collision_pairs[old_index];
         struct collision_pair new_collision = new_collisions[new_index];
 
-        enum order cmp = compare_collisions(&old_collision, &new_collision);
+        Order cmp = compare_collisions(&old_collision, &new_collision);
 
         if (cmp == ORDER_LESS_THAN) {
             generate_collision_event(

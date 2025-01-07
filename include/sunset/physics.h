@@ -5,10 +5,9 @@
 #include <cglm/vec3.h>
 #include <stdint.h>
 
-#include "ecs.h"
 #include "sunset/ecs.h"
 #include "sunset/events.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vector.h"
 
 typedef struct EngineContext EngineContext;

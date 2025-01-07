@@ -10,7 +10,7 @@
 
 #include "sunset/errors.h"
 #include "sunset/json.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vfs.h"
 
 void test_json_parse_simple_object(void **state) {

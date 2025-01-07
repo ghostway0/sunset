@@ -39,11 +39,13 @@ opengl_dep = dependency('opengl', required: true)
 
 m_dep = cc.find_library('m', required: true)
 
-sunset_inc = include_directories('include/')
+sunset_inc = include_directories('include/', 'include/sunset/')
 
 subdir('external')
 
 sunset_files = [
+  'src/map.c',
+  'src/btree.c',
   'src/errors.c',
   'src/fonts.c',
   'src/ring_buffer.c',
@@ -52,7 +54,7 @@ sunset_files = [
   'src/input.c',
   'src/events.c',
   'src/json.c',
-  'src/physics2.c',
+  # 'src/physics2.c',
   'src/bitmap.c',
   'src/shader.c',
   'src/ecs.c',

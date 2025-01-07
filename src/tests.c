@@ -19,7 +19,7 @@
 #include "sunset/mtl_file.h"
 #include "sunset/obj_file.h"
 #include "sunset/ring_buffer.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 
 struct element {
     int x;

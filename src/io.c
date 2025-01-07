@@ -1,8 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "sunset/math.h"
-#include "sunset/utils.h"
+#include "internal/math.h"
+#include "internal/utils.h"
 #include "sunset/vfs.h"
 
 #include "sunset/io.h"

@@ -7,7 +7,7 @@
 #include "sunset/errors.h"
 #include "sunset/images.h"
 #include "sunset/io.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #include "sunset/tga.h"

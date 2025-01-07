@@ -1,10 +1,12 @@
 #include <assert.h>
 #include <stdint.h>
 
-#include "cglm/types.h"
-#include "cglm/vec3.h"
+#include <cglm/types.h>
+#include <cglm/vec3.h>
+
+#include "internal/math.h"
+
 #include "sunset/geometry.h"
-#include "sunset/math.h"
 
 struct rect rect_from_center(struct point center, struct point size) {
     return (struct rect){

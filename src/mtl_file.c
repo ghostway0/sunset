@@ -10,7 +10,7 @@
 #include "sunset/errors.h"
 #include "sunset/io.h"
 #include "sunset/mtl_file.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vector.h"
 
 static void mtl_material_init(struct mtl_material *material) {

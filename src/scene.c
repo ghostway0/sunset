@@ -8,7 +8,7 @@
 #include "sunset/commands.h"
 #include "sunset/map.h"
 #include "sunset/octree.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #include "sunset/scene.h"

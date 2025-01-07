@@ -10,7 +10,7 @@
 #include "sunset/errors.h"
 #include "sunset/io.h"
 #include "sunset/obj_file.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vector.h"
 
 static int parse_face_element(

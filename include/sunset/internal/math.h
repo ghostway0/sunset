@@ -1,7 +1,7 @@
 #ifndef MATH_H
 #define MATH_H
 
-#include "sunset/utils.h"
+#include "internal/utils.h"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
@@ -22,11 +22,11 @@
         result;                                                            \
     })
 
-enum order {
+typedef enum Order {
     ORDER_LESS_THAN = -1,
     ORDER_EQUAL = 0,
     ORDER_GREATER_THAN = 1,
-};
+} Order;
 
 #define vectors_close(type, a, b, tolerance)                               \
     ({                                                                     \
@@ -46,7 +46,7 @@ enum order {
         vectors_close(type, vector, _zero, tolerance);                     \
     })
 
-static inline enum order compare_ptrs(void const *a, void const *b) {
+static inline Order compare_ptrs(void const *a, void const *b) {
     if (a > b) {
         return ORDER_GREATER_THAN;
     }

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "sunset/utils.h"
 #include <stddef.h>
+
+#include "internal/utils.h"
 
 typedef struct Writer Writer;
 typedef struct Reader Reader;

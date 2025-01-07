@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sunset/utils.h"
+#include "internal/utils.h"
 
 struct vector_metadata {
     size_t size;

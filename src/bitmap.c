@@ -5,7 +5,7 @@
 #include <string.h>
 
 #include "sunset/bitmask.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 
 void bitmask_init(size_t size, Bitmask *bitmask_out) {
     bitmask_out->num_chunks = (size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;

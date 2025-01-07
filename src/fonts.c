@@ -5,7 +5,7 @@
 #include "sunset/errors.h"
 #include "sunset/geometry.h"
 #include "sunset/images.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vfs.h"
 
 #include "sunset/fonts.h"

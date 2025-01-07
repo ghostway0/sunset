@@ -3,9 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "byte_stream.h"
-#include "render.h"
-#include "shader.h"
+#include "sunset/byte_stream.h"
+#include "sunset/render.h"
+#include "sunset/shader.h"
 #include "sunset/input.h"
 
 #ifdef SUNSET_BACKEND_OPENGL
@@ -45,11 +45,9 @@ int backend_setup_shader(struct program *program,
         size_t num_arguments);
 
 struct instanced_mesh *backend_create_instanced_mesh(
-        RenderContext *context,
-        struct compiled_mesh const *compiled_mesh);
+        RenderContext *context, struct compiled_mesh const *compiled_mesh);
 
-void backend_set_user_context(
-        RenderContext *context, void *user_context);
+void backend_set_user_context(RenderContext *context, void *user_context);
 
 int backend_register_texture_atlas(RenderContext *context,
         struct image const *atlas_image,

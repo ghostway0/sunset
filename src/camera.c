@@ -6,7 +6,7 @@
 #include <cglm/vec3.h>
 
 #include "sunset/geometry.h"
-#include "sunset/math.h"
+#include "internal/math.h"
 
 #include "sunset/camera.h"
 

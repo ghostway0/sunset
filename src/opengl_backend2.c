@@ -15,11 +15,11 @@
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
-#include "sunset/math.h"
+#include "internal/math.h"
 #include "sunset/opengl_backend.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #define SUNSET_MAX_NUM_INSTANCED 128
@@ -237,7 +237,7 @@ void backend_destroy_program(struct program *program) {
     glDeleteProgram((GLuint)program->handle);
 }
 
-uint32_t backend_register_mesh(struct render_context *context, Mesh mesh) {
+uint32_t backend_register_mesh(RenderContext *context, Mesh mesh) {
     struct compiled_mesh compiled_mesh;
     if (compile_mesh(&mesh, &compiled_mesh) != 0) {
         return -1;
@@ -272,7 +272,7 @@ static int add_preconfigured_shader(
     return 0;
 }
 
-static int setup_default_shaders(struct render_context *context) {
+static int setup_default_shaders(RenderContext *context) {
     int retval = 0;
 
     if ((retval = add_preconfigured_shader(textured_program_config,
@@ -301,7 +301,7 @@ static int setup_default_shaders(struct render_context *context) {
 }
 
 static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
-    struct render_context *context = glfwGetWindowUserPointer(window);
+    RenderContext *context = glfwGetWindowUserPointer(window);
 
     if (context->first_mouse) {
         context->mouse = (struct point){xpos, ypos};
@@ -315,14 +315,14 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
                     }});
 }
 
-static int setup_mouse(struct render_context *context) {
+static int setup_mouse(RenderContext *context) {
     glfwSetInputMode(context->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(context->window, mouse_callback);
 
     return 0;
 }
 
-int backend_setup(struct render_context *context, RenderConfig config) {
+int backend_setup(RenderContext *context, RenderConfig config) {
     int retval = 0;
 
     if (!glfwInit()) {
@@ -407,7 +407,7 @@ failure:
 // }
 
 int backend_register_texture(
-        struct render_context *context, struct image const *texture) {
+        RenderContext *context, struct image const *texture) {
     unused(context);
     unused(texture);
 
@@ -416,7 +416,7 @@ int backend_register_texture(
 
 /// first_id_out gets set the id of the first texture that has been
 /// registered in this atlas. the ids are guaranteed to be in-order.
-int backend_register_texture_atlas(struct render_context *context,
+int backend_register_texture_atlas(RenderContext *context,
         struct image const *atlas_image,
         struct rect *bounds,
         size_t num_textures,
@@ -566,7 +566,7 @@ static int program_set_uniform_vec4(
 }
 
 static void upload_default_uniforms(
-        struct render_context *context, struct program program) {
+        RenderContext *context, struct program program) {
     program_set_uniform_mat4(
             program, "model", &context->frame_cache.model_matrix, 1);
     program_set_uniform_mat4(
@@ -579,7 +579,7 @@ static void upload_default_uniforms(
     // (?) bind textures
 }
 
-static void draw_instanced_mesh(struct render_context *context,
+static void draw_instanced_mesh(RenderContext *context,
         uint32_t mesh_id,
         uint32_t atlas_id,
         mat4 const *transforms,
@@ -621,7 +621,7 @@ static void draw_instanced_mesh(struct render_context *context,
     glBindVertexArray(0);
 }
 
-static enum order compare_instancing_buffers(void const *a, void const *b) {
+static Order compare_instancing_buffers(void const *a, void const *b) {
     struct instancing_buffer *a_data = (struct instancing_buffer *)a;
     struct instancing_buffer *b_data = (struct instancing_buffer *)b;
 
@@ -637,7 +637,7 @@ static enum order compare_instancing_buffers(void const *a, void const *b) {
 }
 
 static void instancing_buffer_flush(
-        struct render_context *context, struct instancing_buffer *buffer) {
+        RenderContext *context, struct instancing_buffer *buffer) {
     vector(mat4) transforms = buffer->transforms;
 
     // draw instanced
@@ -651,7 +651,7 @@ static void instancing_buffer_flush(
 }
 
 static int run_mesh_command(
-        struct render_context *context, struct command_mesh command) {
+        RenderContext *context, struct command_mesh command) {
     struct frame_cache *cache = &context->frame_cache;
 
     if (!command.instanced) {
@@ -712,14 +712,14 @@ static int run_mesh_command(
 }
 
 int backend_start_frame(
-        struct render_context *context, mat4 view, mat4 projection) {
+        RenderContext *context, mat4 view, mat4 projection) {
     glm_mat4_copy(projection, context->frame_cache.projection_matrix);
     glm_mat4_copy(view, context->frame_cache.view_matrix);
 
     return 0;
 }
 
-int backend_flush(struct render_context *context) {
+int backend_flush(RenderContext *context) {
     for (size_t i = 0;
             i < vector_size(context->frame_cache.instancing_buffers);
             ++i) {
@@ -732,7 +732,7 @@ int backend_flush(struct render_context *context) {
 
 // HACK:
 static int run_text_command(
-        struct render_context *context, struct command_text command) {
+        RenderContext *context, struct command_text command) {
     struct program program = context->backend_programs[PROGRAM_DRAW_TEXT];
 
     use_program(program);
@@ -812,12 +812,12 @@ static int run_text_command(
     return 0;
 }
 
-bool backend_should_stop(struct render_context *context) {
+bool backend_should_stop(RenderContext *context) {
     return glfwWindowShouldClose(context->window);
 }
 
 static void run_rect_command(
-        struct render_context *context, struct command_rect command) {
+        RenderContext *context, struct command_rect command) {
     Color color = command.color;
     struct rect rect = command.bounds;
 
@@ -874,7 +874,7 @@ static void run_rect_command(
     glDeleteBuffers(1, &vbo);
 }
 
-static void run_fill_rect_command(struct render_context *context,
+static void run_fill_rect_command(RenderContext *context,
         struct command_filled_rect filled_rect) {
     struct rect rect = filled_rect.rect;
     Color color = filled_rect.color;
@@ -929,7 +929,7 @@ static void run_fill_rect_command(struct render_context *context,
     glDeleteBuffers(1, &vbo);
 }
 
-void backend_draw(struct render_context *context,
+void backend_draw(RenderContext *context,
         CommandBuffer *command_buffer,
         mat4 view,
         mat4 projection) {
@@ -982,11 +982,11 @@ void backend_draw(struct render_context *context,
     glfwPollEvents();
 }
 
-void backend_hide_mouse(struct render_context *context) {
+void backend_hide_mouse(RenderContext *context) {
     glfwSetInputMode(context->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
-void backend_show_mouse(struct render_context *context) {
+void backend_show_mouse(RenderContext *context) {
     glfwSetInputMode(context->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
@@ -998,7 +998,7 @@ void program_destroy(struct program *program) {
     glDeleteProgram(program->handle);
 }
 
-void backend_destroy(struct render_context *context) {
+void backend_destroy(RenderContext *context) {
     for (size_t i = 0; i < NUM_BACKEND_PROGRAMS; i++) {
         program_destroy(&context->backend_programs[i]);
     }

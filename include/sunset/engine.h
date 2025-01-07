@@ -6,12 +6,11 @@
 #include "sunset/commands.h"
 #include "sunset/crypto.h"
 #include "sunset/ecs.h"
-#include "sunset/physics.h"
 #include "sunset/rman.h"
+#include "sunset/events.h"
 #include "sunset/vector.h"
 
 typedef struct UIContext UIContext;
-typedef struct EventQueue EventQueue;
 
 typedef void *PluginHandle;
 
@@ -22,7 +21,7 @@ struct EngineContext {
     vector(PluginHandle) loaded_plugins;
 
     CommandBuffer cmdbuf;
-    struct render_context render_context;
+    RenderContext render_context;
     ResourceManager rman;
 
     EventQueue event_queue;
@@ -63,7 +62,5 @@ struct Game {
 // external API
 
 int engine_run(Game const *game);
-
-int engine_load_scene(EngineContext *engine_context, struct scene *scene);
 
 void engine_set_mouse_mode(EngineContext *engine_context, MouseMode mode);

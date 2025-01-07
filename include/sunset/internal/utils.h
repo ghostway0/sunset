@@ -110,3 +110,5 @@ static inline int compare_uint64_t(void const *a, void const *b) {
 typedef intmax_t ssize_t;
 
 #define sunset_flag(i) (1 << i)
+
+void memswap(void *a, void *b, size_t n);

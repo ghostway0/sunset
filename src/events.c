@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <stdint.h>
 
-#include "sunset/utils.h"
+#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #include "sunset/events.h"
