@@ -6,8 +6,7 @@
 
 #include "sunset/ui.h"
 
-static struct widget *find_active_widget(
-        struct widget *current, struct point mouse) {
+static Widget *find_active_widget(Widget *current, struct point mouse) {
     // backtrack
     while (!point_within_rect(mouse, current->bounds)) {
         current = current->parent;
@@ -37,7 +36,7 @@ static void mouse_click_handler(
         EngineContext *context, void *, Event event) {
     unused(event);
 
-    struct widget *current = context->active_ui->current_widget;
+    Widget *current = context->active_ui->current_widget;
 
     if (current->tag == WIDGET_BUTTON) {
         current->button.clicked_callback(context);
@@ -45,7 +44,7 @@ static void mouse_click_handler(
 }
 
 static void key_up_handler(EngineContext *context, void *, Event event) {
-    struct widget *current = context->active_ui->current_widget;
+    Widget *current = context->active_ui->current_widget;
 
     if (!current || current->tag != WIDGET_INPUT) {
         return;
@@ -64,7 +63,7 @@ static void key_up_handler(EngineContext *context, void *, Event event) {
 
 static void mouse_move_handler(
         EngineContext *context, void *, Event event) {
-    struct widget *current = context->active_ui->current_widget;
+    Widget *current = context->active_ui->current_widget;
 
     if (!current) {
         current = context->active_ui->root;
@@ -76,14 +75,14 @@ static void mouse_move_handler(
 
 void ui_setup(EngineContext *context) {
     event_queue_add_handler(&context->event_queue,
-            SYSEV_MOUSE_MOVE,
+            SYSTEM_EVENT_MOUSE_MOVE,
             (EventHandler){context, mouse_move_handler});
 
     event_queue_add_handler(&context->event_queue,
-            SYSEV_MOUSE_CLICK,
+            SYSTEM_EVENT_MOUSE_CLICK,
             (EventHandler){context, mouse_click_handler});
 
     event_queue_add_handler(&context->event_queue,
-            SYSEV_KEY_UP,
+            SYSTEM_EVENT_KEY_UP,
             (EventHandler){context, key_up_handler});
 }

@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal/utils.h"
+#include "internal/mem_utils.h"
 
 struct vector_metadata {
     size_t size;
@@ -16,14 +16,14 @@ struct vector_metadata {
 #define _vector_metadata(v) ((struct vector_metadata *)(v) - 1)
 
 #define vector_init(v)                                                     \
-    ({                                                                     \
+    do {                                                                   \
         struct vector_metadata *meta =                                     \
                 (struct vector_metadata *)sunset_malloc(                   \
                         sizeof(struct vector_metadata) + sizeof(*v) * 16); \
         meta->size = 0;                                                    \
         meta->capacity = 16;                                               \
         v = (void *)(meta + 1);                                            \
-    })
+    } while (0);
 
 #define vector_destroy(v)                                                  \
     do {                                                                   \

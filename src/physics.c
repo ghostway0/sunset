@@ -293,7 +293,7 @@ static void handle_object_collision(struct object *object,
     glm_vec3_copy(direction, direction_out);
 
     struct event event = {
-            .type_id = SYSEV_COLLISION,
+            .type_id = SYSTEM_EVENT_COLLISION,
             .collision =
                     {
                             .a = object,
@@ -365,7 +365,7 @@ static void generate_collision_event(EventQueue *event_queue,
                "other.");
 
     struct event event = {
-            .type_id = SYSEV_COLLISION,
+            .type_id = SYSTEM_EVENT_COLLISION,
             .collision = {.a = collision.a,
                     .b = collision.b,
                     .type = collision_type},

@@ -4,7 +4,7 @@
 
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
-#include "internal/utils.h"
+#include "internal/mem_utils.h"
 
 // split node into 8 octants recursively
 bool maybe_split_node(OcTree *tree, OcTreeNode *node) {

@@ -16,7 +16,7 @@ static BTreeNode sentinel = {
         .left = &sentinel,
         .right = &sentinel,
         .parent = &sentinel,
-        .color = COLOR_NULL,
+        .color = NODE_COLOR_NULL,
 };
 
 static Direction get_parent_direction(BTreeNode const *node) {
@@ -90,46 +90,47 @@ static void rotate_up(BTree *btree, BTreeNode *node) {
 }
 
 static void restore_black_property(BTree *btree, BTreeNode *to_fix) {
-    if (sibling(to_fix)->color == COLOR_RED) {
+    if (sibling(to_fix)->color == NODE_COLOR_RED) {
         rotate_up(btree, sibling(to_fix));
     }
 
     BTreeNode *sibling_node = sibling(to_fix);
 
-    if (inside_child(sibling_node)->color != COLOR_RED
-            && outside_child(sibling_node)->color != COLOR_RED) {
-        sibling_node->color = COLOR_RED;
+    if (inside_child(sibling_node)->color != NODE_COLOR_RED
+            && outside_child(sibling_node)->color != NODE_COLOR_RED) {
+        sibling_node->color = NODE_COLOR_RED;
 
-        if (to_fix->parent->color == COLOR_RED) {
-            to_fix->parent->color = COLOR_BLACK;
+        if (to_fix->parent->color == NODE_COLOR_RED) {
+            to_fix->parent->color = NODE_COLOR_BLACK;
         } else if (to_fix->parent != btree->root) {
             restore_black_property(btree, to_fix->parent);
         }
     } else {
         BTreeNode *nephew = outside_child(sibling_node);
 
-        if (nephew->color != COLOR_RED) {
+        if (nephew->color != NODE_COLOR_RED) {
             rotate_up(btree, nephew);
         }
 
         rotate_up(btree, sibling_node);
-        uncle(to_fix)->color = COLOR_BLACK;
+        uncle(to_fix)->color = NODE_COLOR_BLACK;
     }
 }
 
 static bool violates_red_property(BTreeNode *node) {
-    return node->color == COLOR_RED && node->parent->color == COLOR_RED;
+    return node->color == NODE_COLOR_RED
+            && node->parent->color == NODE_COLOR_RED;
 }
 
 static void restore_red_property(BTree *btree, BTreeNode *node) {
     if (node->parent == btree->root) {
         // case 1
-        node->parent->color = COLOR_BLACK;
-    } else if (uncle(node)->color == COLOR_RED) {
+        node->parent->color = NODE_COLOR_BLACK;
+    } else if (uncle(node)->color == NODE_COLOR_RED) {
         // case 2
-        node->parent->color = COLOR_BLACK;
-        uncle(node)->color = COLOR_BLACK;
-        node->parent->parent->color = COLOR_RED;
+        node->parent->color = NODE_COLOR_BLACK;
+        uncle(node)->color = NODE_COLOR_BLACK;
+        node->parent->parent->color = NODE_COLOR_RED;
 
         if (violates_red_property(node->parent->parent)) {
             restore_red_property(btree, node->parent->parent);
@@ -178,7 +179,6 @@ void btree_destroy(BTree *btree, DestroyFn destroyer) {
     btree->insert_callback = NULL;
 }
 
-
 bool btree_node_is_sentinel(BTreeNode *node) {
     return node == &sentinel;
 }
@@ -189,11 +189,11 @@ int btree_insert(BTree *btree, BTreeNode *new_node) {
             .left = &sentinel,
             .right = &sentinel,
             .parent = &sentinel,
-            .color = COLOR_RED,
+            .color = NODE_COLOR_RED,
     };
 
     if (btree->root == &sentinel) {
-        new_node->color = COLOR_BLACK;
+        new_node->color = NODE_COLOR_BLACK;
         btree->root = new_node;
         return 0;
     }
@@ -261,8 +261,8 @@ BTreeNode *btree_find(BTree const *btree, BTreeNode *node) {
 void btree_delete(BTree *btree, BTreeNode *node) {
     assert(node != &sentinel);
 
-    if (node != btree->root && node->color != COLOR_RED) {
-        node->color = COLOR_NULL;
+    if (node != btree->root && node->color != NODE_COLOR_RED) {
+        node->color = NODE_COLOR_NULL;
         restore_black_property(btree, node);
     }
 
@@ -273,4 +273,12 @@ void btree_delete(BTree *btree, BTreeNode *node) {
     if (btree->delete_callback != NULL) {
         btree->delete_callback(node->parent);
     }
+}
+
+BTreeNode *btree_iter_gt(BTreeNode *node) {
+    return node->right;
+}
+
+BTreeNode *btree_iter_lt(BTreeNode *node) {
+    return node->left;
 }

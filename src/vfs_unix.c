@@ -153,7 +153,7 @@ size_t vfs_file_get_offset(VfsFile *file) {
 
 bool vfs_is_eof(VfsFile *file) {
     size_t current_offset = vfs_file_get_offset(file);
-    if (current_offset == SIZE_FAIL) {
+    if (current_offset == (size_t)-1) {
         return false;
     }
 

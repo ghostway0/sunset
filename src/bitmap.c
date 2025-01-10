@@ -4,8 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "internal/mem_utils.h"
+
 #include "sunset/bitmask.h"
-#include "internal/utils.h"
 
 void bitmask_init(size_t size, Bitmask *bitmask_out) {
     bitmask_out->num_chunks = (size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
@@ -62,6 +63,7 @@ bool bitmask_is_eql(Bitmask const *bitmask, Bitmask const *other) {
             == 0;
 }
 
+/// checks whether `bitmask` is a superset of `other`.
 bool bitmask_is_superset(Bitmask const *bitmask, Bitmask const *other) {
     for (size_t i = 0; i < bitmask->num_chunks; ++i) {
         if ((bitmask->chunks[i] & other->chunks[i]) != other->chunks[i]) {
@@ -104,4 +106,19 @@ void bitmask_destroy(Bitmask *bitmask) {
     free(bitmask->chunks);
     bitmask->chunks = NULL;
     bitmask->num_chunks = 0;
+}
+
+void bitmask_clear(Bitmask *bitmask) {
+    memset(bitmask->chunks, 0, bitmask->num_chunks * sizeof(Limb));
+}
+
+Bitmask bitmask_clone(Bitmask const *bitmask) {
+    Bitmask result;
+    bitmask_init_empty(bitmask->num_chunks * sizeof(Limb), &result);
+
+    memcpy(result.chunks,
+            bitmask->chunks,
+            bitmask->num_chunks * sizeof(Limb));
+
+    return result;
 }

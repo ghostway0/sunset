@@ -10,14 +10,14 @@
 typedef struct EngineContext EngineContext;
 struct input_state;
 
-struct style {
+typedef struct Style {
     // STUB
-};
+} Style;
 
-struct widget {
-    struct style style;
-    vector(struct widget *) children;
-    struct widget *parent;
+typedef struct Widget {
+    Style style;
+    vector(struct Widget *) children;
+    struct Widget *parent;
     struct rect bounds;
     /// if inactive, all children are disabled
     bool active;
@@ -40,12 +40,12 @@ struct widget {
             void (*clicked_callback)(EngineContext *);
         } button;
     };
-};
+} Widget;
 
-struct UIContext {
-    vector(struct widget) widgets;
-    struct widget *root;
-    struct widget *current_widget;
-} typedef UIContext;
+typedef struct UIContext {
+    vector(Widget) widgets;
+    Widget *root;
+    Widget *current_widget;
+} UIContext;
 
 void ui_setup(EngineContext *context);

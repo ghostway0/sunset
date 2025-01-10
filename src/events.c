@@ -33,18 +33,18 @@ void event_queue_destroy(EventQueue *queue) {
 }
 
 void event_queue_add_handler(
-        EventQueue *queue, uint32_t type_id, struct EventHandler handler) {
+        EventQueue *queue, EventId event_id, struct EventHandler handler) {
     pthread_mutex_lock(queue->lock);
 
-    if (type_id >= vector_size(queue->handlers)) {
-        vector_resize(queue->handlers, type_id + 1);
+    if (event_id >= vector_size(queue->handlers)) {
+        vector_resize(queue->handlers, event_id + 1);
     }
 
-    if (queue->handlers[type_id] == NULL) {
-        vector_init(queue->handlers[type_id]);
+    if (queue->handlers[event_id] == NULL) {
+        vector_init(queue->handlers[event_id]);
     }
 
-    vector_append(queue->handlers[type_id], handler);
+    vector_append(queue->handlers[event_id], handler);
 
     pthread_mutex_unlock(queue->lock);
 }
@@ -69,13 +69,13 @@ void event_queue_process(EventQueue *queue, void *global_context) {
 
 void event_queue_process_one(
         void *global_context, EventQueue *queue, Event const event) {
-    if (queue->handlers[event.type_id] == NULL) {
+    if (queue->handlers[event.event_id] == NULL) {
         return;
     }
 
-    for (size_t j = 0; j < vector_size(queue->handlers[event.type_id]);
+    for (size_t j = 0; j < vector_size(queue->handlers[event.event_id]);
             j++) {
-        EventHandler handler = queue->handlers[event.type_id][j];
+        EventHandler handler = queue->handlers[event.event_id][j];
 
         assert(handler.handler_fn != NULL);
         handler.handler_fn(global_context, handler.local_context, event);

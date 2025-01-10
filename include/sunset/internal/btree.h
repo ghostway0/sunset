@@ -10,9 +10,9 @@ typedef void (*BTreeCallback)(BTreeNode *);
 typedef void (*DestroyFn)(BTreeNode *node);
 
 typedef enum NodeColor {
-    COLOR_NULL,
-    COLOR_RED,
-    COLOR_BLACK,
+    NODE_COLOR_NULL,
+    NODE_COLOR_RED,
+    NODE_COLOR_BLACK,
 } NodeColor;
 
 typedef struct BTreeNode {
@@ -29,6 +29,9 @@ typedef struct BTree {
     BTreeCallback insert_callback;
     BTreeCallback delete_callback;
 } BTree;
+
+BTreeNode *btree_iter_gt(BTreeNode *node);
+BTreeNode *btree_iter_lt(BTreeNode *node);
 
 // btree takes ownership on `new_node`
 int btree_insert(BTree *btree, BTreeNode *new_node);

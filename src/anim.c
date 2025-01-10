@@ -1,3 +1,4 @@
+#include "sunset/images.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -47,7 +48,7 @@ typedef struct KeyframeVisibility {
 } KeyframeVisibility;
 
 typedef struct KeyframeColor {
-    vec4 color;
+    struct color color;
     Interpolation inter;
 } KeyframeColor;
 

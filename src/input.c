@@ -2,17 +2,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "events.h"
 #include "internal/btree.h"
 #include "internal/math.h"
+#include "internal/utils.h"
 #include "sunset/bitmask.h"
-#include "utils.h"
 
 #include "sunset/input.h"
 
 typedef struct SetNode {
     Bitmask mask;
     BTreeNode node;
-    // action
+    EventId event_id;
 } SetNode;
 
 static void setnode_destroy(BTreeNode *node) {
@@ -36,26 +37,46 @@ static Order compare_setnodes(void const *left, void const *right) {
     return ORDER_LESS_THAN;
 }
 
-void inputbinding_init(InputBinding *binding_out) {
+void inputbinding_init(EventQueue *event_queue, InputBinding *binding_out) {
     btree_init(compare_setnodes, NULL, NULL, &binding_out->btree);
+    binding_out->event_queue = event_queue;
 }
 
 void inputbinding_destroy(InputBinding *binding) {
     btree_destroy(&binding->btree, setnode_destroy);
 }
 
-void inputbinding_add(InputBinding *binding, Bitmask comb) {
+void binding_add(
+        InputBinding *binding, Bitmask const *comb, EventId event_id) {
     SetNode *new_node = sunset_malloc(sizeof(SetNode));
-    new_node->mask = comb;
+    new_node->mask = bitmask_clone(comb);
+    new_node->event_id = event_id;
 
     btree_insert(&binding->btree, &new_node->node);
 }
 
-InputBindingCursor inputbinding_query(
-        InputBinding const *binding, InputState const *instate) {
-    SetNode set_node = {.mask = instate->keys, .node = {}};
+bool binding_query(
+        InputBinding const *binding, InputState const *input_state) {
+    BTreeNode *it = binding->btree.root;
 
-    BTreeNode *node = btree_find(&binding->btree, &set_node.node);
+    while (!btree_node_is_sentinel(it)) {
+        SetNode *current_node = container_of(it, SetNode, node);
 
-    return (InputBindingCursor){.curr = node};
+        if (bitmask_is_superset(&current_node->mask, &input_state->keys)) {
+            break;
+        } else {
+            it = btree_iter_gt(it);
+        }
+    }
+
+    while (!btree_node_is_sentinel(it)) {
+        SetNode *node = container_of(it, SetNode, node);
+
+        event_queue_push(
+                binding->event_queue, (Event){.event_id = node->event_id});
+
+        it = btree_iter_gt(it);
+    }
+
+    return true;
 }

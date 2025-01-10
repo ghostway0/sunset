@@ -5,6 +5,7 @@
 
 #include "internal/btree.h"
 #include "sunset/bitmask.h"
+#include "sunset/events.h"
 
 typedef struct InputState {
     Bitmask keys;
@@ -12,15 +13,15 @@ typedef struct InputState {
 
 typedef struct InputBinding {
     BTree btree;
+    EventQueue *event_queue;
 } InputBinding;
 
-typedef struct InputBindingCursor {
-    BTreeNode *curr;
-} InputBindingCursor;
+void inputbinding_init(EventQueue *event_queue, InputBinding *binding_out);
 
-void inputbinding_init(InputBinding *binding_out);
+void inputbinding_destroy(InputBinding *binding);
 
-void inputbinding_add(InputBinding *binding, Bitmask comb);
+void binding_add(
+        InputBinding *binding, Bitmask const *comb, EventId event_id);
 
-InputBindingCursor inputbinding_query(
-        InputBinding const *binding, InputState const *instate);
+bool binding_query(
+        InputBinding const *binding, InputState const *input_state);

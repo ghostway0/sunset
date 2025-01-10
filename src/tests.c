@@ -9,17 +9,20 @@
 #include <cmocka.h>
 // clang-format on
 
+#include "bitmask.h"
+#include "events.h"
+#include "internal/utils.h"
 #include "sunset/base64.h"
 #include "sunset/byte_stream.h"
 #include "sunset/camera.h"
 #include "sunset/ecs.h"
 #include "sunset/errors.h"
 #include "sunset/images.h"
+#include "sunset/input.h"
 #include "sunset/io.h"
 #include "sunset/mtl_file.h"
 #include "sunset/obj_file.h"
 #include "sunset/ring_buffer.h"
-#include "internal/utils.h"
 
 struct element {
     int x;
@@ -654,6 +657,45 @@ void test_ecs(void **state) {
     }
 }
 
+void test_input(void **state) {
+    unused(state);
+
+    EventQueue eq;
+    event_queue_init(&eq);
+
+    InputBinding b;
+    inputbinding_init(&eq, &b);
+
+    Bitmask comb;
+    bitmask_init(8, &comb);
+
+    bitmask_set(&comb, 0);
+    binding_add(&b, &comb, 10);
+    bitmask_clear(&comb);
+
+    bitmask_set(&comb, 0);
+    bitmask_set(&comb, 2);
+    binding_add(&b, &comb, 11);
+    bitmask_clear(&comb);
+
+    bitmask_set(&comb, 2);
+    bitmask_set(&comb, 0);
+    bitmask_set(&comb, 1);
+
+    InputState s;
+    s.keys = comb;
+
+    assert_true(binding_query(&b, &s));
+
+    Event e;
+
+    assert_int_equal(event_queue_pop(&eq, &e), 0);
+    assert_int_equal(e.event_id, 11);
+    
+    assert_int_equal(event_queue_pop(&eq, &e), 0);
+    assert_int_equal(e.event_id, 10);
+}
+
 int main(void) {
     const struct CMUnitTest general_tests[] = {
             cmocka_unit_test(test_ring_buffer),
@@ -677,6 +719,7 @@ int main(void) {
             cmocka_unit_test(test_mtl_file_parse_emission_map),
             cmocka_unit_test(test_mtl_file_parse_invalid_format),
             cmocka_unit_test(test_ecs),
+            cmocka_unit_test(test_input),
     };
 
     return cmocka_run_group_tests(general_tests, NULL, NULL);

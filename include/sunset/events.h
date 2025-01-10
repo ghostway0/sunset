@@ -19,12 +19,12 @@ struct EventHandler {
 } typedef EventHandler;
 
 enum {
-    SYSEV_TICK,
-    SYSEV_RENDER,
-    SYSEV_COLLISION,
-    SYSEV_MOUSE_MOVE,
-    SYSEV_KEY_UP,
-    SYSEV_MOUSE_CLICK,
+    SYSTEM_EVENT_TICK,
+    SYSTEM_EVENT_RENDER,
+    SYSTEM_EVENT_COLLISION,
+    SYSTEM_EVENT_MOUSE_MOVE,
+    SYSTEM_EVENT_KEY_UP,
+    SYSTEM_EVENT_MOUSE_CLICK,
 };
 
 struct EventQueue {
@@ -57,8 +57,10 @@ struct mouse_move_event {
     struct point absolute;
 };
 
+typedef uint32_t EventId;
+
 struct Event {
-    uint32_t type_id;
+    EventId event_id;
     union {
         struct collision_event collision;
         struct mouse_move_event mouse_move;
@@ -74,7 +76,7 @@ void event_queue_init(EventQueue *queue);
 void event_queue_destroy(EventQueue *queue);
 
 void event_queue_add_handler(
-        EventQueue *queue, uint32_t type_id, EventHandler handler);
+        EventQueue *queue, EventId event_id, EventHandler handler);
 
 void event_queue_push(EventQueue *queue, Event const event);
 

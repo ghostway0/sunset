@@ -41,3 +41,7 @@ size_t bitmask_popcount(Bitmask const *bitmask);
 void bitmask_lsb_reset(Bitmask *bitmask);
 
 bool bitmask_is_zero(Bitmask const *bitmask);
+
+void bitmask_clear(Bitmask *bitmask);
+
+Bitmask bitmask_clone(Bitmask const *bitmask);

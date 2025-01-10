@@ -11,7 +11,7 @@
 #include "sunset/octree.h"
 #include "sunset/rman.h"
 #include "sunset/ui.h"
-#include "internal/utils.h"
+#include "internal/time_utils.h"
 
 #include "sunset/engine.h"
 
@@ -21,7 +21,7 @@ static float const TICK_TIME_S = 1.0f / 60.0f;
 static int engine_tick(EngineContext *context) {
     // send tick event
     event_queue_process_one(
-            context, &context->event_queue, (Event){.type_id = SYSEV_TICK});
+            context, &context->event_queue, (Event){.event_id = SYSTEM_EVENT_TICK});
 
     // process all generated events
     event_queue_process(&context->event_queue, context);
@@ -42,7 +42,7 @@ void example_setup_physics(EngineContext *engine_context) {
     physics_init(physics);
 
     event_queue_add_handler(&engine_context->event_queue,
-            SYSEV_TICK,
+            SYSTEM_EVENT_TICK,
             (struct event_handler){.local_context = physics,
                     .handler_fn = physics_callback});
 }
@@ -135,7 +135,7 @@ int engine_run(Game const *game) {
 
         // TODO: handle input using backend
         // InputState instate = backend_capture_input(context.render_context);
-        // event_queue_process_one(..., SYSEV_INPUT_SNIPPET);
+        // event_queue_process_one(..., SYSTEM_EVENT_INPUT_SNIPPET);
         // ? event_queue_process()
 
         if (time_since_s(last_tick) >= TICK_TIME_S) {
