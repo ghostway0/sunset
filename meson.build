@@ -49,6 +49,7 @@ sunset_files = [
   'src/crc64.c',
   'src/errors.c',
   'src/anim.c',
+  'src/render.c',
   'src/fonts.c',
   'src/ring_buffer.c',
   'src/geometry.c',

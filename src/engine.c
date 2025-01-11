@@ -142,29 +142,14 @@ void *octree_init_resource(void) {
 }
 
 static int engine_tick(EngineContext *context) {
-    // send tick event
     event_queue_process_one(context,
             &context->event_queue,
             (Event){.event_id = SYSTEM_EVENT_TICK});
 
-    // process all generated events
     event_queue_process(&context->event_queue, context);
 
     return 0;
 }
-
-// static int render_object(
-//         struct object *object, struct command_buffer *command_buffer) {
-//     mat4 model_matrix;
-//     object_calculate_model_matrix(object, model_matrix);
-//
-//     command_buffer_add_mesh(command_buffer,
-//             object->mesh_id,
-//             object->texture_id,
-//             model_matrix);
-//
-//     return 0;
-// }
 
 void render_world(
         World const *world, Camera const *camera, CommandBuffer *cmdbuf) {
@@ -227,6 +212,8 @@ int engine_run(Game const *game) {
 
         // FIXME: add camera when I have one
         render_world(&context.world, /*camera*/ NULL, &context.cmdbuf);
+
+        // backend_draw(context.render_context, &context.cmdbuf, ...);
 
         if (time_since_s(timespec) < FRAME_TIME_S) {
             usleep(FRAME_TIME_S - time_since_s(timespec));
