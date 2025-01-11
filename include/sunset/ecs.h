@@ -22,44 +22,44 @@ size_t _ecs_register_component(World *world, size_t component_size);
 #define REGISTER_COMPONENT(world, type)                                    \
     DEFINE_COMPONENT_ID(type, _ecs_register_component(world, sizeof(type)))
 
-struct Column {
+typedef struct Column {
     Bitmask mask;
     size_t element_size;
     vector(uint8_t) data;
-} typedef Column;
+} Column;
 
-struct Archetype {
+typedef struct Archetype {
     Bitmask mask;
     size_t num_elements;
     vector(Column) columns;
     vector(Index) free_elems;
-} typedef Archetype;
+} Archetype;
 
-struct EntityPtr {
+typedef struct EntityPtr {
     size_t archetype;
     size_t element;
-} typedef EntityPtr;
+} EntityPtr;
 
-struct World {
+typedef struct World {
     vector(ptrdiff_t) component_sizes;
     vector(Archetype) archetypes;
     vector(EntityPtr) entity_ptrs;
     vector(Index) free_ids;
-} typedef World;
+} World;
 
-struct EntityBuilder {
+typedef struct EntityBuilder {
     World *world;
     Bitmask mask;
     vector(void *) components;
     vector(size_t) component_ids;
-} typedef EntityBuilder;
+} EntityBuilder;
 
-struct WorldIterator {
+typedef struct WorldIterator {
     World const *world;
     Bitmask mask;
     size_t current_archetype;
     size_t current_element;
-} typedef WorldIterator;
+} WorldIterator;
 
 void ecs_init(World *world);
 
@@ -77,7 +77,11 @@ Index entity_builder_finish(EntityBuilder *builder);
 WorldIterator worldit_create(World const *world, Bitmask mask);
 bool worldit_is_valid(WorldIterator const *iterator);
 void worldit_advance(WorldIterator *iterator);
-void *worldit_get_component(WorldIterator *iterator, size_t component_id);
+EntityPtr worldit_get_entityptr(WorldIterator *iterator);
+void *worldit_get_component(WorldIterator *iterator, Index component_id);
 void worldit_destroy(WorldIterator *iterator);
+
+void *ecs_component_from_ptr(
+        World *world, EntityPtr eptr, Index component_id);
 
 #endif // SUNSET_ECS_H_

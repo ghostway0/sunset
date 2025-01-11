@@ -45,3 +45,5 @@ bool bitmask_is_zero(Bitmask const *bitmask);
 void bitmask_clear(Bitmask *bitmask);
 
 Bitmask bitmask_clone(Bitmask const *bitmask);
+
+uint64_t bitmask_hash(Bitmask const *bitmask);

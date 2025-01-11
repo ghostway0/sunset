@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "internal/mem_utils.h"
+#include "sunset/crc64.h"
 
 #include "sunset/bitmask.h"
 
@@ -121,4 +122,9 @@ Bitmask bitmask_clone(Bitmask const *bitmask) {
             bitmask->num_chunks * sizeof(Limb));
 
     return result;
+}
+
+uint64_t bitmask_hash(Bitmask const *bitmask) {
+    return crc64((uint8_t const *)bitmask->chunks,
+            bitmask->num_chunks * sizeof(Limb));
 }

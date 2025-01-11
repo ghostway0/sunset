@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "sunset/ecs.h"
 #include "sunset/ecs_types.h"
 #include "sunset/geometry.h"
 #include "sunset/vector.h"
@@ -13,18 +14,18 @@ struct RenderConfig {
     char const *window_title;
 } typedef RenderConfig;
 
-struct Transform {
+typedef struct Transform {
     AABB bounding_box;
     vec3 position;
     vec3 rotation;
     float scale;
-} typedef Transform;
+} Transform;
 
-struct Renderable {
+typedef struct Renderable {
     // TODO: where should this Index live?
     Index mesh;
     Index texture;
-} typedef Renderable;
+} Renderable;
 
 struct Chunk {
     AABB bounds;
@@ -38,3 +39,8 @@ enum WindowPoint {
     WINDOW_BOTTOM_LEFT,
     WINDOW_BOTTOM_RIGHT,
 } typedef WindowPoint;
+
+DECLARE_COMPONENT_ID(Transform);
+DECLARE_COMPONENT_ID(Renderable);
+
+void calculate_model_matrix(Transform const *transform, mat4 model_matrix);

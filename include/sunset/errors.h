@@ -13,6 +13,10 @@ enum error {
     ERROR_SHADER_COMPILATION_FAILED,
     ERROR_SHADER_LOADING_FAILED,
     ERROR_UNIFORM_NOT_FOUND,
+
+    ERROR_INVALID_PLUGIN,
+
+    ERROR_ANIMATION_DONE,
 };
 
 void error_print(char const *scope, int retval);

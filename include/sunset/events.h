@@ -18,22 +18,23 @@ struct EventHandler {
             Event event);
 } typedef EventHandler;
 
-enum {
+enum SystemEvents {
     SYSTEM_EVENT_TICK,
     SYSTEM_EVENT_RENDER,
     SYSTEM_EVENT_COLLISION,
     SYSTEM_EVENT_MOUSE_MOVE,
     SYSTEM_EVENT_KEY_UP,
+    SYSTEM_EVENT_KEY_DOWN,
     SYSTEM_EVENT_MOUSE_CLICK,
 };
 
-struct EventQueue {
+typedef struct EventQueue {
     vector(Event) events;
     /// maps event type to a Vector of event handlers
     vector(vector(EventHandler)) handlers;
 
     pthread_mutex_t *lock;
-} typedef EventQueue;
+} EventQueue;
 
 enum collision_type {
     COLLISION_ENTER_COLLIDER,
@@ -52,24 +53,17 @@ struct collision_event {
 static_assert(
         sizeof(struct collision_event) <= 60, "collision_event too large");
 
-struct mouse_move_event {
+typedef struct MouseMoveEvent {
     struct point offset;
     struct point absolute;
-};
+} MouseMoveEvent;
 
 typedef uint32_t EventId;
 
-struct Event {
+typedef struct Event {
     EventId event_id;
-    union {
-        struct collision_event collision;
-        struct mouse_move_event mouse_move;
-        // TODO: enum
-        char key_up;
-        char key_down;
-        uint8_t other[60];
-    };
-} typedef Event;
+    uint8_t data[60];
+} Event;
 
 void event_queue_init(EventQueue *queue);
 
@@ -88,3 +82,12 @@ void event_queue_process_one(
 int event_queue_pop(EventQueue *queue, Event *event);
 
 size_t event_queue_remaining(EventQueue const *queue);
+
+#define events_push(__eq, __eid, ...)                                      \
+    ({                                                                     \
+        auto _tmp = __VA_ARGS__;                                           \
+        Event __ev = {.event_id = (__eid)};                                \
+        memcpy(__ev.data, &_tmp, sizeof(_tmp));                            \
+        event_queue_push(__eq, __ev);                                      \
+    })
+

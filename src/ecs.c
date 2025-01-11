@@ -85,7 +85,7 @@ WorldIterator worldit_create(World const *world, Bitmask mask) {
 void worldit_advance(WorldIterator *iterator) {
     if (iterator->current_element + 1
             < iterator->world->archetypes[iterator->current_archetype]
-                      .num_elements) {
+                    .num_elements) {
         iterator->current_element++;
     } else {
         iterator->current_archetype++;
@@ -99,7 +99,7 @@ bool worldit_is_valid(WorldIterator const *iterator) {
             < vector_size(iterator->world->archetypes);
 }
 
-void *worldit_get_component(WorldIterator *iterator, size_t component_id) {
+void *worldit_get_component(WorldIterator *iterator, Index component_id) {
     Archetype *archetype =
             &iterator->world->archetypes[iterator->current_archetype];
 
@@ -252,13 +252,8 @@ Index entity_builder_finish(EntityBuilder *builder) {
     return entity_id;
 }
 
-void *ecs_get_component(
-        World *world, uint32_t entity_id, uint32_t component_id) {
-    if (entity_id >= vector_size(world->entity_ptrs)) {
-        return NULL;
-    }
-
-    EntityPtr eptr = world->entity_ptrs[entity_id];
+void *ecs_component_from_ptr(
+        World *world, EntityPtr eptr, Index component_id) {
     Archetype *archetype = &world->archetypes[eptr.archetype];
 
     for (size_t i = 0; i < vector_size(archetype->columns); i++) {
@@ -269,4 +264,15 @@ void *ecs_get_component(
     }
 
     return NULL;
+}
+
+void *ecs_get_component(
+        World *world, uint32_t entity_id, uint32_t component_id) {
+    if (entity_id >= vector_size(world->entity_ptrs)) {
+        return NULL;
+    }
+
+    EntityPtr eptr = world->entity_ptrs[entity_id];
+
+    return ecs_component_from_ptr(world, eptr, component_id);
 }

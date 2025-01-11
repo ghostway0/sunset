@@ -1,7 +1,5 @@
-#ifndef MATH_H
-#define MATH_H
-
-#include "internal/utils.h"
+#ifndef SUNSET_MATH_H_
+#define SUNSET_MATH_H_
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
@@ -58,4 +56,4 @@ static inline Order compare_ptrs(void const *a, void const *b) {
     return ORDER_EQUAL;
 }
 
-#endif // MATH_H
+#endif // SUNSET_MATH_H_

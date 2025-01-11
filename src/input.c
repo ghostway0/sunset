@@ -30,11 +30,18 @@ static Order compare_setnodes(void const *left, void const *right) {
         return ORDER_GREATER_THAN;
     }
 
+    if (bitmask_is_superset(&right_node->mask, &left_node->mask)) {
+        return ORDER_LESS_THAN;
+    }
+
     if (bitmask_is_eql(&left_node->mask, &right_node->mask)) {
         return ORDER_EQUAL;
     }
 
-    return ORDER_LESS_THAN;
+    uint64_t left_hash = bitmask_hash(&left_node->mask);
+    uint64_t right_hash = bitmask_hash(&right_node->mask);
+
+    return left_hash < right_hash ? ORDER_LESS_THAN : ORDER_GREATER_THAN;
 }
 
 void inputbinding_init(EventQueue *event_queue, InputBinding *binding_out) {
@@ -64,7 +71,7 @@ bool binding_query(
 
         if (bitmask_is_superset(&current_node->mask, &input_state->keys)) {
             break;
-        } else {
+        } else if (bitmask_is_superset(&current_node->mask, &input_state->keys)) {
             it = btree_iter_gt(it);
         }
     }

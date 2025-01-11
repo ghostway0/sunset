@@ -8,6 +8,8 @@
 #include <cglm/types.h>
 #include <log.h>
 
+#include "internal/math.h"
+#include "internal/utils.h"
 #include "sunset/commands.h"
 #include "sunset/config.h"
 #include "sunset/errors.h"
@@ -15,11 +17,9 @@
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
-#include "internal/math.h"
 #include "sunset/opengl_backend.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
-#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #define SUNSET_MAX_NUM_INSTANCED 128
@@ -283,7 +283,7 @@ static int setup_default_shaders(RenderContext *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -307,12 +307,13 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
         context->mouse = (struct point){xpos, ypos};
     }
 
-    event_queue_push(context->event_queue,
-            (Event){.mouse_move = {
-                            .offset = {xpos - context->mouse.x,
-                                    ypos - context->mouse.y},
-                            .absolute = {xpos, ypos},
-                    }});
+    events_push(context->event_queue,
+            SYSTEM_EVENT_MOUSE_MOVE,
+            (MouseMoveEvent){
+                    .offset = {xpos - context->mouse.x,
+                            ypos - context->mouse.y},
+                    .absolute = {xpos, ypos},
+            });
 }
 
 static int setup_mouse(RenderContext *context) {
@@ -874,8 +875,8 @@ static void run_rect_command(
     glDeleteBuffers(1, &vbo);
 }
 
-static void run_fill_rect_command(RenderContext *context,
-        struct command_filled_rect filled_rect) {
+static void run_fill_rect_command(
+        RenderContext *context, struct command_filled_rect filled_rect) {
     struct rect rect = filled_rect.rect;
     Color color = filled_rect.color;
 

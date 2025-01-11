@@ -1,5 +1,6 @@
 #include <stddef.h>
 
+#include "sunset/backend.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
 #include "sunset/vector.h"
@@ -32,10 +33,7 @@ static Widget *find_active_widget(Widget *current, struct point mouse) {
     return current->parent;
 }
 
-static void mouse_click_handler(
-        EngineContext *context, void *, Event event) {
-    unused(event);
-
+static void mouse_click_handler(EngineContext *context, void *, Event) {
     Widget *current = context->active_ui->current_widget;
 
     if (current->tag == WIDGET_BUTTON) {
@@ -54,15 +52,18 @@ static void key_up_handler(EngineContext *context, void *, Event event) {
         vector_init(current->input.text);
     }
 
-    if (event.key_up == '\b') {
+    Key *key_up = (Key *)event.data;
+
+    if (*key_up == KEY_BACKSPACE) {
         vector_pop_back(current->input.text);
     } else {
-        vector_append(current->input.text, event.key_up);
+        vector_append(current->input.text, *key_up);
     }
 }
 
 static void mouse_move_handler(
         EngineContext *context, void *, Event event) {
+    MouseMoveEvent *mouse_move = (MouseMoveEvent *)event.data;
     Widget *current = context->active_ui->current_widget;
 
     if (!current) {
@@ -70,7 +71,7 @@ static void mouse_move_handler(
     }
 
     context->active_ui->current_widget =
-            find_active_widget(current, event.mouse_move.absolute);
+            find_active_widget(current, mouse_move->absolute);
 }
 
 void ui_setup(EngineContext *context) {
@@ -85,4 +86,6 @@ void ui_setup(EngineContext *context) {
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_KEY_UP,
             (EventHandler){context, key_up_handler});
+
+    vector_init(context->ui_contexts);
 }

@@ -46,7 +46,9 @@ subdir('external')
 sunset_files = [
   'src/map.c',
   'src/btree.c',
+  'src/crc64.c',
   'src/errors.c',
+  'src/anim.c',
   'src/fonts.c',
   'src/ring_buffer.c',
   'src/geometry.c',
