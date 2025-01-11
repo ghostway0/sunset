@@ -1,13 +1,13 @@
 #ifndef SUNSET_ANIM_H_
 #define SUNSET_ANIM_H_
 
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #include <cglm/types.h>
 
-#include "sunset/images.h"
 #include "sunset/ecs.h"
+#include "sunset/images.h"
 
 typedef enum Interpolation {
     INTERPOLATION_LINEAR,

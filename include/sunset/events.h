@@ -90,4 +90,3 @@ size_t event_queue_remaining(EventQueue const *queue);
         memcpy(__ev.data, &_tmp, sizeof(_tmp));                            \
         event_queue_push(__eq, __ev);                                      \
     })
-

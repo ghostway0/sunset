@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 #include "sunset/byte_stream.h"
+#include "sunset/input.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
-#include "sunset/input.h"
 
 #ifdef SUNSET_BACKEND_OPENGL
 

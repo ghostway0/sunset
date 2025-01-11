@@ -6,7 +6,6 @@
 #include "camera.h"
 #include "cglm/types.h"
 #include "internal/time_utils.h"
-#include "internal/utils.h"
 #include "sunset/backend.h"
 #include "sunset/bitmask.h"
 #include "sunset/commands.h"

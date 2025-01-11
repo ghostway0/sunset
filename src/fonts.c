@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "internal/mem_utils.h"
 #include "sunset/errors.h"
 #include "sunset/geometry.h"
 #include "sunset/images.h"
-#include "internal/mem_utils.h"
 #include "sunset/vfs.h"
 
 #include "sunset/fonts.h"

@@ -5,8 +5,8 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
-#include "sunset/geometry.h"
 #include "internal/math.h"
+#include "sunset/geometry.h"
 
 #include "sunset/camera.h"
 

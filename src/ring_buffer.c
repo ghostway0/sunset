@@ -1,9 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "internal/mem_utils.h"
 #include "sunset/errors.h"
 #include "sunset/ring_buffer.h"
-#include "internal/mem_utils.h"
 
 int ring_buffer_append(RingBuffer *ring_buffer, void const *data) {
     if (((ring_buffer->head + 1) & (ring_buffer->buffer_size - 1))

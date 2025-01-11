@@ -283,7 +283,7 @@ static int setup_default_shaders(RenderContext *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 

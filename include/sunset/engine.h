@@ -6,8 +6,8 @@
 #include "sunset/commands.h"
 #include "sunset/crypto.h"
 #include "sunset/ecs.h"
-#include "sunset/rman.h"
 #include "sunset/events.h"
+#include "sunset/rman.h"
 #include "sunset/vector.h"
 
 typedef struct UIContext UIContext;

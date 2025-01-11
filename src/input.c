@@ -71,7 +71,8 @@ bool binding_query(
 
         if (bitmask_is_superset(&current_node->mask, &input_state->keys)) {
             break;
-        } else if (bitmask_is_superset(&current_node->mask, &input_state->keys)) {
+        } else if (bitmask_is_superset(
+                           &current_node->mask, &input_state->keys)) {
             it = btree_iter_gt(it);
         }
     }

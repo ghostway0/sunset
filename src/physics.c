@@ -3,14 +3,14 @@
 
 #include <cglm/vec3.h>
 
+#include "internal/math.h"
+#include "internal/utils.h"
 #include "sunset/bitmask.h"
 #include "sunset/ecs.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
-#include "internal/math.h"
-#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #include "sunset/physics.h"

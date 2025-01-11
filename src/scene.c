@@ -4,11 +4,11 @@
 #include <cglm/affine.h>
 #include <cglm/types.h>
 
+#include "internal/utils.h"
 #include "sunset/backend.h"
 #include "sunset/commands.h"
 #include "sunset/map.h"
 #include "sunset/octree.h"
-#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #include "sunset/scene.h"

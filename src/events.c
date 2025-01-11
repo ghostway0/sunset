@@ -1,8 +1,8 @@
 #include <pthread.h>
 #include <stdint.h>
 
-#include "sunset/vector.h"
 #include "internal/mem_utils.h"
+#include "sunset/vector.h"
 
 #include "sunset/events.h"
 

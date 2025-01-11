@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "internal/utils.h"
 #include "sunset/errors.h"
 #include "sunset/images.h"
 #include "sunset/io.h"
-#include "internal/utils.h"
 #include "sunset/vector.h"
 
 #include "sunset/tga.h"

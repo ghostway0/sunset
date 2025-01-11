@@ -6,9 +6,9 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "internal/utils.h"
 #include "sunset/errors.h"
 #include "sunset/io.h"
-#include "internal/utils.h"
 #include "sunset/vfs.h"
 
 #ifdef __linux__
