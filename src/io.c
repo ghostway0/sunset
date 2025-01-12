@@ -75,6 +75,140 @@ ssize_t writer_write(Writer *writer, void const *buf, size_t count) {
     return writer->write(writer->ctx, buf, count);
 }
 
+ssize_t writer_print_string(Writer *writer, char const *buf) {
+    return writer_write(writer, buf, strlen(buf));
+}
+
+ssize_t writer_write_byte(Writer *writer, uint8_t byte) {
+    return writer_write(writer, &byte, 1);
+}
+
+ssize_t writer_print_u64(Writer *writer, uint64_t value) {
+    if (value == 0) {
+        return writer_write_byte(writer, '0');
+    }
+
+    char buffer[20];
+    size_t i = sizeof(buffer);
+
+    while (value) {
+        buffer[--i] = '0' + (value % 10);
+        value /= 10;
+    }
+
+    return writer->write(writer->ctx, buffer + i, sizeof(buffer) - i);
+}
+
+ssize_t writer_print_i64(Writer *writer, int64_t value) {
+    if (value == 0) {
+        return writer_write_byte(writer, '0');
+    }
+
+    bool negative = value < 0;
+
+    if (negative) {
+        if (writer_write_byte(writer, '-') != 1) {
+            return -1;
+        }
+
+        value = -value;
+    }
+
+    return writer_print_u64(writer, (uint64_t)value);
+}
+
+static ssize_t print_integer_part(Writer *writer, int64_t value) {
+    if (value == 0) {
+        return writer_write_byte(writer, '0');
+    }
+
+    char buffer[20];
+    int i = sizeof(buffer);
+    uint64_t abs_value = (value < 0) ? -value : value;
+
+    while (abs_value) {
+        buffer[--i] = '0' + (abs_value % 10);
+        abs_value /= 10;
+    }
+
+    return writer_write(writer, buffer + i, sizeof(buffer) - i);
+}
+
+static ssize_t print_fractional_part(
+        Writer *writer, double fractional_part, size_t precision) {
+    if (writer_write_byte(writer, '.') != 1) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < precision; ++i) {
+        fractional_part *= 10;
+
+        int64_t digit = fractional_part;
+
+        if (writer_write_byte(writer, '0' + digit) != 1) {
+            return -1;
+        }
+
+        fractional_part -= digit;
+        if (fractional_part == 0.0) {
+            break;
+        }
+    }
+
+    return precision;
+}
+
+ssize_t writer_print_f32(Writer *writer, float value) {
+    if (value == 0.0f) {
+        return writer_print_string(writer, "0.0");
+    }
+
+    if (value < 0) {
+        if (writer_write_byte(writer, '-') != 1) {
+            return -1;
+        }
+        value = -value;
+    }
+
+    int64_t integer_part = (int64_t)value;
+    double fractional_part = value - integer_part;
+
+    ssize_t written = print_integer_part(writer, integer_part);
+
+    if (written < 0) {
+        return written;
+    }
+
+    written = print_fractional_part(writer, fractional_part, 6);
+
+    return written > 0 ? 1 : written; // Indicate success if at least
+                                      // integer part was written
+}
+
+ssize_t writer_print_f64(Writer *writer, double value) {
+    if (value == 0.0) {
+        return writer_print_string(writer, "0.0");
+    }
+
+    if (value < 0) {
+        if (writer_write_byte(writer, '-') != 1) {
+            return -1;
+        }
+        value = -value;
+    }
+
+    int64_t integer_part = (int64_t)value;
+    double fractional_part = value - integer_part;
+
+    ssize_t written = print_integer_part(writer, integer_part);
+    if (written < 0)
+        return written;
+
+    written = print_fractional_part(writer, fractional_part, 15);
+
+    return written > 0 ? 1 : written;
+}
+
 Writer *get_stdout(void) {
     static Writer stdout_writer;
     static bool initialized = false;

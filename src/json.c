@@ -143,7 +143,7 @@ static int parse_object(struct parser *p, struct json_value *value_out) {
             goto cleanup;
         }
 
-        struct key_value kv = {
+        KeyValue kv = {
                 .key = key.data.string,
                 .value = value,
         };

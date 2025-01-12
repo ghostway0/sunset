@@ -14,6 +14,7 @@
     } while (0)
 
 typedef struct VfsFile VfsFile;
+typedef struct KeyValue KeyValue;
 
 enum json_type {
     JSON_OBJECT,
@@ -25,24 +26,22 @@ enum json_type {
     JSON_NULL,
 };
 
-struct key_value;
-
 struct json_value {
     enum json_type type;
     union {
         char *string;
         double number;
-        vector(struct key_value) object;
+        vector(KeyValue) object;
         vector(struct json_value) array;
         size_t whole_number;
         bool boolean;
     } data;
 };
 
-struct key_value {
+typedef struct KeyValue {
     char const *key;
     struct json_value value;
-};
+} KeyValue;
 
 int json_parse(
         char const *input, size_t input_size, struct json_value *value_out);

@@ -14,8 +14,10 @@
 #define DECLARE_COMPONENT_ID(type) size_t COMPONENT_ID(type)
 #define DEFINE_COMPONENT_ID(type, id) COMPONENT_ID(type) = id;
 
-typedef uint32_t Index;
+typedef struct Writer Writer;
 typedef struct World World;
+
+typedef uint32_t Index;
 
 size_t _ecs_register_component(World *world, size_t component_size);
 
@@ -41,7 +43,7 @@ typedef struct EntityPtr {
 } EntityPtr;
 
 typedef struct World {
-    vector(ptrdiff_t) component_sizes;
+    vector(size_t) component_sizes;
     vector(Archetype) archetypes;
     vector(EntityPtr) entity_ptrs;
     vector(Index) free_ids;
@@ -83,5 +85,7 @@ void worldit_destroy(WorldIterator *iterator);
 
 void *ecs_component_from_ptr(
         World *world, EntityPtr eptr, Index component_id);
+
+void ecs_save(World *world, Writer *writer);
 
 #endif // SUNSET_ECS_H_
