@@ -94,11 +94,11 @@ static int decompress_rle(
 int tga_load_image(Reader *reader, struct image *image_out) {
     int retval = 0;
 
-    assert(reader != NULL);
-    assert(image_out != NULL);
-
     TGAHeader header;
-    reader_read_type(reader, &header);
+    if (reader_read(reader, sizeof(TGAHeader), &header)
+            != sizeof(TGAHeader)) {
+        return -ERROR_IO;
+    }
 
     if (header.bpp % 8 != 0 || header.bpp >= 32) {
         return -ERROR_INVALID_FORMAT;
@@ -161,7 +161,10 @@ int tga_load_image(Reader *reader, struct image *image_out) {
         // Handle uncompressed data (currently only supports 16-bit)
         for (size_t i = 0; i < image_size; i++) {
             uint16_t pixel_data;
-            reader_read_type(reader, &pixel_data);
+            if (reader_read(reader, sizeof(uint16_t), &pixel_data)
+                    != sizeof(uint16_t)) {
+                return ERROR_IO;
+            }
 
             if (pixel_size_bytes == 2) {
                 image_out->pixels[i] = color_from_16bit(pixel_data);

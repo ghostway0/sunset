@@ -1,6 +1,6 @@
 #pragma once
 
-enum error {
+typedef enum Error {
     ERROR_IO = 1,
 
     ERROR_INVALID_FORMAT,
@@ -17,6 +17,6 @@ enum error {
     ERROR_INVALID_PLUGIN,
 
     ERROR_UNSUPPORTED,
-};
+} Error;
 
 void error_print(char const *scope, int retval);

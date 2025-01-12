@@ -5,6 +5,8 @@ typedef struct timespec Time;
 
 Time get_time(void);
 
+float get_time_s();
+
 uint64_t get_time_ms(void);
 
 uint64_t get_time_us(void);

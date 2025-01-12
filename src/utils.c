@@ -2,7 +2,13 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "internal/utils.h"
+#include "internal/time_utils.h"
+
+float get_time_s() {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (float)ts.tv_sec + (float)ts.tv_nsec / 1e9;
+}
 
 uint64_t get_time_ms() {
     struct timespec ts;

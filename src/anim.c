@@ -5,10 +5,11 @@
 #include <cglm/types.h>
 
 #include "internal/time_utils.h"
-#include "render.h"
 #include "sunset/ecs.h"
-#include "sunset/errors.h"
 #include "sunset/images.h"
+#include "sunset/render.h"
+
+#define ANIMATION_DONE 1
 
 typedef enum Interpolation {
     INTERPOLATION_LINEAR,
@@ -83,7 +84,7 @@ typedef struct Animation {
 } Animation;
 
 typedef struct ActiveAnimation {
-    float keyframe_start_ms;
+    float keyframe_time;
     Animation *animation;
     size_t keyframe;
 } ActiveAnimation;
@@ -193,29 +194,35 @@ void interpolate_transform(World *world,
 //     visibility->visible = visible;
 // }
 
-int anim_tick(World *world, EntityPtr eptr) {
+int anim_tick(World *world, EntityPtr eptr, float dt) {
     ActiveAnimation *anim = ecs_component_from_ptr(
             world, eptr, COMPONENT_ID(ActiveAnimation));
 
-    if (anim->keyframe >= anim->animation->num_keyframes) {
-        return -ERROR_ANIMATION_DONE;
+    anim->keyframe_time += dt;
+
+    if (anim->keyframe + 1 >= anim->animation->num_keyframes) {
+        return ANIMATION_DONE;
     }
 
-    float curr_time = get_time_ms();
-    float elapsed_time = curr_time - anim->keyframe_start_ms;
-
     Keyframe *keyframe = &anim->animation->keyframes[anim->keyframe];
+
+    while (anim->keyframe_time >= keyframe->duration) {
+        anim->keyframe++;
+        anim->keyframe_time -= keyframe->duration;
+
+        if (anim->keyframe + 1 >= anim->animation->num_keyframes) {
+            return ANIMATION_DONE;
+        }
+
+        keyframe = &anim->animation->keyframes[anim->keyframe];
+    }
+
     Keyframe *next_keyframe =
             &anim->animation->keyframes[anim->keyframe + 1];
 
-    if (elapsed_time >= keyframe->duration) {
-        anim->keyframe++;
-        anim->keyframe_start_ms = curr_time;
-    }
-
     assert(keyframe->tag == next_keyframe->tag);
 
-    float t = elapsed_time / keyframe->duration;
+    float t = anim->keyframe_time / keyframe->duration;
 
     switch (keyframe->tag) {
         case KEYFRAME_TRANSFORM:

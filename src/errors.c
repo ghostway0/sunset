@@ -3,7 +3,7 @@
 #include "sunset/errors.h"
 
 void error_print(char const *scope, int retval) {
-    enum error err = -retval;
+    Error err = -retval;
 
     switch (err) {
         case ERROR_IO:
