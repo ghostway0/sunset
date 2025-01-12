@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "sunset/backend.h"
+#include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/crypto.h"
 #include "sunset/ecs.h"
@@ -22,10 +23,12 @@ struct EngineContext {
 
     CommandBuffer cmdbuf;
     RenderContext render_context;
-    ResourceManager rman;
 
     EventQueue event_queue;
+    ResourceManager rman;
     World world;
+
+    Camera camera;
 
     float dt;
 } typedef EngineContext;
@@ -61,6 +64,6 @@ struct Game {
 
 // external API
 
-int engine_run(Game const *game);
+int engine_run(RenderConfig render_config, Game const *game);
 
 void engine_set_mouse_mode(EngineContext *engine_context, MouseMode mode);

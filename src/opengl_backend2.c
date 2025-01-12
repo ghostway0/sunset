@@ -349,7 +349,9 @@ int backend_setup(RenderContext *context, RenderConfig config) {
 
     glfwMakeContextCurrent(context->window);
 
-    glfwSwapInterval(1);
+    if (config.enable_vsync) {
+        glfwSwapInterval(1);
+    }
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);

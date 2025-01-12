@@ -12,6 +12,9 @@
 struct RenderConfig {
     size_t window_width, window_height;
     char const *window_title;
+
+    size_t preferred_gpu;
+    bool enable_vsync;
 } typedef RenderConfig;
 
 typedef struct Transform {

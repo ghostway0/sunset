@@ -88,7 +88,9 @@ static int unload_plugin(EngineContext *context, void *handle) {
 
 DECLARE_RESOURCE_ID(OcTree);
 
-static int engine_setup(EngineContext *context, Game const *game) {
+static int engine_setup(EngineContext *context,
+        RenderConfig render_config,
+        Game const *game) {
     int err;
 
     // main system communication
@@ -100,11 +102,7 @@ static int engine_setup(EngineContext *context, Game const *game) {
 
     cmdbuf_init(&context->cmdbuf, COMMAND_BUFFER_DEFAULT);
 
-    // TODO: get render config
-    if ((err = backend_setup(&context->render_context,
-                 (RenderConfig){.window_width = 1920,
-                         .window_height = 1080,
-                         .window_title = "Test"}))) {
+    if ((err = backend_setup(&context->render_context, render_config))) {
         return err;
     }
 
@@ -181,15 +179,15 @@ void render_world(
     }
 }
 
-int engine_run(Game const *game) {
+int engine_run(RenderConfig render_config, Game const *game) {
     int retval = 0;
     EngineContext context = {0};
 
-    if ((retval = engine_setup(&context, game))) {
+    if ((retval = engine_setup(&context, render_config, game))) {
         return retval;
     }
 
-    rman_get_or_init(&context.rman, OcTree, octree_init_resource);
+    // rman_get_or_init(&context.rman, OcTree, octree_init_resource);
 
     Time last_tick = get_time();
 
@@ -210,10 +208,13 @@ int engine_run(Game const *game) {
             last_tick = get_time();
         }
 
-        // FIXME: add camera when I have one
-        render_world(&context.world, /*camera*/ NULL, &context.cmdbuf);
+        // multi camera?
+        render_world(&context.world, &context.camera, &context.cmdbuf);
 
-        // backend_draw(context.render_context, &context.cmdbuf, ...);
+        backend_draw(&context.render_context,
+                &context.cmdbuf,
+                context.camera.view_matrix,
+                context.camera.projection_matrix);
 
         if (time_since_s(timespec) < FRAME_TIME_S) {
             usleep(FRAME_TIME_S - time_since_s(timespec));

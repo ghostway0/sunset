@@ -16,7 +16,7 @@ enum error {
 
     ERROR_INVALID_PLUGIN,
 
-    ERROR_ANIMATION_DONE,
+    ERROR_UNSUPPORTED,
 };
 
 void error_print(char const *scope, int retval);

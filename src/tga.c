@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal/utils.h"
 #include "sunset/errors.h"
 #include "sunset/images.h"
 #include "sunset/io.h"
@@ -21,7 +20,7 @@ enum color_type {
     TGA_TYPE_RLE_GREY = 11,
 };
 
-struct tga_header {
+typedef struct TGAHeader {
     uint8_t id_length;
     uint8_t color_map_type;
     uint8_t image_type;
@@ -34,7 +33,7 @@ struct tga_header {
     uint16_t height;
     uint8_t bpp;
     uint8_t descriptor;
-} __attribute__((packed));
+} __attribute__((packed)) TGAHeader;
 
 int fill_color_map(uint8_t const *data,
         size_t pixel_size_bytes,
@@ -56,13 +55,13 @@ int fill_color_map(uint8_t const *data,
     return 0;
 }
 
-struct tga_footer {
+typedef struct TGAFooter {
     uint32_t extension_offset;
     uint32_t developer_offset;
     char signature[18];
     char dot;
     char null;
-} __attribute__((packed));
+} __attribute__((packed)) TGAFooter;
 
 static int decompress_rle(
         uint8_t *data, size_t size, size_t pixel_size_bytes, Color *out) {
@@ -98,7 +97,7 @@ int tga_load_image(Reader *reader, struct image *image_out) {
     assert(reader != NULL);
     assert(image_out != NULL);
 
-    struct tga_header header;
+    TGAHeader header;
     reader_read_type(reader, &header);
 
     if (header.bpp % 8 != 0 || header.bpp >= 32) {

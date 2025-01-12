@@ -64,3 +64,5 @@ void backend_hide_mouse(RenderContext *context);
 void backend_show_mouse(RenderContext *context);
 
 InputState backend_capture_input(RenderContext *context);
+
+RenderConfig backend_get_params();

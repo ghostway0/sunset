@@ -42,7 +42,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define DEFAULT_SEED 0x0;
+#define DEFAULT_SEED 0x0
 
 // clang-format off
 uint64_t const crc64_tab[256] = {
@@ -113,21 +113,14 @@ uint64_t const crc64_tab[256] = {
 };
 // clang-format on
 
-uint64_t crc64(uint8_t const *data, size_t data_size) {
-    uint64_t crc = DEFAULT_SEED;
-
-    for (size_t i = 0; i < data_size; i++) {
+uint64_t crc64_from_seed(uint64_t crc, uint8_t const *data, size_t size) {
+    for (size_t i = 0; i < size; i++) {
         crc = crc64_tab[(uint8_t)crc ^ data[i]] ^ (crc >> 8);
     }
 
     return crc;
 }
 
-uint64_t crc64_from_seed(
-        uint64_t crc, uint8_t const *data, size_t data_size) {
-    for (size_t i = 0; i < data_size; i++) {
-        crc = crc64_tab[(uint8_t)crc ^ data[i]] ^ (crc >> 8);
-    }
-
-    return crc;
+uint64_t crc64(uint8_t const *data, size_t size) {
+    return crc64_from_seed(DEFAULT_SEED, data, size);
 }
