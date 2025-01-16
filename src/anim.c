@@ -137,6 +137,9 @@ void interpolate_transform(World *world,
             start_keyframe->scale_inter);
 }
 
+// skeleton?
+// should this be a registration system and this would just iterate over pointers?
+
 // void interpolate_morph(World *world,
 //         EntityPtr eptr,
 //         KeyframeMorph *start_keyframe,
@@ -190,7 +193,6 @@ void interpolate_transform(World *world,
 //         }
 //     }
 //
-//     // Apply the interpolated visibility to the visibility component
 //     visibility->visible = visible;
 // }
 
@@ -206,6 +208,7 @@ int anim_tick(World *world, EntityPtr eptr, float dt) {
 
     Keyframe *keyframe = &anim->animation->keyframes[anim->keyframe];
 
+    // advances keyframes until current time
     while (anim->keyframe_time >= keyframe->duration) {
         anim->keyframe++;
         anim->keyframe_time -= keyframe->duration;

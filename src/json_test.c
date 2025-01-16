@@ -8,10 +8,12 @@
 #include <unistd.h>
 // clang-format on
 
+#include "byte_stream.h"
 #include "internal/utils.h"
 #include "sunset/errors.h"
 #include "sunset/json.h"
 #include "sunset/vfs.h"
+#include "vector.h"
 
 void test_json_parse_simple_object(void **state) {
     unused(state);
@@ -213,27 +215,19 @@ void test_json_value_print(void **state) {
 
     char const *json = "{\"key\": {\"key2\": \"value2\"}}";
 
-    char test_buffer[strlen(json) + 1];
-    memset(test_buffer, 0, sizeof(test_buffer));
-
     struct json_value value;
     err = json_parse(json, strlen(json), &value);
     assert_int_equal(err, 0);
 
-    VfsFile temp_file;
-    err = vfs_create_tempfile(&temp_file);
-    assert_int_equal(err, 0);
+    struct byte_stream stream;
+    Writer writer = 
 
-    json_value_print(&value, &temp_file, -1);
-    vfs_file_seek(&temp_file, VFS_SEEK_SET, 0);
+    json_value_print(&value, &writer, -1);
 
-    assert_int_equal(vfs_file_size(&temp_file), strlen(json));
-    assert_int_equal(vfs_file_read(&temp_file, strlen(json), test_buffer),
-            strlen(json));
+    assert_string_equal(
+            (char const *)v, "{\"key\": {\"key2\": \"value2\"}}");
 
-    assert_string_equal(test_buffer, "{\"key\": {\"key2\": \"value2\"}}");
-
-    vfs_close(&temp_file);
+    vector_writer_cleanup(writer);
     json_value_destroy(&value);
 }
 

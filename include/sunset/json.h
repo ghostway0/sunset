@@ -13,7 +13,7 @@
         }                                                                  \
     } while (0)
 
-typedef struct VfsFile VfsFile;
+typedef struct Writer Writer;
 typedef struct KeyValue KeyValue;
 
 enum json_type {
@@ -50,4 +50,4 @@ void json_value_destroy(struct json_value *json);
 
 // -1 for not pretty
 void json_value_print(
-        struct json_value *json, VfsFile *file, size_t indent);
+        struct json_value *json, Writer *writer, size_t indent);

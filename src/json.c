@@ -3,8 +3,8 @@
 #include <string.h>
 
 #include "sunset/errors.h"
+#include "sunset/io.h"
 #include "sunset/vector.h"
-#include "sunset/vfs.h"
 
 #include "sunset/json.h"
 
@@ -295,73 +295,80 @@ void json_value_destroy(struct json_value *json) {
     }
 }
 
-static void print_indent(VfsFile *file, size_t indent) {
+static void print_indent(Writer *writer, size_t indent) {
     if (indent != (size_t)-1) {
         for (size_t i = 0; i < indent; i++) {
-            vfs_file_print(file, " ");
+            writer_write_byte(writer, ' ');
         }
     }
 }
 
 void json_value_print(
-        struct json_value *json, VfsFile *file, size_t indent) {
+        struct json_value *json, Writer *writer, size_t indent) {
     switch (json->type) {
         case JSON_STRING:
-            vfs_file_printf(file, "\"%s\"", json->data.string);
+            writer_write_byte(writer, '"');
+            writer_print_string(writer, json->data.string);
+            writer_write_byte(writer, '"');
             break;
         case JSON_WHOLE_NUMBER:
-            vfs_file_printf(file, "\"%zu\"", json->data.whole_number);
+            writer_print_i64(writer, json->data.whole_number);
             break;
         case JSON_NUMBER:
-            vfs_file_printf(file, "\"%f\"", json->data.number);
+            writer_print_f64(writer, json->data.number);
             break;
         case JSON_BOOLEAN:
-            vfs_file_print(file, json->data.boolean ? "true" : "false");
+            writer_print_string(
+                    writer, json->data.boolean ? "true" : "false");
             break;
         case JSON_NULL:
-            vfs_file_print(file, "null");
+            writer_print_string(writer, "null");
             break;
         case JSON_OBJECT: {
-            vfs_file_print(file, "{");
+            writer_write_byte(writer, '{');
             for (size_t i = 0; i < vector_size(json->data.object); i++) {
                 if (indent != (size_t)-1) {
-                    vfs_file_print(file, "\n");
-                    print_indent(file, indent + 2);
+                    writer_write_byte(writer, '\n');
+                    print_indent(writer, indent + 2);
                 }
-                vfs_file_printf(file, "\"%s\": ", json->data.object[i].key);
+                writer_write_byte(writer, '"');
+                writer_print_string(writer, json->data.object[i].key);
+                writer_print_string(writer, "\": ");
                 json_value_print(&json->data.object[i].value,
-                        file,
+                        writer,
                         indent != (size_t)-1 ? indent + 2 : indent);
                 if (i != vector_size(json->data.object) - 1) {
-                    vfs_file_print(file, indent != (size_t)-1 ? "," : ", ");
+                    writer_print_string(
+                            writer, indent != (size_t)-1 ? "," : ", ");
                 }
             }
             if (indent != (size_t)-1) {
-                vfs_file_print(file, "\n");
-                print_indent(file, indent);
+                writer_write_byte(writer, '\n');
+                print_indent(writer, indent);
             }
-            vfs_file_print(file, "}");
+            writer_write_byte(writer, '}');
             break;
         }
         case JSON_ARRAY: {
-            vfs_file_print(file, "[");
+            writer_write_byte(writer, '[');
             for (size_t i = 0; i < vector_size(json->data.array); i++) {
                 if (indent != (size_t)-1) {
-                    vfs_file_print(file, "\n");
-                    print_indent(file, indent + 2);
+                    writer_write_byte(writer, '\n');
+                    print_indent(writer, indent + 2);
                 }
                 json_value_print(&json->data.array[i],
-                        file,
+                        writer,
                         indent != (size_t)-1 ? indent + 2 : indent);
                 if (i != vector_size(json->data.array) - 1) {
-                    vfs_file_print(file, indent != (size_t)-1 ? "," : ", ");
+                    writer_print_string(
+                            writer, indent != (size_t)-1 ? "," : ", ");
                 }
             }
             if (indent != (size_t)-1) {
-                vfs_file_print(file, "\n");
-                print_indent(file, indent);
+                writer_write_byte(writer, '\n');
+                print_indent(writer, indent);
             }
-            vfs_file_print(file, "]");
+            writer_write_byte(writer, ']');
             break;
         }
         default:

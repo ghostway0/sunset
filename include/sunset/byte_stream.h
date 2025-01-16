@@ -23,3 +23,6 @@ void byte_stream_from_buf(
 bool byte_stream_is_eof(struct byte_stream const *stream);
 
 int byte_stream_skip(struct byte_stream *stream, size_t num_bytes);
+
+int byte_stream_write(
+        struct byte_stream *stream, void const *buf, size_t size);

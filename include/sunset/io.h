@@ -1,9 +1,11 @@
+#pragma once
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "internal/utils.h"
-#include "sunset/vector.h"
+#include "sunset/vector_types.h"
 
 typedef ssize_t (*ReadFn)(void *ctx, size_t count, void *buf);
 
@@ -42,15 +44,6 @@ ssize_t writer_print_u64(Writer *writer, uint64_t value);
 ssize_t writer_print_i64(Writer *writer, int64_t value);
 ssize_t writer_print_f32(Writer *writer, float value);
 ssize_t writer_print_f64(Writer *writer, double value);
-
-#define writer_write_type(stream, in)                                      \
-    do {                                                                   \
-        int __err;                                                         \
-        if ((__err = writer_write(stream, in, sizeof(*in)))                \
-                != sizeof(*in)) {                                          \
-            return __err;                                                  \
-        }                                                                  \
-    } while (0)
 
 Writer *get_stdout(void);
 

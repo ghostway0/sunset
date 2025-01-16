@@ -48,6 +48,7 @@ sunset_files = [
   'src/btree.c',
   'src/crc64.c',
   'src/errors.c',
+  'src/vector.c',
   'src/anim.c',
   'src/render.c',
   'src/fonts.c',

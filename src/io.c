@@ -3,6 +3,8 @@
 
 #include "internal/math.h"
 #include "internal/utils.h"
+#include "sunset/errors.h"
+#include "sunset/vector.h"
 #include "sunset/vfs.h"
 
 #include "sunset/io.h"
@@ -108,7 +110,7 @@ ssize_t writer_print_i64(Writer *writer, int64_t value) {
 
     if (negative) {
         if (writer_write_byte(writer, '-') != 1) {
-            return -1;
+            return ERROR_IO;
         }
 
         value = -value;
@@ -137,7 +139,7 @@ static ssize_t print_integer_part(Writer *writer, int64_t value) {
 static ssize_t print_fractional_part(
         Writer *writer, double fractional_part, size_t precision) {
     if (writer_write_byte(writer, '.') != 1) {
-        return -1;
+        return ERROR_IO;
     }
 
     for (size_t i = 0; i < precision; ++i) {
@@ -146,7 +148,7 @@ static ssize_t print_fractional_part(
         int64_t digit = fractional_part;
 
         if (writer_write_byte(writer, '0' + digit) != 1) {
-            return -1;
+            return ERROR_IO;
         }
 
         fractional_part -= digit;
@@ -165,7 +167,7 @@ ssize_t writer_print_f32(Writer *writer, float value) {
 
     if (value < 0) {
         if (writer_write_byte(writer, '-') != 1) {
-            return -1;
+            return ERROR_IO;
         }
         value = -value;
     }
@@ -173,16 +175,20 @@ ssize_t writer_print_f32(Writer *writer, float value) {
     int64_t integer_part = (int64_t)value;
     double fractional_part = value - integer_part;
 
-    ssize_t written = print_integer_part(writer, integer_part);
+    ssize_t written_int = print_integer_part(writer, integer_part);
 
-    if (written < 0) {
-        return written;
+    if (written_int < 0) {
+        return written_int;
     }
 
-    written = print_fractional_part(writer, fractional_part, 6);
+    ssize_t written_frac =
+            print_fractional_part(writer, fractional_part, 6);
 
-    return written > 0 ? 1 : written; // Indicate success if at least
-                                      // integer part was written
+    if (written_frac < 0) {
+        return written_frac;
+    }
+
+    return written_frac + written_int;
 }
 
 ssize_t writer_print_f64(Writer *writer, double value) {
@@ -192,7 +198,7 @@ ssize_t writer_print_f64(Writer *writer, double value) {
 
     if (value < 0) {
         if (writer_write_byte(writer, '-') != 1) {
-            return -1;
+            return ERROR_IO;
         }
         value = -value;
     }
