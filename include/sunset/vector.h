@@ -5,7 +5,6 @@
 #include <string.h>
 
 #include "internal/mem_utils.h"
-#include "sunset/io.h"
 
 struct vector_metadata {
     size_t size;

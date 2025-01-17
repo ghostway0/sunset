@@ -8,7 +8,6 @@
 #include "sunset/vector.h"
 
 typedef struct EngineContext EngineContext;
-struct input_state;
 
 typedef struct Style {
     // STUB

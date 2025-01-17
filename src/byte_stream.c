@@ -1,12 +1,15 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "internal/math.h"
+#include "internal/mem_utils.h"
 #include "sunset/byte_stream.h"
 #include "sunset/errors.h"
+#include "sunset/io.h"
 #include "sunset/vector.h"
 
 int byte_stream_read_vector(
-        struct byte_stream *stream, size_t size, vector(uint8_t) * out) {
+        ByteStream *stream, size_t size, vector(uint8_t) * out) {
     if (stream->cursor + size >= stream->size) {
         return ERROR_OUT_OF_BOUNDS;
     }
@@ -20,7 +23,7 @@ int byte_stream_read_vector(
     return 0;
 }
 
-int byte_stream_skip(struct byte_stream *stream, size_t num_bytes) {
+int byte_stream_skip(ByteStream *stream, size_t num_bytes) {
     // skipping the last byte is okay; after that it is not.
     if (byte_stream_is_eof(stream)) {
         return ERROR_OUT_OF_BOUNDS;
@@ -32,7 +35,7 @@ int byte_stream_skip(struct byte_stream *stream, size_t num_bytes) {
 }
 
 ssize_t byte_stream_read(void *ctx, size_t count, void *buf) {
-    struct byte_stream *stream = (struct byte_stream *)ctx;
+    ByteStream *stream = (ByteStream *)ctx;
 
     if (stream->cursor + count >= stream->size) {
         count = stream->size - stream->cursor;
@@ -45,17 +48,15 @@ ssize_t byte_stream_read(void *ctx, size_t count, void *buf) {
 }
 
 void byte_stream_from_buf(
-        uint8_t const *buf, size_t size, struct byte_stream *stream_out) {
+        uint8_t *buf, size_t size, ByteStream *stream_out) {
     stream_out->data = buf;
     stream_out->size = size;
     stream_out->cursor = 0;
 }
 
-bool byte_stream_is_eof(struct byte_stream const *stream) {
+bool byte_stream_is_eof(ByteStream const *stream) {
     return stream->cursor >= stream->size;
 }
 
-int byte_stream_write(
-        struct byte_stream *stream, void const *buf, size_t size) {
-    
+ssize_t byte_stream_write(ByteStream *stream, void const *buf, size_t size) {
 }

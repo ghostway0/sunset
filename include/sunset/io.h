@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "internal/utils.h"
-#include "sunset/vector_types.h"
+#include "sunset/vector.h"
 
 typedef ssize_t (*ReadFn)(void *ctx, size_t count, void *buf);
 

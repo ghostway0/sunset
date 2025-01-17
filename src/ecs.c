@@ -86,7 +86,7 @@ WorldIterator worldit_create(World const *world, Bitmask mask) {
 void worldit_advance(WorldIterator *iterator) {
     if (iterator->current_element + 1
             < iterator->world->archetypes[iterator->current_archetype]
-                      .num_elements) {
+                    .num_elements) {
         iterator->current_element++;
     } else {
         iterator->current_archetype++;
@@ -256,6 +256,10 @@ Index entity_builder_finish(EntityBuilder *builder) {
 void *ecs_component_from_ptr(
         World *world, EntityPtr eptr, Index component_id) {
     Archetype *archetype = &world->archetypes[eptr.archetype];
+
+    if (!bitmask_is_set(&archetype->mask, component_id)) {
+        return NULL;
+    }
 
     for (size_t i = 0; i < vector_size(archetype->columns); i++) {
         if (bitmask_is_set(&archetype->columns[i].mask, component_id)) {

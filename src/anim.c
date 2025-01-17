@@ -140,62 +140,6 @@ void interpolate_transform(World *world,
 // skeleton?
 // should this be a registration system and this would just iterate over pointers?
 
-// void interpolate_morph(World *world,
-//         EntityPtr eptr,
-//         KeyframeMorph *start_keyframe,
-//         KeyframeMorph *end_keyframe,
-//         float t) {
-//     Morph *morph = ecs_component_from_ptr(world, eptr,
-//     COMPONENT_ID(Morph));
-//
-//     float weight = interpolate(start_keyframe->weight,
-//             end_keyframe->weight,
-//             t,
-//             start_keyframe->weight_inter);
-//
-//     morph->weight = weight;
-// }
-//
-// void interpolate_weights(World *world,
-//         EntityPtr eptr,
-//         KeyframeWeights *start_keyframe,
-//         KeyframeWeights *end_keyframe,
-//         float t) {
-//     // Get the weights component
-//     Weights *weights =
-//             ecs_component_from_ptr(world, eptr, COMPONENT_ID(Weights));
-//
-//     // Interpolate the weight
-//     float weight = interpolate(start_keyframe->weight,
-//             end_keyframe->weight,
-//             t,
-//             start_keyframe->weight_inter);
-//
-//     // Apply the interpolated weight to the weights component
-//     weights->weight = weight;
-// }
-//
-// void interpolate_visibility(World *world,
-//         EntityPtr eptr,
-//         KeyframeVisibility *start_keyframe,
-//         KeyframeVisibility *end_keyframe,
-//         float t) {
-//     // Get the visibility component
-//     Visibility *visibility =
-//             ecs_component_from_ptr(world, eptr,
-//             COMPONENT_ID(Visibility));
-//
-//     // Interpolate the visibility
-//     bool visible = start_keyframe->visible;
-//     if (end_keyframe->visible != start_keyframe->visible) {
-//         if (t >= 0.5f) {
-//             visible = end_keyframe->visible;
-//         }
-//     }
-//
-//     visibility->visible = visible;
-// }
-
 int anim_tick(World *world, EntityPtr eptr, float dt) {
     ActiveAnimation *anim = ecs_component_from_ptr(
             world, eptr, COMPONENT_ID(ActiveAnimation));

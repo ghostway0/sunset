@@ -69,7 +69,7 @@ int load_image_file(char const *path, struct image *image_out) {
         return retval;
     }
 
-    struct byte_stream stream;
+    ByteStream stream;
     byte_stream_from_buf(data, file_size, &stream);
 
     Reader reader = {.read = (ReadFn)byte_stream_read, .ctx = &stream};

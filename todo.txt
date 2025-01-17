@@ -3,7 +3,7 @@ Big:
 * World builder
 * UI
 
-todo:
+Todo:
  [ ] fix physics to be a system
  [X] find how octree should be handled
  [ ] mtl and obj file parsing should output standard types
@@ -11,7 +11,12 @@ todo:
  [ ] 3d mesh commands
  [ ] save a `World`
  [X] get rid of `Scene`
+ [ ] add Focus enum to resource manager and use it in controllers
+
+Low:
  [ ] fonts should be grayscale, and then you can choose text color in command
+
+graveyard:
 
 // TODO: for each free id, rotate the entities so it'd make sense, and patch
 // entity_ptrs accordingly (this is expensive)

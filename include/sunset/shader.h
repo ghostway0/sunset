@@ -26,7 +26,7 @@ struct shader_argument {
 struct active_argument {
     char const *name;
     enum argument_type type;
-    struct byte_stream data;
+    ByteStream data;
 };
 
 struct program {

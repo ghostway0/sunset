@@ -5,24 +5,22 @@
 
 #include "sunset/vector.h"
 
-struct byte_stream {
+typedef struct ByteStream {
     size_t size;
-    // currently write streams are not supported.
-    uint8_t const *data;
+    uint8_t *data;
     size_t cursor;
-};
+} ByteStream;
 
 int byte_stream_read_vector(
-        struct byte_stream *stream, size_t size, vector(uint8_t) * out);
+        ByteStream *stream, size_t size, vector(uint8_t) * out);
 
 ssize_t byte_stream_read(void *ctx, size_t count, void *out);
 
 void byte_stream_from_buf(
-        uint8_t const *data, size_t size, struct byte_stream *stream_out);
+        uint8_t *data, size_t size, ByteStream *stream_out);
 
-bool byte_stream_is_eof(struct byte_stream const *stream);
+bool byte_stream_is_eof(ByteStream const *stream);
 
-int byte_stream_skip(struct byte_stream *stream, size_t num_bytes);
+int byte_stream_skip(ByteStream *stream, size_t num_bytes);
 
-int byte_stream_write(
-        struct byte_stream *stream, void const *buf, size_t size);
+ssize_t byte_stream_write(ByteStream *stream, void const *buf, size_t size);
