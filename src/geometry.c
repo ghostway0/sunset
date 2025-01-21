@@ -28,6 +28,10 @@ struct point rect_size(struct rect rect) {
     return (struct point){rect.width, rect.height};
 }
 
+struct point rect_get_origin(struct rect rect) {
+    return (struct point){.x = rect.x, .y = rect.y};
+}
+
 struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n) {
     assert(i < n);
     assert(n > 0);

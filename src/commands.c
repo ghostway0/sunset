@@ -50,10 +50,10 @@ void command_text_init(struct command *command,
         struct font *font,
         char const *text,
         uint32_t text_len,
-        WindowPoint alignment) {
+        WindowPoint origin) {
     command->type = COMMAND_TEXT;
     command->data.text =
-            (struct command_text){start, font, text, text_len, alignment};
+            (struct command_text){start, font, text, text_len, origin};
 }
 
 void command_image_init(struct command *command,
@@ -113,7 +113,7 @@ void cmdbuf_add_filled_rect(
 
 void cmdbuf_add_arc(CommandBuffer *cmdbuf,
         struct point center,
-        int r,
+        size_t r,
         float a0,
         float a1) {
     struct command command;
@@ -123,7 +123,7 @@ void cmdbuf_add_arc(CommandBuffer *cmdbuf,
 
 void cmdbuf_add_filled_arc(CommandBuffer *cmdbuf,
         struct point center,
-        uint32_t r,
+        size_t r,
         float a0,
         float a1) {
     struct command command;
@@ -136,9 +136,9 @@ void cmdbuf_add_text(CommandBuffer *cmdbuf,
         struct font *font,
         char const *text,
         uint32_t text_len,
-        WindowPoint alignment) {
+        WindowPoint origin) {
     struct command command;
-    command_text_init(&command, start, font, text, text_len, alignment);
+    command_text_init(&command, start, font, text, text_len, origin);
     cmdbuf_append(cmdbuf, &command);
 }
 

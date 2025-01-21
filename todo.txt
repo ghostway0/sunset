@@ -8,8 +8,9 @@ Todo:
  [X] find how octree should be handled
  [ ] mtl and obj file parsing should output standard types
  [ ] animation file format
- [ ] 3d mesh commands
+ [ ] change mesh structure
  [ ] save a `World`
+ [ ] reflection for entities
  [X] get rid of `Scene`
  [ ] add Focus enum to resource manager and use it in controllers
 

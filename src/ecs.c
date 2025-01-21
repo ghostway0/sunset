@@ -43,8 +43,14 @@ static void iterator_advance_internal(WorldIterator *iterator) {
     }
 }
 
-size_t _ecs_register_component(World *world, size_t component_size) {
+size_t _ecs_register_component(World *world,
+        size_t component_size,
+        [[maybe_unused]] char const *component_name) {
     assert(vector_size(world->component_sizes) < ECS_MAX_COMPONENTS);
+
+#ifdef SUNSET_REFLECTION
+    vector_append(world->component_names, component_name);
+#endif
 
     vector_append(world->component_sizes, component_size);
     return vector_size(world->component_sizes) - 1;
@@ -86,7 +92,7 @@ WorldIterator worldit_create(World const *world, Bitmask mask) {
 void worldit_advance(WorldIterator *iterator) {
     if (iterator->current_element + 1
             < iterator->world->archetypes[iterator->current_archetype]
-                    .num_elements) {
+                      .num_elements) {
         iterator->current_element++;
     } else {
         iterator->current_archetype++;

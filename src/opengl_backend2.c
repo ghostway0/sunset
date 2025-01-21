@@ -174,12 +174,12 @@ static int compile_mesh(Mesh const *mesh, struct compiled_mesh *mesh_out) {
             mesh->indices,
             GL_STATIC_DRAW);
 
+    // position
     glVertexAttribPointer(
             0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    // for mesh 2d
-    // should have different modes for 2d/3d meshes
+    // texture
     glVertexAttribPointer(1,
             2,
             GL_FLOAT,
@@ -756,8 +756,8 @@ static int run_text_command(
 
     float scale = 1;
 
-    float y = command.alignment == WINDOW_TOP_LEFT
-                    || command.alignment == WINDOW_TOP_RIGHT
+    float y = command.origin == WINDOW_TOP_LEFT
+                    || command.origin == WINDOW_TOP_RIGHT
             ? context->screen_height - command.start.y
             : command.start.y;
 

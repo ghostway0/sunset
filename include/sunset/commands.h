@@ -62,7 +62,7 @@ struct command_text {
     struct font *font;
     char const *text;
     uint32_t text_len;
-    WindowPoint alignment;
+    WindowPoint origin;
 };
 
 struct command_image {
@@ -133,7 +133,7 @@ void command_text_init(struct command *command,
         struct font *font,
         char const *text,
         uint32_t text_len,
-        WindowPoint alignment);
+        WindowPoint origin);
 
 void command_image_init(struct command *command,
         struct point pos,
@@ -183,13 +183,13 @@ void cmdbuf_add_filled_rect(
 
 void cmdbuf_add_arc(CommandBuffer *cmdbuf,
         struct point center,
-        int r,
+        size_t r,
         float a0,
         float a1);
 
 void cmdbuf_add_filled_arc(CommandBuffer *cmdbuf,
         struct point center,
-        uint32_t r,
+        size_t r,
         float a0,
         float a1);
 
@@ -198,7 +198,7 @@ void cmdbuf_add_text(CommandBuffer *cmdbuf,
         struct font *font,
         char const *text,
         uint32_t text_len,
-        WindowPoint alignment);
+        WindowPoint origin);
 
 void cmdbuf_add_image(
         CommandBuffer *cmdbuf, struct point pos, struct image const *image);

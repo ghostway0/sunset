@@ -1,11 +1,16 @@
 #include <stddef.h>
 
+#include "commands.h"
+#include "internal/utils.h"
+#include "render.h"
 #include "sunset/backend.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
 #include "sunset/vector.h"
 
 #include "sunset/ui.h"
+
+// NOTE: this could be done with entities and plugins
 
 static Widget *find_active_widget(Widget *current, struct point mouse) {
     // backtrack
@@ -72,6 +77,55 @@ static void mouse_move_handler(
 
     context->active_ui->current_widget =
             find_active_widget(current, mouse_move->absolute);
+}
+
+[[maybe_unused]]
+static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
+    switch (widget->tag) {
+        case WIDGET_BUTTON: {
+            if (widget->style.background_transparent) {
+                cmdbuf_add_rect(
+                        cmdbuf, widget->bounds, widget->style.color);
+            } else {
+                cmdbuf_add_filled_rect(
+                        cmdbuf, widget->bounds, widget->style.color);
+            }
+            break;
+        }
+        case WIDGET_TEXT:
+            cmdbuf_add_text(cmdbuf,
+                    rect_get_origin(widget->bounds),
+                    widget->text.font,
+                    widget->text.input,
+                    vector_size(widget->text.input),
+                    WINDOW_TOP_LEFT);
+            break;
+        case WIDGET_INPUT:
+            cmdbuf_add_rect(cmdbuf, widget->bounds, widget->style.color);
+            cmdbuf_add_text(cmdbuf,
+                    rect_get_origin(widget->bounds),
+                    widget->input.font,
+                    widget->input.text,
+                    vector_size(widget->input.text),
+                    WINDOW_TOP_LEFT);
+            break;
+        case WIDGET_IMAGE:
+            // TODO: resizing?
+            cmdbuf_add_image(cmdbuf,
+                    (struct point){
+                            .x = widget->bounds.x, .y = widget->bounds.y},
+                    &widget->image);
+            break;
+        case WIDGET_CONTAINER:
+            // do nothing
+            break;
+        default:
+            todo();
+    }
+
+    for (size_t i = 0; i < vector_size(widget->children); i++) {
+        render_widget(cmdbuf, widget->children[i]);
+    }
 }
 
 void ui_setup(EngineContext *context) {

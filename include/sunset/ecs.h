@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "internal/utils.h"
 #include "sunset/bitmask.h"
 #include "sunset/vector.h"
 
@@ -19,10 +20,12 @@ typedef struct World World;
 
 typedef uint32_t Index;
 
-size_t _ecs_register_component(World *world, size_t component_size);
+size_t _ecs_register_component(
+        World *world, size_t component_size, char const *component_name);
 
 #define REGISTER_COMPONENT(world, type)                                    \
-    DEFINE_COMPONENT_ID(type, _ecs_register_component(world, sizeof(type)))
+    DEFINE_COMPONENT_ID(type,                                              \
+            _ecs_register_component(world, sizeof(type), stringify(type)))
 
 typedef struct Column {
     Bitmask mask;
@@ -47,6 +50,9 @@ typedef struct World {
     vector(Archetype) archetypes;
     vector(EntityPtr) entity_ptrs;
     vector(Index) free_ids;
+#ifdef SUNSET_REFLECTION
+    vector(char const *) component_names;
+#endif
 } World;
 
 typedef struct EntityBuilder {

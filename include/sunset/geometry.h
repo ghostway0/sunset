@@ -39,6 +39,8 @@ struct point rect_center(struct rect rect);
 
 struct point rect_size(struct rect rect);
 
+struct point rect_get_origin(struct rect rect);
+
 // subdivide and get the ith quadrant
 struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n);
 

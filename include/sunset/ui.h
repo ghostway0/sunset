@@ -10,7 +10,8 @@
 typedef struct EngineContext EngineContext;
 
 typedef struct Style {
-    // STUB
+    bool background_transparent;
+    Color color;
 } Style;
 
 typedef struct Widget {
@@ -30,10 +31,14 @@ typedef struct Widget {
     } tag;
 
     union {
-        char const *text;
+        struct {
+            char const *input;
+            struct font *font;
+        } text;
         struct image image;
         struct {
             vector(char) text;
+            struct font *font;
         } input;
         struct {
             void (*clicked_callback)(EngineContext *);

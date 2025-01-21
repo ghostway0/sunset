@@ -5,7 +5,6 @@
 #include "sunset/commands.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
-#include "sunset/scene.h"
 #include "sunset/shader.h"
 #include "sunset/vector.h"
 
@@ -18,6 +17,11 @@ enum shader_type {
     SHADER_TESSELLATION_CONTROL = GL_TESS_CONTROL_SHADER,
     SHADER_TESSELLATION_EVALUATION = GL_TESS_EVALUATION_SHADER,
 };
+
+typedef enum MeshType {
+    MESH_2D,
+    MESH_3D,
+} MeshType;
 
 struct compiled_mesh {
     uint32_t id;

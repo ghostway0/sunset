@@ -36,12 +36,12 @@ struct Chunk {
     size_t id;
 } typedef Chunk;
 
-enum WindowPoint {
+typedef enum WindowPoint {
     WINDOW_TOP_LEFT,
     WINDOW_TOP_RIGHT,
     WINDOW_BOTTOM_LEFT,
     WINDOW_BOTTOM_RIGHT,
-} typedef WindowPoint;
+} WindowPoint;
 
 DECLARE_COMPONENT_ID(Transform);
 DECLARE_COMPONENT_ID(Renderable);
