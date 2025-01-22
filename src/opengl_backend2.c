@@ -300,7 +300,8 @@ static int setup_default_shaders(RenderContext *context) {
     return 0;
 }
 
-static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+static void mouse_move_callback(
+        GLFWwindow *window, double xpos, double ypos) {
     RenderContext *context = glfwGetWindowUserPointer(window);
 
     if (context->first_mouse) {
@@ -316,9 +317,21 @@ static void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
             });
 }
 
+static void mouse_button_callback(
+        GLFWwindow *window, int button, int action, int mods) {
+    unused(mods);
+
+    RenderContext *context = glfwGetWindowUserPointer(window);
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+        event_queue_push(context->event_queue,
+                (Event){SYSTEM_EVENT_MOUSE_CLICK, .data = {0}});
+    }
+}
+
 static int setup_mouse(RenderContext *context) {
-    glfwSetInputMode(context->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(context->window, mouse_callback);
+    glfwSetCursorPosCallback(context->window, mouse_move_callback);
+    glfwSetMouseButtonCallback(context->window, mouse_button_callback);
 
     return 0;
 }
@@ -978,7 +991,7 @@ void backend_draw(RenderContext *context,
                 break;
             }
             default:
-                log_error("unhandled command type %d", command.type);
+                todo();
                 break;
         }
     }

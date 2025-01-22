@@ -7,6 +7,7 @@
 #include "cglm/types.h"
 #include "fonts.h"
 #include "internal/time_utils.h"
+#include "log.h"
 #include "sunset/backend.h"
 #include "sunset/bitmask.h"
 #include "sunset/commands.h"
@@ -22,7 +23,6 @@
 #include "sunset/engine.h"
 
 static float const FRAME_TIME_S = 1.0f / 60.0f;
-static float const TICK_TIME_S = 1.0f / 60.0f;
 
 // TODO: use the rman
 /*
@@ -183,6 +183,10 @@ void render_world(
     }
 }
 
+static void clicked(EngineContext *) {
+    log_debug("clicked!");
+}
+
 int engine_run(RenderConfig render_config, Game const *game) {
     int retval = 0;
     EngineContext context = {0};
@@ -193,18 +197,30 @@ int engine_run(RenderConfig render_config, Game const *game) {
 
     rman_get_or_init(&context.rman, OcTree, octree_init_resource);
 
-    Time last_tick = get_time();
-
     UIContext uictx = {};
 
     struct font font;
     assert(load_font_psf2("../gaming/test.psf2", &font) == 0);
 
     vector_init(uictx.widgets);
-    vector_append(uictx.widgets,
-            (Widget){.tag = WIDGET_TEXT, .text = {"hello", &font}});
 
-    uictx.root = &uictx.widgets[0];
+    vector_append(uictx.widgets,
+            (Widget){.tag = WIDGET_TEXT,
+                    .text = {"test", &font},
+                    .active = true,
+                    .bounds = {100, 10, 100, 100},
+                    .parent = NULL,
+                    .children = NULL});
+
+    vector_append(uictx.widgets,
+            (Widget){.tag = WIDGET_BUTTON,
+                    .button = {.clicked_callback = clicked},
+                    .bounds = {100, 100, 100, 100},
+                    .active = true,
+                    .parent = NULL,
+                    .children = NULL});
+
+    uictx.root = &uictx.widgets[1];
     uictx.current_widget = NULL;
 
     context.active_ui = &uictx;
@@ -218,12 +234,8 @@ int engine_run(RenderConfig render_config, Game const *game) {
         // event_queue_process_one(..., SYSTEM_EVENT_INPUT_SNIPPET);
         // ? event_queue_process()
 
-        if (time_since_s(last_tick) >= TICK_TIME_S) {
-            if ((retval = engine_tick(&context))) {
-                goto cleanup;
-            }
-
-            last_tick = get_time();
+        if ((retval = engine_tick(&context))) {
+            goto cleanup;
         }
 
         // multi camera?

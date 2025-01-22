@@ -1,12 +1,12 @@
 #include <stddef.h>
 
-#include "commands.h"
 #include "internal/utils.h"
 #include "log.h"
-#include "render.h"
 #include "sunset/backend.h"
+#include "sunset/commands.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
+#include "sunset/render.h"
 #include "sunset/vector.h"
 
 #include "sunset/ui.h"
@@ -15,7 +15,7 @@
 
 static Widget *find_active_widget(Widget *current, struct point mouse) {
     // backtrack
-    while (!point_within_rect(mouse, current->bounds)) {
+    while (current && !point_within_rect(mouse, current->bounds)) {
         current = current->parent;
     }
 
@@ -42,7 +42,7 @@ static Widget *find_active_widget(Widget *current, struct point mouse) {
 static void mouse_click_handler(EngineContext *context, void *, Event) {
     Widget *current = context->active_ui->current_widget;
 
-    if (current->tag == WIDGET_BUTTON) {
+    if (current->tag == WIDGET_BUTTON && current->button.clicked_callback) {
         current->button.clicked_callback(context);
     }
 }
@@ -86,11 +86,18 @@ static void mouse_move_handler(
 
     context->active_ui->current_widget =
             find_active_widget(current, mouse_move->absolute);
+    if (context->active_ui->current_widget) {
+        log_debug("%zu", context->active_ui->current_widget->tag);
+    }
 }
 
 static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
+    if (!widget->active) {
+        return;
+    }
+
     switch (widget->tag) {
-        case WIDGET_BUTTON: {
+        case WIDGET_BUTTON:
             if (widget->style.background_transparent) {
                 cmdbuf_add_rect(
                         cmdbuf, widget->bounds, widget->style.color);
@@ -99,13 +106,12 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
                         cmdbuf, widget->bounds, widget->style.color);
             }
             break;
-        }
         case WIDGET_TEXT:
             cmdbuf_add_text(cmdbuf,
                     rect_get_origin(widget->bounds),
                     widget->text.font,
                     widget->text.input,
-                    vector_size(widget->text.input),
+                    strlen(widget->text.input),
                     WINDOW_TOP_LEFT);
             break;
         case WIDGET_INPUT:
