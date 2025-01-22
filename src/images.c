@@ -70,9 +70,9 @@ int load_image_file(char const *path, struct image *image_out) {
     }
 
     ByteStream stream;
-    byte_stream_from_buf(data, file_size, &stream);
+    bstream_from_ro(data, file_size, &stream);
 
-    Reader reader = {.read = (ReadFn)byte_stream_read, .ctx = &stream};
+    Reader reader = {.read = (ReadFn)bstream_read, .ctx = &stream};
 
     if (strcmp(get_filename_extesnion(path), ".tga")) {
         retval = tga_load_image(&reader, image_out);

@@ -10,7 +10,6 @@
 // clang-format on
 
 #include "bitmask.h"
-#include "events.h"
 #include "internal/utils.h"
 #include "sunset/base64.h"
 #include "sunset/byte_stream.h"
@@ -18,7 +17,6 @@
 #include "sunset/ecs.h"
 #include "sunset/errors.h"
 #include "sunset/images.h"
-#include "sunset/input.h"
 #include "sunset/io.h"
 #include "sunset/mtl_file.h"
 #include "sunset/obj_file.h"
@@ -223,11 +221,11 @@ void test_base64_invalid_input(void **state) {
 void test_obj_model_parse_empty(void **state) {
     unused(state);
 
-    uint8_t str[] = "";
+    const uint8_t str[] = "";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -246,13 +244,13 @@ void test_obj_model_parse_empty(void **state) {
 void test_obj_model_parse_vertices(void **state) {
     unused(state);
 
-    uint8_t str[] =
+    const uint8_t str[] =
             "v 1.0 -1.0 -1.0\n"
             "v 1.0 -1.0 1.0\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -267,13 +265,13 @@ void test_obj_model_parse_vertices(void **state) {
 void test_obj_model_parse_normals(void **state) {
     unused(state);
 
-    uint8_t str[] =
+    const uint8_t str[] =
             "vn 0.0 -1.0 0.0\n"
             "vn 0.0 1.0 0.0\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -288,13 +286,13 @@ void test_obj_model_parse_normals(void **state) {
 void test_obj_model_parse_texcoords(void **state) {
     unused(state);
 
-    uint8_t str[] =
+    const uint8_t str[] =
             "vt 0.625 0.5\n"
             "vt 0.875 0.5\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -309,15 +307,15 @@ void test_obj_model_parse_texcoords(void **state) {
 void test_obj_model_parse_faces(void **state) {
     unused(state);
 
-    uint8_t str[] =
+    const uint8_t str[] =
             "v 1.0 -1.0 -1.0\n"
             "v 1.0 -1.0 1.0\n"
             "v -1.0 -1.0 1.0\n"
             "f 1/1/1 2/2/1 3/3/1\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -333,11 +331,11 @@ void test_obj_model_parse_faces(void **state) {
 void test_obj_model_parse_material_lib(void **state) {
     unused(state);
 
-    uint8_t str[] = "mtllib my_material.mtl\n";
+    const uint8_t str[] = "mtllib my_material.mtl\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -351,11 +349,11 @@ void test_obj_model_parse_material_lib(void **state) {
 void test_obj_model_parse_object_name(void **state) {
     unused(state);
 
-    uint8_t str[] = "o MyObject\n";
+    const uint8_t str[] = "o MyObject\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -368,15 +366,15 @@ void test_obj_model_parse_object_name(void **state) {
 
 void test_obj_model_parse_invalid_faces(void **state) {
     unused(state);
-    uint8_t str[] =
+    const uint8_t str[] =
             "v 1.0 -1.0 -1.0\n"
             "v 1.0 -1.0 1.0\n"
             "v -1.0 -1.0 1.0\n"
             "f 1/2 2//1 3\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -385,15 +383,16 @@ void test_obj_model_parse_invalid_faces(void **state) {
 
 void test_obj_model_parse_partial_faces(void **state) {
     unused(state);
-    uint8_t str[] =
+
+    const uint8_t str[] =
             "v 1.0 -1.0 -1.0\n"
             "v 1.0 -1.0 1.0\n"
             "v -1.0 -1.0 1.0\n"
             "f 1//2 2//1 3//3\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct obj_model model;
     int err = obj_model_parse(&reader, &model);
@@ -419,11 +418,11 @@ void test_obj_model_parse_partial_faces(void **state) {
 void test_mtl_file_parse_empty(void **state) {
     unused(state);
 
-    uint8_t str[] = "";
+    const uint8_t str[] = "";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
@@ -437,7 +436,7 @@ void test_mtl_file_parse_empty(void **state) {
 void test_mtl_file_parse_single_material(void **state) {
     unused(state);
 
-    uint8_t str[] =
+    const uint8_t str[] =
             "newmtl Material1\n"
             "Kd 0.8 0.0 0.2\n"
             "Ks 1.0 1.0 1.0\n"
@@ -446,8 +445,8 @@ void test_mtl_file_parse_single_material(void **state) {
             "map_Kd textures/diffuse.png\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
@@ -469,7 +468,7 @@ void test_mtl_file_parse_single_material(void **state) {
 void test_mtl_file_parse_multiple_materials(void **state) {
     unused(state);
 
-    uint8_t str[] =
+    const uint8_t str[] =
             "newmtl Material1\n"
             "Kd 0.8 0.0 0.2\n"
             "newmtl Material2\n"
@@ -477,8 +476,8 @@ void test_mtl_file_parse_multiple_materials(void **state) {
             "map_Kd textures/diffuse2.jpg\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
@@ -495,13 +494,13 @@ void test_mtl_file_parse_multiple_materials(void **state) {
 void test_mtl_file_parse_emission_map(void **state) {
     unused(state);
 
-    uint8_t str[] =
+    const uint8_t str[] =
             "newmtl Material1\n"
             "map_Ke textures/emission.tga\n";
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);
@@ -516,13 +515,13 @@ void test_mtl_file_parse_emission_map(void **state) {
 void test_mtl_file_parse_invalid_format(void **state) {
     unused(state);
 
-    uint8_t str[] =
+    const uint8_t str[] =
             "newmtl Material1\n"
             "Kd 0.8 0.0\n"; // missing a component in Kd
 
     ByteStream stream;
-    byte_stream_from_buf(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = byte_stream_read};
+    bstream_from_ro(str, sizeof(str) - 1, &stream);
+    Reader reader = {.ctx = &stream, .read = bstream_read};
 
     struct mtl_file mtl;
     int err = mtl_file_parse(&reader, &mtl);

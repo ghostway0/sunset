@@ -128,6 +128,12 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
     }
 }
 
+static void tick_handler(EngineContext *engine_context,
+        void * /*local_context*/,
+        Event /*event*/) {
+    render_widget(&engine_context->cmdbuf, engine_context->active_ui->root);
+}
+
 void ui_setup(EngineContext *context) {
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_MOUSE_MOVE,
@@ -141,5 +147,9 @@ void ui_setup(EngineContext *context) {
             SYSTEM_EVENT_KEY_UP,
             (EventHandler){context, key_up_handler});
 
+    event_queue_add_handler(&context->event_queue,
+            SYSTEM_EVENT_TICK,
+            (EventHandler){NULL, tick_handler});
+    ;
     vector_init(context->ui_contexts);
 }
