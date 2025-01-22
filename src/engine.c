@@ -5,6 +5,7 @@
 
 #include "camera.h"
 #include "cglm/types.h"
+#include "fonts.h"
 #include "internal/time_utils.h"
 #include "sunset/backend.h"
 #include "sunset/bitmask.h"
@@ -16,6 +17,7 @@
 #include "sunset/render.h"
 #include "sunset/rman.h"
 #include "sunset/ui.h"
+#include "vector.h"
 
 #include "sunset/engine.h"
 
@@ -102,7 +104,9 @@ static int engine_setup(EngineContext *context,
 
     cmdbuf_init(&context->cmdbuf, COMMAND_BUFFER_DEFAULT);
 
-    if ((err = backend_setup(&context->render_context, render_config))) {
+    if ((err = backend_setup(&context->render_context,
+                 &context->event_queue,
+                 render_config))) {
         return err;
     }
 
@@ -187,9 +191,23 @@ int engine_run(RenderConfig render_config, Game const *game) {
         return retval;
     }
 
-    // rman_get_or_init(&context.rman, OcTree, octree_init_resource);
+    rman_get_or_init(&context.rman, OcTree, octree_init_resource);
 
     Time last_tick = get_time();
+
+    UIContext uictx = {};
+
+    struct font font;
+    assert(load_font_psf2("../gaming/test.psf2", &font) == 0);
+
+    vector_init(uictx.widgets);
+    vector_append(uictx.widgets,
+            (Widget){.tag = WIDGET_TEXT, .text = {"hello", &font}});
+
+    uictx.root = &uictx.widgets[0];
+    uictx.current_widget = NULL;
+
+    context.active_ui = &uictx;
 
     while (!backend_should_stop(&context.render_context)) {
         Time timespec = get_time();

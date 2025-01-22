@@ -43,7 +43,7 @@ typedef enum WindowPoint {
     WINDOW_BOTTOM_RIGHT,
 } WindowPoint;
 
-DECLARE_COMPONENT_ID(Transform);
-DECLARE_COMPONENT_ID(Renderable);
+extern DECLARE_COMPONENT_ID(Transform);
+extern DECLARE_COMPONENT_ID(Renderable);
 
 void calculate_model_matrix(Transform const *transform, mat4 model_matrix);

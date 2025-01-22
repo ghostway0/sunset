@@ -1,3 +1,6 @@
+#include "ecs.h"
+#include "engine.h"
+#include "render.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -66,12 +69,23 @@
 int main() {
     int retval = 0;
 
-    // struct render_config render_config = {
-    //         .window_width = 1920,
-    //         .window_height = 1080,
-    // };
+    RenderConfig render_config = {
+            .window_width = 1920,
+            .window_height = 1080,
+    };
 
-    // engine_run();
+    World world;
+    ecs_init(&world);
+
+    Game game = {
+            .bounds = {},
+            .world = world,
+    };
+
+    vector_init(game.plugins);
+    vector_init(game.resources);
+
+    engine_run(render_config, &game);
 
     // uint32_t texture_id;
     // backend_register_texture_atlas(

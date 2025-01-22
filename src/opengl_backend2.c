@@ -323,7 +323,9 @@ static int setup_mouse(RenderContext *context) {
     return 0;
 }
 
-int backend_setup(RenderContext *context, RenderConfig config) {
+int backend_setup(RenderContext *context,
+        EventQueue *event_queue,
+        RenderConfig config) {
     int retval = 0;
 
     if (!glfwInit()) {
@@ -360,6 +362,8 @@ int backend_setup(RenderContext *context, RenderConfig config) {
         retval = -ERROR_IO;
         goto failure;
     }
+
+    context->event_queue = event_queue;
 
     if ((retval = setup_default_shaders(context))) {
         goto failure;

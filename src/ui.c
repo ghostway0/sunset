@@ -2,6 +2,7 @@
 
 #include "commands.h"
 #include "internal/utils.h"
+#include "log.h"
 #include "render.h"
 #include "sunset/backend.h"
 #include "sunset/engine.h"
@@ -47,6 +48,10 @@ static void mouse_click_handler(EngineContext *context, void *, Event) {
 }
 
 static void key_up_handler(EngineContext *context, void *, Event event) {
+    if (!context->active_ui) {
+        return;
+    }
+
     Widget *current = context->active_ui->current_widget;
 
     if (!current || current->tag != WIDGET_INPUT) {
@@ -68,6 +73,10 @@ static void key_up_handler(EngineContext *context, void *, Event event) {
 
 static void mouse_move_handler(
         EngineContext *context, void *, Event event) {
+    if (!context->active_ui) {
+        return;
+    }
+
     MouseMoveEvent *mouse_move = (MouseMoveEvent *)event.data;
     Widget *current = context->active_ui->current_widget;
 
@@ -79,7 +88,6 @@ static void mouse_move_handler(
             find_active_widget(current, mouse_move->absolute);
 }
 
-[[maybe_unused]]
 static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
     switch (widget->tag) {
         case WIDGET_BUTTON: {
@@ -123,14 +131,20 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
             todo();
     }
 
-    for (size_t i = 0; i < vector_size(widget->children); i++) {
-        render_widget(cmdbuf, widget->children[i]);
+    if (widget->children) {
+        for (size_t i = 0; i < vector_size(widget->children); i++) {
+            render_widget(cmdbuf, widget->children[i]);
+        }
     }
 }
 
 static void tick_handler(EngineContext *engine_context,
         void * /*local_context*/,
         Event /*event*/) {
+    if (!engine_context->active_ui) {
+        return;
+    }
+
     render_widget(&engine_context->cmdbuf, engine_context->active_ui->root);
 }
 

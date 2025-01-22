@@ -3,6 +3,9 @@
 
 #include "sunset/render.h"
 
+DECLARE_COMPONENT_ID(Transform);
+DECLARE_COMPONENT_ID(Renderable);
+
 void calculate_model_matrix(Transform const *transform, mat4 model_matrix) {
     glm_mat4_identity(model_matrix);
 

@@ -26,7 +26,9 @@ struct shader_arguments {
     size_t num_ssbos;
 };
 
-int backend_setup(RenderContext *context, RenderConfig config);
+int backend_setup(RenderContext *context,
+        EventQueue *event_queue,
+        RenderConfig config);
 
 int backend_create_program(struct program *program_out);
 
