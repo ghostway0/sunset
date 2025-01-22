@@ -9,8 +9,8 @@
 #define vec3_format "vec3(%f, %f, %f)"
 #define vec3_args(v) v[0], v[1], v[2]
 
-#define rect_format "rect(%zu, %zu, %zu, %zu)"
-#define rect_args(r) r.x, r.y, r.width, r.height
+#define rect_format "rect(%f, %f, %f, %f)"
+#define rect_args(r) r.x, r.y, r.w, r.h
 
 #define vec4_format "vec4(%f, %f, %f, %f)"
 #define vec4_args(v) v[0], v[1], v[2], v[3]
@@ -27,13 +27,19 @@ struct point {
 };
 
 struct rect {
-    size_t x;
-    size_t y;
-    size_t width;
-    size_t height;
+    float x;
+    float y;
+    float w;
+    float h;
 };
 
 struct rect rect_from_center(struct point center, struct point size);
+
+struct rect rect_closure(struct rect a, struct rect b);
+
+bool is_zero_rect(struct rect rect);
+
+bool rect_contains(struct rect parent, struct rect child);
 
 struct point rect_center(struct rect rect);
 

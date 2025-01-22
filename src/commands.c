@@ -2,6 +2,7 @@
 
 #include <cglm/mat4.h>
 
+#include "render.h"
 #include "sunset/commands.h"
 
 void command_nop_init(struct command *command) {
@@ -14,16 +15,21 @@ void command_line_init(
     command->data.line = (struct command_line){from, to};
 }
 
-void command_rect_init(
-        struct command *command, struct rect rect, Color color) {
+void command_rect_init(struct command *command,
+        struct rect rect,
+        Color color,
+        WindowPoint origin) {
     command->type = COMMAND_RECT;
-    command->data.rect = (struct command_rect){rect, color};
+    command->data.rect = (struct command_rect){origin, rect, color};
 }
 
-void command_filled_rect_init(
-        struct command *command, struct rect rect, Color color) {
+void command_filled_rect_init(struct command *command,
+        struct rect rect,
+        Color color,
+        WindowPoint origin) {
     command->type = COMMAND_FILLED_RECT;
-    command->data.filled_rect = (struct command_filled_rect){rect, color};
+    command->data.filled_rect =
+            (struct command_filled_rect){origin, rect, color};
 }
 
 void command_arc_init(struct command *command,
@@ -98,16 +104,21 @@ void cmdbuf_add_line(
     cmdbuf_append(cmdbuf, &command);
 }
 
-void cmdbuf_add_rect(CommandBuffer *cmdbuf, struct rect rect, Color color) {
+void cmdbuf_add_rect(CommandBuffer *cmdbuf,
+        struct rect rect,
+        Color color,
+        WindowPoint origin) {
     struct command command;
-    command_rect_init(&command, rect, color);
+    command_rect_init(&command, rect, color, origin);
     cmdbuf_append(cmdbuf, &command);
 }
 
-void cmdbuf_add_filled_rect(
-        CommandBuffer *cmdbuf, struct rect rect, Color color) {
+void cmdbuf_add_filled_rect(CommandBuffer *cmdbuf,
+        struct rect rect,
+        Color color,
+        WindowPoint origin) {
     struct command command;
-    command_filled_rect_init(&command, rect, color);
+    command_filled_rect_init(&command, rect, color, origin);
     cmdbuf_append(cmdbuf, &command);
 }
 

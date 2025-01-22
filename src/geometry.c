@@ -12,20 +12,45 @@ struct rect rect_from_center(struct point center, struct point size) {
     return (struct rect){
             .x = center.x - size.x / 2,
             .y = center.y - size.y / 2,
-            .width = size.x,
-            .height = size.y,
+            .w = size.x,
+            .h = size.y,
     };
+}
+
+bool is_zero_rect(struct rect rect) {
+    return rect.x == 0.0 && rect.y == 0.0 && rect.h == 0.0 && rect.w == 0.0;
+}
+
+struct rect rect_closure(struct rect a, struct rect b) {
+    float min_x = min(a.x, b.x);
+    float min_y = min(a.y, b.y);
+
+    float max_x = max(a.x + a.w, b.x + b.w);
+    float max_y = max(a.y + a.h, b.y + b.h);
+
+    return (struct rect){
+            .x = min_x,
+            .y = min_y,
+            .h = max_y - min_y,
+            .w = max_x - min_x,
+    };
+}
+
+bool rect_contains(struct rect parent, struct rect child) {
+    return child.x >= parent.x && child.y >= parent.y
+            && (child.x + child.w) <= (parent.x + parent.w)
+            && (child.y + child.h) <= (parent.y + parent.h);
 }
 
 struct point rect_center(struct rect rect) {
     return (struct point){
-            .x = rect.x + rect.width / 2,
-            .y = rect.y + rect.height / 2,
+            .x = rect.x + rect.w / 2,
+            .y = rect.y + rect.h / 2,
     };
 }
 
 struct point rect_size(struct rect rect) {
-    return (struct point){rect.width, rect.height};
+    return (struct point){rect.w, rect.h};
 }
 
 struct point rect_get_origin(struct rect rect) {
@@ -36,14 +61,14 @@ struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n) {
     assert(i < n);
     assert(n > 0);
 
-    size_t w = rect.width / n;
-    size_t h = rect.height / n;
+    size_t w = rect.w / n;
+    size_t h = rect.h / n;
 
     return (struct rect){
             .x = rect.x + (i % n) * w,
             .y = rect.y + (i / n) * h,
-            .width = w,
-            .height = h,
+            .w = w,
+            .h = h,
     };
 }
 
@@ -74,12 +99,12 @@ bool aabb_contains_point(AABB aabb, vec3 point) {
 
 AABB from_rect(struct rect rect) {
     return (AABB){{rect.x, rect.y, 0.0f},
-            {rect.x + rect.width, rect.y + rect.height, 0.0f}};
+            {rect.x + rect.w, rect.y + rect.h, 0.0f}};
 }
 
 bool point_within_rect(struct point position, struct rect rect) {
-    return position.x >= rect.x && position.x <= rect.x + rect.width
-            && position.y >= rect.y && position.y <= rect.y + rect.height;
+    return position.x >= rect.x && position.x <= rect.x + rect.w
+            && position.y >= rect.y && position.y <= rect.y + rect.h;
 }
 
 bool position_within_aabb(vec3 position, AABB aabb) {
@@ -89,9 +114,8 @@ bool position_within_aabb(vec3 position, AABB aabb) {
 }
 
 float rect_distance_to_camera(vec3 camera_position, struct rect rect) {
-    vec3 center = {rect.x + (float)rect.width / 2,
-            rect.y + (float)rect.height / 2,
-            0.0f};
+    vec3 center = {
+            rect.x + (float)rect.w / 2, rect.y + (float)rect.h / 2, 0.0f};
 
     return glm_vec3_distance(camera_position, center);
 }

@@ -6,6 +6,8 @@
 #include "camera.h"
 #include "cglm/types.h"
 #include "fonts.h"
+#include "images.h"
+#include "internal/mem_utils.h"
 #include "internal/time_utils.h"
 #include "log.h"
 #include "sunset/backend.h"
@@ -197,31 +199,30 @@ int engine_run(RenderConfig render_config, Game const *game) {
 
     rman_get_or_init(&context.rman, OcTree, octree_init_resource);
 
-    UIContext uictx = {};
-
     struct font font;
     assert(load_font_psf2("../gaming/test.psf2", &font) == 0);
 
-    vector_init(uictx.widgets);
+    UIContext uictx = {};
+    ui_init(&uictx);
 
-    vector_append(uictx.widgets,
-            (Widget){.tag = WIDGET_TEXT,
-                    .text = {"test", &font},
-                    .active = true,
-                    .bounds = {100, 10, 100, 100},
-                    .parent = NULL,
-                    .children = NULL});
+    Widget *widget1 = sunset_malloc(sizeof(Widget));
+    *widget1 = (Widget){.tag = WIDGET_TEXT,
+            .text = {"test", &font},
+            .active = true,
+            .bounds = {100, 10, 100, 100},
+            .parent = NULL,
+            .children = NULL};
+    ui_add_widget(uictx.root, widget1);
 
-    vector_append(uictx.widgets,
-            (Widget){.tag = WIDGET_BUTTON,
-                    .button = {.clicked_callback = clicked},
-                    .bounds = {100, 100, 100, 100},
-                    .active = true,
-                    .parent = NULL,
-                    .children = NULL});
-
-    uictx.root = &uictx.widgets[1];
-    uictx.current_widget = NULL;
+    Widget *widget2 = sunset_malloc(sizeof(Widget));
+    *widget2 = (Widget){.tag = WIDGET_BUTTON,
+            .button = {.clicked_callback = clicked},
+            .bounds = {100, 100, 100, 100},
+            .active = true,
+            .parent = NULL,
+        .style = {.color = COLOR_WHITE},
+            .children = NULL};
+    ui_add_widget(uictx.root, widget2);
 
     context.active_ui = &uictx;
 

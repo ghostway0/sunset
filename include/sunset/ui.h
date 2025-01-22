@@ -47,9 +47,12 @@ typedef struct Widget {
 } Widget;
 
 typedef struct UIContext {
-    vector(Widget) widgets;
     Widget *root;
     Widget *current_widget;
 } UIContext;
 
 void ui_setup(EngineContext *context);
+
+void ui_init(UIContext *ui_out);
+
+int ui_add_widget(Widget *root, Widget *widget);

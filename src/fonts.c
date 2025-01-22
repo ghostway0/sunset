@@ -67,8 +67,8 @@ static int load_glyphs(
         font_out->glyphs[i].bounds = (struct rect){
                 .x = 0,
                 .y = 0,
-                .width = header->width,
-                .height = header->height,
+                .w = header->width,
+                .h = header->height,
         };
 
         font_out->glyphs[i].advance_x = header->width;

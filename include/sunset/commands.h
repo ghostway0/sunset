@@ -34,11 +34,13 @@ struct command_line {
 };
 
 struct command_rect {
+    WindowPoint origin;
     struct rect bounds;
     Color color;
 };
 
 struct command_filled_rect {
+    WindowPoint origin;
     struct rect rect;
     Color color;
 };
@@ -110,11 +112,15 @@ void command_nop_init(struct command *command);
 void command_line_init(
         struct command *command, struct point from, struct point to);
 
-void command_rect_init(
-        struct command *command, struct rect rect, Color color);
+void command_rect_init(struct command *command,
+        struct rect rect,
+        Color color,
+        WindowPoint origin);
 
-void command_filled_rect_init(
-        struct command *command, struct rect rect, Color color);
+void command_filled_rect_init(struct command *command,
+        struct rect rect,
+        Color color,
+        WindowPoint origin);
 
 void command_arc_init(struct command *command,
         struct point center,
@@ -176,10 +182,15 @@ void cmdbuf_add_nop(CommandBuffer *cmdbuf);
 void cmdbuf_add_line(
         CommandBuffer *cmdbuf, struct point from, struct point to);
 
-void cmdbuf_add_rect(CommandBuffer *cmdbuf, struct rect rect, Color color);
+void cmdbuf_add_rect(CommandBuffer *cmdbuf,
+        struct rect rect,
+        Color color,
+        WindowPoint origin);
 
-void cmdbuf_add_filled_rect(
-        CommandBuffer *cmdbuf, struct rect rect, Color color);
+void cmdbuf_add_filled_rect(CommandBuffer *cmdbuf,
+        struct rect rect,
+        Color color,
+        WindowPoint origin);
 
 void cmdbuf_add_arc(CommandBuffer *cmdbuf,
         struct point center,

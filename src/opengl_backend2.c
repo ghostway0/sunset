@@ -795,8 +795,8 @@ static int run_text_command(
 
         float xpos = current_x + glyph->bounds.x * scale;
         float ypos = y + glyph->bounds.y * scale;
-        float w = glyph->bounds.width * scale;
-        float h = glyph->bounds.height * scale;
+        float w = glyph->bounds.w * scale;
+        float h = glyph->bounds.h * scale;
 
         float vertices[6][4] = {{xpos, ypos + h, 0.0f, 1.0f},
                 {xpos, ypos, 0.0f, 0.0f},
@@ -845,15 +845,24 @@ static void run_rect_command(
     float g = color.g / 255.0f;
     float b = color.b / 255.0f;
     float a = color.a / 255.0f;
+    
+    // FIXME: make this actually accurate
+    rect.x = command.origin == WINDOW_TOP_RIGHT
+                    || command.origin == WINDOW_BOTTOM_RIGHT
+            ? context->screen_width - rect.x
+            : rect.x;
+    rect.y = command.origin == WINDOW_TOP_RIGHT
+                    || command.origin == WINDOW_TOP_LEFT
+            ? context->screen_height - rect.y
+            : rect.y;
 
     float x1 = ((float)rect.x / (float)context->screen_width) * 2.0f - 1.0f;
     float y1 =
             ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
-    float x2 = ((float)(rect.x + rect.width) / (float)context->screen_width)
-                    * 2.0f
+    float x2 =
+            ((float)(rect.x + rect.w) / (float)context->screen_width) * 2.0f
             - 1.0f;
-    float y2 =
-            ((float)(rect.y + rect.height) / (float)context->screen_height)
+    float y2 = ((float)(rect.y + rect.h) / (float)context->screen_height)
                     * 2.0f
             - 1.0f;
 
@@ -895,23 +904,32 @@ static void run_rect_command(
 }
 
 static void run_fill_rect_command(
-        RenderContext *context, struct command_filled_rect filled_rect) {
-    struct rect rect = filled_rect.rect;
-    Color color = filled_rect.color;
+        RenderContext *context, struct command_filled_rect command) {
+    struct rect rect = command.rect;
+    Color color = command.color;
 
     float r = color.r / 255.0f;
     float g = color.g / 255.0f;
     float b = color.b / 255.0f;
     float a = color.a / 255.0f;
 
+    // FIXME: make this actually accurate
+    rect.x = command.origin == WINDOW_TOP_RIGHT
+                    || command.origin == WINDOW_BOTTOM_RIGHT
+            ? context->screen_width - rect.x
+            : rect.x;
+    rect.y = command.origin == WINDOW_TOP_RIGHT
+                    || command.origin == WINDOW_TOP_LEFT
+            ? context->screen_height - rect.y
+            : rect.y;
+
     float x1 = ((float)rect.x / (float)context->screen_width) * 2.0f - 1.0f;
     float y1 =
             ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
-    float x2 = ((float)(rect.x + rect.width) / (float)context->screen_width)
-                    * 2.0f
+    float x2 =
+            ((float)(rect.x + rect.w) / (float)context->screen_width) * 2.0f
             - 1.0f;
-    float y2 =
-            ((float)(rect.y + rect.height) / (float)context->screen_height)
+    float y2 = ((float)(rect.y + rect.h) / (float)context->screen_height)
                     * 2.0f
             - 1.0f;
 

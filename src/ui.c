@@ -1,5 +1,8 @@
 #include <stddef.h>
+#include <stdlib.h>
 
+#include "geometry.h"
+#include "internal/mem_utils.h"
 #include "internal/utils.h"
 #include "log.h"
 #include "sunset/backend.h"
@@ -41,6 +44,10 @@ static Widget *find_active_widget(Widget *current, struct point mouse) {
 
 static void mouse_click_handler(EngineContext *context, void *, Event) {
     Widget *current = context->active_ui->current_widget;
+
+    if (!current) {
+        return;
+    }
 
     if (current->tag == WIDGET_BUTTON && current->button.clicked_callback) {
         current->button.clicked_callback(context);
@@ -86,6 +93,7 @@ static void mouse_move_handler(
 
     context->active_ui->current_widget =
             find_active_widget(current, mouse_move->absolute);
+
     if (context->active_ui->current_widget) {
         log_debug("%zu", context->active_ui->current_widget->tag);
     }
@@ -99,11 +107,15 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
     switch (widget->tag) {
         case WIDGET_BUTTON:
             if (widget->style.background_transparent) {
-                cmdbuf_add_rect(
-                        cmdbuf, widget->bounds, widget->style.color);
+                cmdbuf_add_rect(cmdbuf,
+                        widget->bounds,
+                        widget->style.color,
+                        WINDOW_TOP_LEFT);
             } else {
-                cmdbuf_add_filled_rect(
-                        cmdbuf, widget->bounds, widget->style.color);
+                cmdbuf_add_filled_rect(cmdbuf,
+                        widget->bounds,
+                        widget->style.color,
+                        WINDOW_TOP_LEFT);
             }
             break;
         case WIDGET_TEXT:
@@ -115,7 +127,10 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
                     WINDOW_TOP_LEFT);
             break;
         case WIDGET_INPUT:
-            cmdbuf_add_rect(cmdbuf, widget->bounds, widget->style.color);
+            cmdbuf_add_rect(cmdbuf,
+                    widget->bounds,
+                    widget->style.color,
+                    WINDOW_TOP_LEFT);
             cmdbuf_add_text(cmdbuf,
                     rect_get_origin(widget->bounds),
                     widget->input.font,
@@ -154,6 +169,72 @@ static void tick_handler(EngineContext *engine_context,
     render_widget(&engine_context->cmdbuf, engine_context->active_ui->root);
 }
 
+void ui_init(UIContext *ui_out) {
+    ui_out->root = sunset_malloc(sizeof(struct Widget));
+    ui_out->current_widget = NULL;
+
+    *ui_out->root = (Widget){
+            .children = NULL,
+            .active = true,
+            .bounds = {0},
+            .tag = WIDGET_CONTAINER,
+            .style = {},
+    };
+}
+
+/// Takes ownership over `widget`
+int ui_add_widget(Widget *root, Widget *widget) {
+    if (!root->children) {
+        vector_init(root->children);
+    }
+
+    if (rect_contains(root->bounds, widget->bounds)) {
+        for (size_t i = 0; i < vector_size(root->children); i++) {
+            Widget *child = root->children[i];
+
+            if (rect_contains(child->bounds, widget->bounds)) {
+                return ui_add_widget(child, widget);
+            }
+        }
+
+        widget->parent = root;
+
+        vector_append(root->children, widget);
+
+        return 0;
+    }
+
+    // XXX: maybe drop the requirement for this setup
+    // and just do it here.
+    if (root->tag == WIDGET_CONTAINER) {
+        if (is_zero_rect(root->bounds)) {
+            root->bounds = widget->bounds;
+        } else {
+            root->bounds = rect_closure(root->bounds, widget->bounds);
+        }
+
+        widget->parent = root;
+
+        vector_append(root->children, widget);
+
+        return 0;
+    }
+
+    return -1;
+}
+
+static void destroy_widget(Widget *widget) {
+    for (size_t i = 0; i < vector_size(widget->children); i++) {
+        destroy_widget(widget->children[i]);
+    }
+
+    free(widget);
+}
+
+void ui_destroy(UIContext *ui) {
+    destroy_widget(ui->root);
+}
+
 void ui_setup(EngineContext *context) {
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_MOUSE_MOVE,
@@ -170,6 +251,6 @@ void ui_setup(EngineContext *context) {
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_TICK,
             (EventHandler){NULL, tick_handler});
-    ;
+
     vector_init(context->ui_contexts);
 }
