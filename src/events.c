@@ -2,6 +2,7 @@
 #include <stdint.h>
 
 #include "internal/mem_utils.h"
+#include "log.h"
 #include "sunset/vector.h"
 
 #include "sunset/events.h"
@@ -69,6 +70,8 @@ void event_queue_process(EventQueue *queue, void *global_context) {
 
 void event_queue_process_one(
         void *global_context, EventQueue *queue, Event const event) {
+    pthread_mutex_lock(queue->lock);
+
     if (queue->handlers[event.event_id] == NULL) {
         return;
     }
@@ -80,6 +83,8 @@ void event_queue_process_one(
         assert(handler.handler_fn != NULL);
         handler.handler_fn(global_context, handler.local_context, event);
     }
+
+    pthread_mutex_unlock(queue->lock);
 }
 
 int event_queue_pop(EventQueue *queue, Event *event) {

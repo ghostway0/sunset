@@ -1,7 +1,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "geometry.h"
 #include "internal/mem_utils.h"
 #include "internal/utils.h"
 #include "log.h"
@@ -9,10 +8,20 @@
 #include "sunset/commands.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
+#include "sunset/geometry.h"
 #include "sunset/render.h"
+#include "sunset/rman.h"
 #include "sunset/vector.h"
 
 #include "sunset/ui.h"
+
+typedef enum Focus {
+    FOCUS_NULL,
+    FOCUS_UI,
+    FOCUS_MAIN,
+} Focus;
+
+DECLARE_RESOURCE_ID(input_focus);
 
 // NOTE: this could be done with entities and plugins
 
@@ -43,6 +52,12 @@ static Widget *find_active_widget(Widget *current, struct point mouse) {
 }
 
 static void mouse_click_handler(EngineContext *context, void *, Event) {
+    Focus *focus = rman_get(&context->rman, RESOURCE_ID(input_focus));
+
+    if (*focus != FOCUS_UI) {
+        return;
+    }
+
     Widget *current = context->active_ui->current_widget;
 
     if (!current) {
@@ -95,7 +110,8 @@ static void mouse_move_handler(
             find_active_widget(current, mouse_move->absolute);
 
     if (context->active_ui->current_widget) {
-        log_debug("%zu", context->active_ui->current_widget->tag);
+        Focus *focus = rman_get(&context->rman, RESOURCE_ID(input_focus));
+        *focus = FOCUS_UI;
     }
 }
 
@@ -106,7 +122,7 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
 
     switch (widget->tag) {
         case WIDGET_BUTTON:
-            if (widget->style.background_transparent) {
+            if (!widget->style.solid) {
                 cmdbuf_add_rect(cmdbuf,
                         widget->bounds,
                         widget->style.color,
@@ -253,4 +269,9 @@ void ui_setup(EngineContext *context) {
             (EventHandler){NULL, tick_handler});
 
     vector_init(context->ui_contexts);
+
+    Focus *focus = sunset_malloc(sizeof(Focus));
+    *focus = FOCUS_NULL;
+
+    REGISTER_RESOURCE(&context->rman, input_focus, focus);
 }

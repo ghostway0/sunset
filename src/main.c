@@ -70,8 +70,8 @@ int main() {
     int retval = 0;
 
     RenderConfig render_config = {
-            .window_width = 1920,
-            .window_height = 1080,
+            .window_width = 1080,
+            .window_height = 720,
     };
 
     World world;

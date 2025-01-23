@@ -10,7 +10,7 @@
 typedef struct EngineContext EngineContext;
 
 typedef struct Style {
-    bool background_transparent;
+    bool solid;
     Color color;
 } Style;
 
