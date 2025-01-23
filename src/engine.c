@@ -200,7 +200,7 @@ int engine_run(RenderConfig render_config, Game const *game) {
     rman_get_or_init(&context.rman, OcTree, octree_init_resource);
 
     struct font font;
-    assert(load_font_psf2("../gaming/test.psf2", &font) == 0);
+    assert(load_font_psf2("font.psf", &font) == 0);
 
     UIContext uictx = {};
     ui_init(&uictx);

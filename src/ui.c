@@ -3,7 +3,6 @@
 
 #include "internal/mem_utils.h"
 #include "internal/utils.h"
-#include "log.h"
 #include "sunset/backend.h"
 #include "sunset/commands.h"
 #include "sunset/engine.h"
@@ -35,20 +34,25 @@ static Widget *find_active_widget(Widget *current, struct point mouse) {
         return NULL;
     }
 
-    while (point_within_rect(mouse, current->bounds)) {
+    bool found = true;
+
+    while (found) {
         if (!current->children) {
-            return current;
+            break;
         }
+
+        found = false;
 
         for (size_t i = 0; i < vector_size(current->children); i++) {
             if (point_within_rect(mouse, current->children[i]->bounds)) {
                 current = current->children[i];
+                found = true;
                 break;
             }
         }
     }
 
-    return current->parent;
+    return current;
 }
 
 static void mouse_click_handler(EngineContext *context, void *, Event) {
