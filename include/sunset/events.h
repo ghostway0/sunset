@@ -20,12 +20,20 @@ struct EventHandler {
 
 enum SystemEvents {
     SYSTEM_EVENT_TICK,
-    SYSTEM_EVENT_RENDER,
-    SYSTEM_EVENT_COLLISION,
+
+    // SYSTEM_EVENT_RENDER,
+
+    // input events
     SYSTEM_EVENT_MOUSE_MOVE,
     SYSTEM_EVENT_KEY_UP,
     SYSTEM_EVENT_KEY_DOWN,
     SYSTEM_EVENT_MOUSE_CLICK,
+
+    // maybe this shouldn't be here
+    SYSTEM_EVENT_COLLISION,
+
+    // backend events
+    SYSTEM_EVENT_VIEWPORT_CHANGED,
 };
 
 typedef struct EventQueue {

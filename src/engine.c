@@ -112,6 +112,23 @@ static int engine_setup(EngineContext *context,
         return err;
     }
 
+    camera_init(
+            (CameraState){
+                    {0.0f, 0.0f, 0.0f},
+                    {0.0f, 1.0f, 0.0f},
+                    0.0f,
+                    0.0f,
+
+            },
+            (CameraOptions){
+                    0.1f,
+                    100.0f,
+                    45.0f,
+                    (float)render_config.window_height
+                            / (float)render_config.window_width,
+            },
+            &context->camera);
+
     // engine setup
 
     vector_init(context->loaded_plugins);
@@ -185,6 +202,29 @@ void render_world(
     }
 }
 
+static void camera_viewport_handler(
+        EngineContext *, void *ctx, Event const event) {
+    Camera *camera = ctx;
+
+    struct point *viewport_dims = (struct point *)event.data;
+
+    camera_init(
+            (CameraState){
+                    {0.0f, 0.0f, 0.0f},
+                    {0.0f, 1.0f, 0.0f},
+                    0.0f,
+                    0.0f,
+
+            },
+            (CameraOptions){
+                    0.1f,
+                    100.0f,
+                    45.0f,
+                    viewport_dims->y / viewport_dims->x,
+            },
+            camera);
+}
+
 static void clicked(EngineContext *) {
     log_debug("clicked!");
 }
@@ -198,6 +238,12 @@ int engine_run(RenderConfig render_config, Game const *game) {
     }
 
     rman_get_or_init(&context.rman, OcTree, octree_init_resource);
+
+    // FIXME: this is not really nice
+    event_queue_add_handler(&context.event_queue,
+            SYSTEM_EVENT_VIEWPORT_CHANGED,
+            (EventHandler){.handler_fn = camera_viewport_handler,
+                    .local_context = &context.camera});
 
     struct font font;
     assert(load_font_psf2("font.psf", &font) == 0);

@@ -336,7 +336,8 @@ static int setup_mouse(RenderContext *context) {
     return 0;
 }
 
-static void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+static void framebuffer_size_callback(
+        GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
     RenderContext *render_context = glfwGetWindowUserPointer(window);
 
@@ -350,8 +351,11 @@ static void framebuffer_size_callback(GLFWwindow *window, int width, int height)
             -1.0f,
             1.0f,
             render_context->ortho_projection);
-}
 
+    events_push(render_context->event_queue,
+            SYSTEM_EVENT_VIEWPORT_CHANGED,
+            (struct point){.x = width, .y = height});
+}
 
 int backend_setup(RenderContext *context,
         EventQueue *event_queue,
@@ -405,7 +409,8 @@ int backend_setup(RenderContext *context,
 
     glfwSetWindowUserPointer(context->window, context);
 
-    glfwSetFramebufferSizeCallback(context->window, framebuffer_size_callback);
+    glfwSetFramebufferSizeCallback(
+            context->window, framebuffer_size_callback);
 
     vector_init(context->meshes);
     vector_init(context->frame_cache.instancing_buffers);
