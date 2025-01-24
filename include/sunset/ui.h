@@ -12,6 +12,8 @@ typedef struct EngineContext EngineContext;
 typedef struct Style {
     bool solid;
     Color color;
+    // relative-to-parent positioning
+    bool relative;
 } Style;
 
 typedef struct Widget {
@@ -34,6 +36,7 @@ typedef struct Widget {
         struct {
             char const *input;
             struct font *font;
+            // size?
         } text;
         struct image image;
         struct {

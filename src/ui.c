@@ -3,7 +3,6 @@
 
 #include "internal/mem_utils.h"
 #include "internal/utils.h"
-#include "log.h"
 #include "sunset/backend.h"
 #include "sunset/commands.h"
 #include "sunset/engine.h"
@@ -69,6 +68,10 @@ static void mouse_click_handler(EngineContext *context, void *, Event) {
         return;
     }
 
+    // NOTE: the correct calculation here would be to go up
+    // the actual tree. subwidgets currently shadow buttons.
+    // the current hack is to set to a size of 0,0.
+
     if (current->tag == WIDGET_BUTTON && current->button.clicked_callback) {
         current->button.clicked_callback(context);
     }
@@ -114,10 +117,8 @@ static void mouse_move_handler(
     context->active_ui->current_widget =
             find_active_widget(current, mouse_move->absolute);
 
-    if (context->active_ui->current_widget) {
-        Focus *focus = rman_get(&context->rman, RESOURCE_ID(input_focus));
-        *focus = FOCUS_UI;
-    }
+    Focus *focus = rman_get(&context->rman, RESOURCE_ID(input_focus));
+    *focus = context->active_ui->current_widget ? FOCUS_UI : FOCUS_NULL;
 }
 
 static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
@@ -125,7 +126,15 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
         return;
     }
 
+    // not sure why this draws ontop
+    if (widget->children) {
+        for (size_t i = 0; i < vector_size(widget->children); i++) {
+            render_widget(cmdbuf, widget->children[i]);
+        }
+    }
+
     switch (widget->tag) {
+        case WIDGET_CONTAINER:
         case WIDGET_BUTTON:
             if (!widget->style.solid) {
                 cmdbuf_add_rect(cmdbuf,
@@ -166,17 +175,8 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
                             .x = widget->bounds.x, .y = widget->bounds.y},
                     &widget->image);
             break;
-        case WIDGET_CONTAINER:
-            // do nothing
-            break;
         default:
             todo();
-    }
-
-    if (widget->children) {
-        for (size_t i = 0; i < vector_size(widget->children); i++) {
-            render_widget(cmdbuf, widget->children[i]);
-        }
     }
 }
 
@@ -203,8 +203,7 @@ void ui_init(UIContext *ui_out) {
     };
 }
 
-/// Takes ownership over `widget`
-int ui_add_widget(Widget *root, Widget *widget) {
+static int ui_add_widget_impl(Widget *root, Widget *widget) {
     if (!root->children) {
         vector_init(root->children);
     }
@@ -242,6 +241,16 @@ int ui_add_widget(Widget *root, Widget *widget) {
     }
 
     return -1;
+}
+
+/// Takes ownership over `widget`
+int ui_add_widget(Widget *root, Widget *widget) {
+    if (widget->style.relative) {
+        widget->bounds.x += root->bounds.x;
+        widget->bounds.y += root->bounds.y;
+    }
+
+    return ui_add_widget_impl(root, widget);
 }
 
 static void destroy_widget(Widget *widget) {

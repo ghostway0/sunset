@@ -818,7 +818,7 @@ static int run_text_command(
         }
 
         float xpos = current_x + glyph->bounds.x * scale;
-        float ypos = y + glyph->bounds.y * scale;
+        float ypos = y - (glyph->bounds.h + glyph->bounds.y) * scale;
         float w = glyph->bounds.w * scale;
         float h = glyph->bounds.h * scale;
 

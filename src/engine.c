@@ -270,6 +270,14 @@ int engine_run(RenderConfig render_config, Game const *game) {
             .children = NULL};
     ui_add_widget(uictx.root, widget2);
 
+    Widget *widget3 = sunset_malloc(sizeof(Widget));
+    *widget3 = (Widget){.tag = WIDGET_TEXT,
+            .text = {"fun", &font},
+            .bounds = {30, 30, 0, 0},
+            .style = {.relative = true},
+            .active = true};
+    ui_add_widget(widget2, widget3);
+
     context.active_ui = &uictx;
 
     while (!backend_should_stop(&context.render_context)) {
