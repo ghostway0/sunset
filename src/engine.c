@@ -209,7 +209,7 @@ int engine_run(RenderConfig render_config, Game const *game) {
     *widget1 = (Widget){.tag = WIDGET_TEXT,
             .text = {"test", &font},
             .active = true,
-            .bounds = {100, 10, 100, 10},
+            .bounds = {100, 50, 100, 10},
             .parent = NULL,
             .children = NULL};
     ui_add_widget(uictx.root, widget1);
@@ -220,7 +220,7 @@ int engine_run(RenderConfig render_config, Game const *game) {
             .bounds = {100, 100, 100, 100},
             .active = true,
             .parent = NULL,
-            .style = {.color = COLOR_WHITE, .solid = true},
+            .style = {.color = COLOR_WHITE, .solid = false},
             .children = NULL};
     ui_add_widget(uictx.root, widget2);
 

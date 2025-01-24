@@ -3,6 +3,7 @@
 
 #include "internal/mem_utils.h"
 #include "internal/utils.h"
+#include "log.h"
 #include "sunset/backend.h"
 #include "sunset/commands.h"
 #include "sunset/engine.h"

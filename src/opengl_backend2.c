@@ -283,7 +283,7 @@ static int setup_default_shaders(RenderContext *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -336,6 +336,23 @@ static int setup_mouse(RenderContext *context) {
     return 0;
 }
 
+static void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+    glViewport(0, 0, width, height);
+    RenderContext *render_context = glfwGetWindowUserPointer(window);
+
+    render_context->screen_width = width;
+    render_context->screen_height = height;
+
+    glm_ortho(0.0f,
+            render_context->screen_width,
+            0.0f,
+            render_context->screen_height,
+            -1.0f,
+            1.0f,
+            render_context->ortho_projection);
+}
+
+
 int backend_setup(RenderContext *context,
         EventQueue *event_queue,
         RenderConfig config) {
@@ -387,6 +404,8 @@ int backend_setup(RenderContext *context,
     }
 
     glfwSetWindowUserPointer(context->window, context);
+
+    glfwSetFramebufferSizeCallback(context->window, framebuffer_size_callback);
 
     vector_init(context->meshes);
     vector_init(context->frame_cache.instancing_buffers);
@@ -845,7 +864,7 @@ static void run_rect_command(
     float g = color.g / 255.0f;
     float b = color.b / 255.0f;
     float a = color.a / 255.0f;
-    
+
     // FIXME: make this actually accurate
     rect.x = command.origin == WINDOW_TOP_RIGHT
                     || command.origin == WINDOW_BOTTOM_RIGHT
@@ -862,7 +881,7 @@ static void run_rect_command(
     float x2 =
             ((float)(rect.x + rect.w) / (float)context->screen_width) * 2.0f
             - 1.0f;
-    float y2 = ((float)(rect.y + rect.h) / (float)context->screen_height)
+    float y2 = ((float)(rect.y - rect.h) / (float)context->screen_height)
                     * 2.0f
             - 1.0f;
 
@@ -923,14 +942,11 @@ static void run_fill_rect_command(
             ? context->screen_height - rect.y
             : rect.y;
 
-    float x1 = ((float)rect.x / (float)context->screen_width) * 2.0f - 1.0f;
-    float y1 =
-            ((float)rect.y / (float)context->screen_height) * 2.0f - 1.0f;
-    float x2 =
-            ((float)(rect.x + rect.w) / (float)context->screen_width) * 2.0f
+    float x1 = (rect.x / (float)context->screen_width) * 2.0f - 1.0f;
+    float y1 = (rect.y / (float)context->screen_height) * 2.0f - 1.0f;
+    float x2 = ((rect.x + rect.w) / (float)context->screen_width) * 2.0f
             - 1.0f;
-    float y2 = ((float)(rect.y + rect.h) / (float)context->screen_height)
-                    * 2.0f
+    float y2 = ((rect.y - rect.h) / (float)context->screen_height) * 2.0f
             - 1.0f;
 
     struct program program = context->backend_programs[PROGRAM_DRAW_DIRECT];
