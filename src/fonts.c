@@ -80,7 +80,7 @@ static int load_glyphs(
                 uint8_t byte = bitmap[y * row_size + x / 8];
                 uint8_t bit = byte & (1 << (7 - (x % 8)));
                 font_out->glyphs[i].image.pixels[y * header->width + x] =
-                        bit ? COLOR_WHITE : COLOR_BLACK;
+                        bit ? COLOR_WHITE : COLOR_TRANSPARENT;
             }
         }
 
