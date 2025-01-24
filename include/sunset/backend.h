@@ -52,7 +52,7 @@ struct instanced_mesh *backend_create_instanced_mesh(
 void backend_set_user_context(RenderContext *context, void *user_context);
 
 int backend_register_texture_atlas(RenderContext *context,
-        struct image const *atlas_image,
+        Image const *atlas_image,
         struct rect *bounds,
         size_t num_textures,
         uint32_t *first_id_out);

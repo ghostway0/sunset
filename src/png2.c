@@ -246,7 +246,7 @@ cleanup:
     return retval;
 }
 
-int png_process_pixels(PNGData const *png_data, struct image *image_out) {
+int png_process_pixels(PNGData const *png_data, Image *image_out) {
     assert(png_data != NULL);
     assert(image_out != NULL);
 
@@ -317,7 +317,7 @@ int png_process_pixels(PNGData const *png_data, struct image *image_out) {
     return retval;
 }
 
-int png_load_image(Reader *reader, struct image *image_out) {
+int png_load_image(Reader *reader, Image *image_out) {
     int retval;
 
     uint64_t signature;

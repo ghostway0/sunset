@@ -6,7 +6,7 @@
 #include "sunset/images.h"
 
 struct glyph {
-    struct image image;
+    Image image;
     struct rect bounds;
     int advance_x;
 };

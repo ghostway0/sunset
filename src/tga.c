@@ -91,7 +91,7 @@ static int decompress_rle(
     return 0;
 }
 
-int tga_load_image(Reader *reader, struct image *image_out) {
+int tga_load_image(Reader *reader, Image *image_out) {
     int retval = 0;
 
     TGAHeader header;

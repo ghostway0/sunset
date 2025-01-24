@@ -64,7 +64,7 @@ void command_text_init(struct command *command,
 
 void command_image_init(struct command *command,
         struct point pos,
-        struct image const *image) {
+        Image const *image) {
     command->type = COMMAND_IMAGE;
     command->data.image = (struct command_image){pos, *image};
 }
@@ -155,7 +155,7 @@ void cmdbuf_add_text(CommandBuffer *cmdbuf,
 
 void cmdbuf_add_image(CommandBuffer *cmdbuf,
         struct point pos,
-        struct image const *image) {
+        Image const *image) {
     struct command command;
     command_image_init(&command, pos, image);
     cmdbuf_append(cmdbuf, &command);

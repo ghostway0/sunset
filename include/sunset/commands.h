@@ -69,7 +69,7 @@ struct command_text {
 
 struct command_image {
     struct point pos;
-    struct image image;
+    Image image;
 };
 
 struct command_mesh {
@@ -143,7 +143,7 @@ void command_text_init(struct command *command,
 
 void command_image_init(struct command *command,
         struct point pos,
-        struct image const *image);
+        Image const *image);
 
 void command_custom_init(struct command *command, struct program *program);
 
@@ -212,7 +212,7 @@ void cmdbuf_add_text(CommandBuffer *cmdbuf,
         WindowPoint origin);
 
 void cmdbuf_add_image(
-        CommandBuffer *cmdbuf, struct point pos, struct image const *image);
+        CommandBuffer *cmdbuf, struct point pos, Image const *image);
 
 void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
         uint32_t mesh_id,

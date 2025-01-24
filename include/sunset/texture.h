@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 struct texture {
-    struct image *images;
+    Image *images;
     size_t num_images;
 };

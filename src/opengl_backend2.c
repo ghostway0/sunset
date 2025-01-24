@@ -442,7 +442,7 @@ failure:
 //     // return offset into atlas
 // }
 //
-// int compile_texture_into(struct image const *texture, struct atlas
+// int compile_texture_into(Image const *texture, struct atlas
 // *atlas) {
 //     ptrdiff_t offset = get_atlas_region(atlas, texture->h, texture->w);
 //
@@ -451,7 +451,7 @@ failure:
 // }
 
 int backend_register_texture(
-        RenderContext *context, struct image const *texture) {
+        RenderContext *context, Image const *texture) {
     unused(context);
     unused(texture);
 
@@ -461,7 +461,7 @@ int backend_register_texture(
 /// first_id_out gets set the id of the first texture that has been
 /// registered in this atlas. the ids are guaranteed to be in-order.
 int backend_register_texture_atlas(RenderContext *context,
-        struct image const *atlas_image,
+        Image const *atlas_image,
         struct rect *bounds,
         size_t num_textures,
         uint32_t *first_id_out) {
@@ -513,7 +513,7 @@ int backend_register_texture_atlas(RenderContext *context,
     return 0;
 }
 
-GLint compile_texture(struct image const *atlas_image) {
+GLint compile_texture(Image const *atlas_image) {
     GLuint atlas;
     glGenTextures(1, &atlas);
     glBindTexture(GL_TEXTURE_2D, atlas);

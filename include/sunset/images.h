@@ -34,19 +34,19 @@ bool colors_equal(Color a, Color b);
 uint8_t color_to_grayscale(Color color);
 
 // TODO: multiformat
-struct image {
+typedef struct Image {
     size_t w;
     size_t h;
     Color *pixels;
-};
+} Image;
 
-// void image_convert(struct image const *image, enum image_format
-// targeT_format, struct image *image_out);
+// void image_convert(Image const *image, enum image_format
+// targeT_format, Image *image_out);
 
-void image_destroy(struct image *image);
+void image_destroy(Image *image);
 
-int load_image_file(char const *path, struct image *image_out);
+int load_image_file(char const *path, Image *image_out);
 
-void show_image_grayscale(struct image const *image);
+void show_image_grayscale(Image const *image);
 
-void show_image_grayscale_at(struct image const *image, struct point pos);
+void show_image_grayscale_at(Image const *image, struct point pos);

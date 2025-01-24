@@ -38,7 +38,7 @@ typedef struct Widget {
             struct font *font;
             // size?
         } text;
-        struct image image;
+        Image image;
         struct {
             vector(char) text;
             struct font *font;

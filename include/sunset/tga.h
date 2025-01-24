@@ -1,6 +1,6 @@
 #pragma once
 
 typedef struct Reader Reader;
-struct image;
+typedef struct Image Image;
 
-int tga_load_image(Reader *reader, struct image *image_out);
+int tga_load_image(Reader *reader, Image *image_out);

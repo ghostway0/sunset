@@ -37,7 +37,7 @@ struct PSF2Header {
     uint32_t height, width;
 } typedef PSF2Header;
 
-static void flip_image(struct image *image) {
+static void flip_image(Image *image) {
     Color *flipped_pixels =
             sunset_malloc(image->w * image->h * sizeof(Color));
 

@@ -50,7 +50,7 @@ Color color_from_grayscale(uint8_t value) {
     return (Color){value, value, value, 255};
 }
 
-int load_image_file(char const *path, struct image *image_out) {
+int load_image_file(char const *path, Image *image_out) {
     VfsFile file;
     int retval = 0;
 
@@ -85,7 +85,7 @@ int load_image_file(char const *path, struct image *image_out) {
     return retval;
 }
 
-void show_image_grayscale(struct image const *image) {
+void show_image_grayscale(Image const *image) {
     for (size_t y = 0; y < image->h; y++) {
         for (size_t x = 0; x < image->w; x++) {
             uint8_t pixel =
@@ -96,7 +96,7 @@ void show_image_grayscale(struct image const *image) {
     }
 }
 
-void show_image_grayscale_at(struct image const *image, struct point pos) {
+void show_image_grayscale_at(Image const *image, struct point pos) {
     for (size_t y = 0; y < image->h; y++) {
         printf("\033[%u;%uH",
                 (uint32_t)pos.y + (uint32_t)y,
@@ -113,8 +113,8 @@ void show_image_grayscale_at(struct image const *image, struct point pos) {
     printf("\033[%lu;%luH", (uint32_t)pos.y + image->h, (size_t)1);
 }
 
-void image_destroy(struct image *image) {
+void image_destroy(Image *image) {
     free(image->pixels);
 }
 
-// void image_convert(struct image const *image, struct image *image_out) {}
+// void image_convert(Image const *image, Image *image_out) {}
