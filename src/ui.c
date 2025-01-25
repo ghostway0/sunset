@@ -153,14 +153,15 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
                     WINDOW_TOP_LEFT);
             break;
         case WIDGET_INPUT:
-            if (!widget->input.text) {
-                break;
-            }
-
             cmdbuf_add_rect(cmdbuf,
                     widget->bounds,
                     widget->style.color,
                     WINDOW_TOP_LEFT);
+
+            if (!widget->input.text) {
+                break;
+            }
+
             cmdbuf_add_text(cmdbuf,
                     rect_get_origin(widget->bounds),
                     widget->input.font,

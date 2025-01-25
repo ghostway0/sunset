@@ -168,6 +168,8 @@ static int engine_tick(EngineContext *context) {
             &context->event_queue,
             (Event){.event_id = SYSTEM_EVENT_TICK});
 
+    backend_generate_input_events(&context->render_context);
+
     event_queue_process(&context->event_queue, context);
 
     return 0;
@@ -233,6 +235,7 @@ int engine_run(RenderConfig render_config, Game const *game) {
             (EventHandler){.handler_fn = camera_viewport_handler,
                     .local_context = &context.camera});
 
+    // temporary
     Font font;
     load_font_psf2("font.psf", &font);
 
@@ -265,21 +268,20 @@ int engine_run(RenderConfig render_config, Game const *game) {
             .style = {.relative = true},
             .active = true};
     ui_add_widget(widget2, widget3);
-    
+
     Widget *widget4 = sunset_malloc(sizeof(Widget));
     *widget4 = (Widget){.tag = WIDGET_INPUT,
             .input = {.text = NULL, .font = &font, 24},
             .bounds = {30, 30, 100, 100},
-            .style = {},
+            .style = {.color = COLOR_WHITE},
             .active = true};
     ui_add_widget(uictx.root, widget4);
 
     context.active_ui = &uictx;
+    // temporary
 
     while (!backend_should_stop(&context.render_context)) {
         Time timespec = get_time();
-
-        backend_generate_input_events(&context.render_context);
 
         if ((retval = engine_tick(&context))) {
             goto cleanup;
