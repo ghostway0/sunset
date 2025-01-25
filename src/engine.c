@@ -265,6 +265,14 @@ int engine_run(RenderConfig render_config, Game const *game) {
             .style = {.relative = true},
             .active = true};
     ui_add_widget(widget2, widget3);
+    
+    Widget *widget4 = sunset_malloc(sizeof(Widget));
+    *widget4 = (Widget){.tag = WIDGET_INPUT,
+            .input = {.text = NULL, .font = &font, 24},
+            .bounds = {30, 30, 100, 100},
+            .style = {},
+            .active = true};
+    ui_add_widget(uictx.root, widget4);
 
     context.active_ui = &uictx;
 
