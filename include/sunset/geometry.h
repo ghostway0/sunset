@@ -21,10 +21,10 @@
 #define mat4_fmt_args(m)                                                   \
     vec4_args(m[0]), vec4_args(m[1]), vec4_args(m[2]), vec4_args(m[3])
 
-struct point {
+typedef struct Point {
     float x;
     float y;
-};
+} Point;
 
 struct rect {
     float x;
@@ -33,7 +33,7 @@ struct rect {
     float h;
 };
 
-struct rect rect_from_center(struct point center, struct point size);
+struct rect rect_from_center(Point center, Point size);
 
 struct rect rect_closure(struct rect a, struct rect b);
 
@@ -41,25 +41,25 @@ bool is_zero_rect(struct rect rect);
 
 bool rect_contains(struct rect parent, struct rect child);
 
-struct point rect_center(struct rect rect);
+Point rect_center(struct rect rect);
 
-struct point rect_size(struct rect rect);
+Point rect_size(struct rect rect);
 
-struct point rect_get_origin(struct rect rect);
+Point rect_get_origin(struct rect rect);
 
 // subdivide and get the ith quadrant
 struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n);
 
-struct AABB {
+typedef struct AABB {
     vec3 min;
     vec3 max;
-} typedef AABB;
+} AABB;
 
 void aabb_translate(AABB *aabb, vec3 translation);
 
 bool aabb_collide(AABB const *a, AABB const *b);
 
-struct Mesh {
+typedef struct Mesh {
     float *vertices;
     size_t num_vertices;
     uint32_t *indices;
@@ -68,7 +68,7 @@ struct Mesh {
     size_t num_normals;
     float *texcoords;
     size_t num_texcoords;
-} typedef Mesh;
+} Mesh;
 
 AABB aabb_subdivide_i(AABB aabb, size_t i, size_t n);
 
@@ -76,7 +76,7 @@ bool aabb_contains_point(AABB aabb, vec3 point);
 
 AABB from_rect(struct rect rect);
 
-bool point_within_rect(struct point position, struct rect rect);
+bool point_within_rect(Point position, struct rect rect);
 
 bool position_within_aabb(vec3 position, AABB aabb);
 

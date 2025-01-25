@@ -8,6 +8,7 @@
 #include "sunset/vector.h"
 
 typedef struct EngineContext EngineContext;
+typedef struct Font Font;
 
 typedef struct Style {
     bool solid;
@@ -35,13 +36,14 @@ typedef struct Widget {
     union {
         struct {
             char const *input;
-            struct font *font;
-            // size?
+            Font *font;
+            size_t size;
         } text;
         Image image;
         struct {
             vector(char) text;
-            struct font *font;
+            Font *font;
+            size_t text_size;
         } input;
         struct {
             void (*clicked_callback)(EngineContext *);
@@ -53,6 +55,12 @@ typedef struct UIContext {
     Widget *root;
     Widget *current_widget;
 } UIContext;
+
+typedef enum Focus {
+    FOCUS_NULL,
+    FOCUS_UI,
+    FOCUS_MAIN,
+} Focus;
 
 void ui_setup(EngineContext *context);
 

@@ -4,10 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "internal/math.h"
 #include "internal/mem_utils.h"
 #include "sunset/crc64.h"
 
 #include "sunset/bitmask.h"
+
+constexpr Limb ONE = 1;
 
 void bitmask_init(size_t size, Bitmask *bitmask_out) {
     bitmask_out->num_chunks = (size + LIMB_SIZE_BITS - 1) / LIMB_SIZE_BITS;
@@ -29,12 +32,17 @@ void bitmask_init_empty(size_t size, Bitmask *bitmask_out) {
 
 bool bitmask_is_set(Bitmask const *bitmask, size_t index) {
     return bitmask->chunks[index / LIMB_SIZE_BITS]
-            & (1ULL << (index % LIMB_SIZE_BITS));
+            & (ONE << (index % LIMB_SIZE_BITS));
 }
 
 void bitmask_set(Bitmask *bitmask, size_t index) {
     bitmask->chunks[index / LIMB_SIZE_BITS] |=
-            (1ULL << (index % LIMB_SIZE_BITS));
+            (ONE << (index % LIMB_SIZE_BITS));
+}
+
+void bitmask_unset(Bitmask *bitmask, size_t index) {
+    bitmask->chunks[index / LIMB_SIZE_BITS] &=
+            ~(ONE << (index % LIMB_SIZE_BITS));
 }
 
 size_t bitmask_ctz(Bitmask const *bitmask) {
@@ -115,7 +123,7 @@ void bitmask_clear(Bitmask *bitmask) {
 
 Bitmask bitmask_clone(Bitmask const *bitmask) {
     Bitmask result;
-    bitmask_init_empty(bitmask->num_chunks * sizeof(Limb), &result);
+    bitmask_init_empty(bitmask->num_chunks * LIMB_SIZE_BITS, &result);
 
     memcpy(result.chunks,
             bitmask->chunks,
@@ -127,4 +135,9 @@ Bitmask bitmask_clone(Bitmask const *bitmask) {
 uint64_t bitmask_hash(Bitmask const *bitmask) {
     return crc64((uint8_t const *)bitmask->chunks,
             bitmask->num_chunks * sizeof(Limb));
+}
+
+void bitmask_copy(Bitmask *dest, Bitmask const *source) {
+    size_t to_copy = min(dest->num_chunks, source->num_chunks);
+    memcpy(dest->chunks, source->chunks, to_copy * sizeof(Limb));
 }

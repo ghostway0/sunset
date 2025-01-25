@@ -162,3 +162,10 @@ bool camera_box_within_frustum(Camera *camera, AABB aabb) {
 
     return camera_sphere_in_frustum(camera, center, radius);
 }
+
+void camera_set_aspect_ratio(Camera *camera, float ratio) {
+    camera->aspect_ratio = ratio;
+
+    calculate_projection_matrix(
+            camera, camera->aspect_ratio, camera->projection_matrix);
+}

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <pthread.h>
 #include <stddef.h>
 
 #include <GL/glew.h>
@@ -8,6 +9,7 @@
 #include <cglm/types.h>
 #include <log.h>
 
+#include "bitmask.h"
 #include "internal/math.h"
 #include "internal/utils.h"
 #include "sunset/commands.h"
@@ -300,12 +302,50 @@ static int setup_default_shaders(RenderContext *context) {
     return 0;
 }
 
+static Key sys_to_key(int key, int mods) {
+    unused(mods);
+
+    if (key >= GLFW_KEY_SPACE && key <= GLFW_KEY_LAST) {
+        return (Key)key;
+    }
+
+    return HIGHEST_KEY;
+}
+
+static void key_callback(
+        GLFWwindow *window, int key, int scancode, int action, int mods) {
+    unused(scancode);
+
+    RenderContext *context = glfwGetWindowUserPointer(window);
+    pthread_mutex_lock(&context->lock);
+
+    Key app_key = sys_to_key(key, mods);
+
+    if (app_key == HIGHEST_KEY) {
+        goto cleanup;
+    }
+
+    if (action == GLFW_PRESS) {
+        bitmask_set(&context->keyboard_state, app_key);
+
+        events_push(
+                context->event_queue, SYSTEM_EVENT_KEY_PRESSED, app_key);
+    } else if (action == GLFW_REPEAT) {
+        events_push(context->event_queue, SYSTEM_EVENT_KEY_REPEAT, app_key);
+    } else if (action == GLFW_RELEASE) {
+        bitmask_unset(&context->keyboard_state, app_key);
+    }
+
+cleanup:
+    pthread_mutex_unlock(&context->lock);
+}
+
 static void mouse_move_callback(
         GLFWwindow *window, double xpos, double ypos) {
     RenderContext *context = glfwGetWindowUserPointer(window);
 
     if (context->first_mouse) {
-        context->mouse = (struct point){xpos, ypos};
+        context->mouse = (Point){xpos, ypos};
     }
 
     events_push(context->event_queue,
@@ -314,7 +354,21 @@ static void mouse_move_callback(
                     .offset = {xpos - context->mouse.x,
                             ypos - context->mouse.y},
                     .absolute = {xpos, ypos},
+                    .mouse_buttons = context->mouse_buttons,
             });
+}
+
+static MouseButton sys_to_mouse_button(int button) {
+    switch (button) {
+        case GLFW_MOUSE_BUTTON_LEFT:
+            return MOUSE_BUTTON_LEFT;
+        case GLFW_MOUSE_BUTTON_RIGHT:
+            return MOUSE_BUTTON_RIGHT;
+        case GLFW_MOUSE_BUTTON_MIDDLE:
+            return MOUSE_BUTTON_MIDDLE;
+        default:
+            return MOUSE_BUTTON_UNKNOWN;
+    }
 }
 
 static void mouse_button_callback(
@@ -323,9 +377,14 @@ static void mouse_button_callback(
 
     RenderContext *context = glfwGetWindowUserPointer(window);
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        event_queue_push(context->event_queue,
-                (Event){SYSTEM_EVENT_MOUSE_CLICK, .data = {0}});
+    if (action == GLFW_PRESS) {
+        bitmask_set(&context->mouse_buttons, sys_to_mouse_button(button));
+
+        events_push(context->event_queue,
+                SYSTEM_EVENT_MOUSE_CLICK,
+                (MouseClickEvent){sys_to_mouse_button(button)});
+    } else if (action == GLFW_RELEASE) {
+        bitmask_unset(&context->mouse_buttons, sys_to_mouse_button(button));
     }
 }
 
@@ -354,7 +413,7 @@ static void framebuffer_size_callback(
 
     events_push(render_context->event_queue,
             SYSTEM_EVENT_VIEWPORT_CHANGED,
-            (struct point){.x = width, .y = height});
+            (Point){.x = width, .y = height});
 }
 
 int backend_setup(RenderContext *context,
@@ -417,6 +476,14 @@ int backend_setup(RenderContext *context,
     vector_init(context->textures);
     vector_init(context->atlases);
 
+    pthread_mutex_init(&context->lock, NULL);
+
+    bitmask_init_empty(NUM_MOUSE_BUTTONS, &context->mouse_buttons);
+    bitmask_init_empty(HIGHEST_KEY, &context->keyboard_state);
+    bitmask_init_empty(HIGHEST_KEY, &context->state_temp);
+
+    glfwSetKeyCallback(context->window, key_callback);
+
     glm_ortho(0.0f,
             context->screen_width,
             0.0f,
@@ -435,6 +502,16 @@ failure:
     return retval;
 }
 
+void backend_generate_input_events(RenderContext *context) {
+    bitmask_copy(&context->state_temp, &context->keyboard_state);
+
+    while (!bitmask_is_zero(&context->state_temp)) {
+        size_t key = bitmask_ctz(&context->state_temp);
+        events_push(context->event_queue, SYSTEM_EVENT_KEY_DOWN, key);
+        bitmask_unset(&context->state_temp, key);
+    }
+}
+
 // static struct rect get_atlas_region(
 //         struct atlas *atlas, size_t width, size_t height) {
 //     // resize to the max of w and h
@@ -450,12 +527,12 @@ failure:
 //
 // }
 
-int backend_register_texture(
-        RenderContext *context, Image const *texture) {
+int backend_register_texture(RenderContext *context, Image const *texture) {
     unused(context);
     unused(texture);
 
     todo();
+    unreachable();
 }
 
 /// first_id_out gets set the id of the first texture that has been
@@ -694,8 +771,7 @@ static void instancing_buffer_flush(
     vector_clear(transforms);
 }
 
-static int run_mesh_command(
-        RenderContext *context, struct command_mesh command) {
+static int run_mesh_command(RenderContext *context, CommandMesh command) {
     struct frame_cache *cache = &context->frame_cache;
 
     if (!command.instanced) {
@@ -775,8 +851,7 @@ int backend_flush(RenderContext *context) {
 }
 
 // HACK:
-static int run_text_command(
-        RenderContext *context, struct command_text command) {
+static int run_text_command(RenderContext *context, CommandText command) {
     struct program program = context->backend_programs[PROGRAM_DRAW_TEXT];
 
     use_program(program);
@@ -794,8 +869,6 @@ static int run_text_command(
 
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
     glEnableVertexAttribArray(0);
-
-    float scale = 1;
 
     float y = command.origin == WINDOW_TOP_LEFT
                     || command.origin == WINDOW_TOP_RIGHT
@@ -816,6 +889,8 @@ static int run_text_command(
         if ((tex = compile_texture(&glyph->image)) == 0) {
             return -1;
         }
+
+        float scale = (float)command.size / (float)glyph->image.h;
 
         float xpos = current_x + glyph->bounds.x * scale;
         float ypos = y - (glyph->bounds.h + glyph->bounds.y) * scale;
@@ -860,8 +935,7 @@ bool backend_should_stop(RenderContext *context) {
     return glfwWindowShouldClose(context->window);
 }
 
-static void run_rect_command(
-        RenderContext *context, struct command_rect command) {
+static void run_rect_command(RenderContext *context, CommandRect command) {
     Color color = command.color;
     struct rect rect = command.bounds;
 
@@ -928,7 +1002,7 @@ static void run_rect_command(
 }
 
 static void run_fill_rect_command(
-        RenderContext *context, struct command_filled_rect command) {
+        RenderContext *context, CommandFilledRect command) {
     struct rect rect = command.rect;
     Color color = command.color;
 
@@ -998,7 +1072,7 @@ void backend_draw(RenderContext *context,
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     while (true) {
-        struct command command;
+        Command command;
         if (cmdbuf_pop(command_buffer, &command)) {
             break;
         }

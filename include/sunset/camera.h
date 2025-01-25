@@ -4,22 +4,22 @@
 
 typedef struct AABB AABB;
 
-struct CameraState {
+typedef struct CameraState {
     vec3 position;
     vec3 up;
     float yaw;
     float pitch;
-} typedef CameraState;
+} CameraState;
 
-struct CameraOptions {
+typedef struct CameraOptions {
     // in radians
     float fov;
     float speed;
     float sensitivity;
     float aspect_ratio;
-} typedef CameraOptions;
+} CameraOptions;
 
-struct Camera {
+typedef struct Camera {
     vec3 position;
     vec3 direction;
     vec3 up;
@@ -33,7 +33,7 @@ struct Camera {
     float aspect_ratio;
     mat4 view_matrix;
     mat4 projection_matrix;
-} typedef Camera;
+} Camera;
 
 void camera_init(
         CameraState state, CameraOptions options, Camera *camera_out);
@@ -55,3 +55,5 @@ bool camera_point_in_frustum(Camera *camera, vec3 point);
 bool camera_box_within_frustum(Camera *camera, AABB aabb);
 
 void camera_set_rotation(Camera *camera, float x_angle, float y_angle);
+
+void camera_set_aspect_ratio(Camera *camera, float ratio);

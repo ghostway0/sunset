@@ -14,17 +14,11 @@
 
 #include "sunset/ui.h"
 
-typedef enum Focus {
-    FOCUS_NULL,
-    FOCUS_UI,
-    FOCUS_MAIN,
-} Focus;
-
 DECLARE_RESOURCE_ID(input_focus);
 
 // NOTE: this could be done with entities and plugins
 
-static Widget *find_active_widget(Widget *current, struct point mouse) {
+static Widget *find_active_widget(Widget *current, Point mouse) {
     // backtrack
     while (current && !point_within_rect(mouse, current->bounds)) {
         current = current->parent;
@@ -77,7 +71,7 @@ static void mouse_click_handler(EngineContext *context, void *, Event) {
     }
 }
 
-static void key_up_handler(EngineContext *context, void *, Event event) {
+static void key_handler(EngineContext *context, void *, Event event) {
     if (!context->active_ui) {
         return;
     }
@@ -92,12 +86,12 @@ static void key_up_handler(EngineContext *context, void *, Event event) {
         vector_init(current->input.text);
     }
 
-    Key *key_up = (Key *)event.data;
+    Key *key = (Key *)event.data;
 
-    if (*key_up == KEY_BACKSPACE) {
+    if (*key == KEY_BACKSPACE) {
         vector_pop_back(current->input.text);
     } else {
-        vector_append(current->input.text, *key_up);
+        vector_append(current->input.text, *key);
     }
 }
 
@@ -154,6 +148,7 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
                     widget->text.font,
                     widget->text.input,
                     strlen(widget->text.input),
+                    widget->text.size,
                     WINDOW_TOP_LEFT);
             break;
         case WIDGET_INPUT:
@@ -166,13 +161,13 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
                     widget->input.font,
                     widget->input.text,
                     vector_size(widget->input.text),
+                    widget->input.text_size,
                     WINDOW_TOP_LEFT);
             break;
         case WIDGET_IMAGE:
             // TODO: resizing?
             cmdbuf_add_image(cmdbuf,
-                    (struct point){
-                            .x = widget->bounds.x, .y = widget->bounds.y},
+                    (Point){.x = widget->bounds.x, .y = widget->bounds.y},
                     &widget->image);
             break;
         default:
@@ -275,8 +270,11 @@ void ui_setup(EngineContext *context) {
             (EventHandler){context, mouse_click_handler});
 
     event_queue_add_handler(&context->event_queue,
-            SYSTEM_EVENT_KEY_UP,
-            (EventHandler){context, key_up_handler});
+            SYSTEM_EVENT_KEY_PRESSED,
+            (EventHandler){context, key_handler});
+    event_queue_add_handler(&context->event_queue,
+            SYSTEM_EVENT_KEY_REPEAT,
+            (EventHandler){context, key_handler});
 
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_TICK,

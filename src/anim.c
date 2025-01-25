@@ -138,7 +138,8 @@ void interpolate_transform(World *world,
 }
 
 // skeleton?
-// should this be a registration system and this would just iterate over pointers?
+// should this be a registration system and this would just iterate over
+// pointers?
 
 int anim_tick(World *world, EntityPtr eptr, float dt) {
     ActiveAnimation *anim = ecs_component_from_ptr(

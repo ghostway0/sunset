@@ -5,14 +5,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct RingBuffer {
+typedef struct RingBuffer {
     _Atomic size_t head;
     _Atomic size_t tail;
     size_t element_size;
     /// power of two
     size_t buffer_size;
     void *buffer;
-} typedef RingBuffer;
+} RingBuffer;
 
 int ring_buffer_append(RingBuffer *ring_buffer, void const *data);
 

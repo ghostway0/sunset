@@ -9,9 +9,9 @@
 #include <cmocka.h>
 // clang-format on
 
-#include "bitmask.h"
 #include "internal/utils.h"
 #include "sunset/base64.h"
+#include "sunset/bitmask.h"
 #include "sunset/byte_stream.h"
 #include "sunset/camera.h"
 #include "sunset/ecs.h"
@@ -221,7 +221,7 @@ void test_base64_invalid_input(void **state) {
 void test_obj_model_parse_empty(void **state) {
     unused(state);
 
-    const uint8_t str[] = "";
+    uint8_t const str[] = "";
 
     ByteStream stream;
     bstream_from_ro(str, sizeof(str) - 1, &stream);
@@ -244,7 +244,7 @@ void test_obj_model_parse_empty(void **state) {
 void test_obj_model_parse_vertices(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "v 1.0 -1.0 -1.0\n"
             "v 1.0 -1.0 1.0\n";
 
@@ -265,7 +265,7 @@ void test_obj_model_parse_vertices(void **state) {
 void test_obj_model_parse_normals(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "vn 0.0 -1.0 0.0\n"
             "vn 0.0 1.0 0.0\n";
 
@@ -286,7 +286,7 @@ void test_obj_model_parse_normals(void **state) {
 void test_obj_model_parse_texcoords(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "vt 0.625 0.5\n"
             "vt 0.875 0.5\n";
 
@@ -307,7 +307,7 @@ void test_obj_model_parse_texcoords(void **state) {
 void test_obj_model_parse_faces(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "v 1.0 -1.0 -1.0\n"
             "v 1.0 -1.0 1.0\n"
             "v -1.0 -1.0 1.0\n"
@@ -331,7 +331,7 @@ void test_obj_model_parse_faces(void **state) {
 void test_obj_model_parse_material_lib(void **state) {
     unused(state);
 
-    const uint8_t str[] = "mtllib my_material.mtl\n";
+    uint8_t const str[] = "mtllib my_material.mtl\n";
 
     ByteStream stream;
     bstream_from_ro(str, sizeof(str) - 1, &stream);
@@ -349,7 +349,7 @@ void test_obj_model_parse_material_lib(void **state) {
 void test_obj_model_parse_object_name(void **state) {
     unused(state);
 
-    const uint8_t str[] = "o MyObject\n";
+    uint8_t const str[] = "o MyObject\n";
 
     ByteStream stream;
     bstream_from_ro(str, sizeof(str) - 1, &stream);
@@ -366,7 +366,7 @@ void test_obj_model_parse_object_name(void **state) {
 
 void test_obj_model_parse_invalid_faces(void **state) {
     unused(state);
-    const uint8_t str[] =
+    uint8_t const str[] =
             "v 1.0 -1.0 -1.0\n"
             "v 1.0 -1.0 1.0\n"
             "v -1.0 -1.0 1.0\n"
@@ -384,7 +384,7 @@ void test_obj_model_parse_invalid_faces(void **state) {
 void test_obj_model_parse_partial_faces(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "v 1.0 -1.0 -1.0\n"
             "v 1.0 -1.0 1.0\n"
             "v -1.0 -1.0 1.0\n"
@@ -418,7 +418,7 @@ void test_obj_model_parse_partial_faces(void **state) {
 void test_mtl_file_parse_empty(void **state) {
     unused(state);
 
-    const uint8_t str[] = "";
+    uint8_t const str[] = "";
 
     ByteStream stream;
     bstream_from_ro(str, sizeof(str) - 1, &stream);
@@ -436,7 +436,7 @@ void test_mtl_file_parse_empty(void **state) {
 void test_mtl_file_parse_single_material(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "newmtl Material1\n"
             "Kd 0.8 0.0 0.2\n"
             "Ks 1.0 1.0 1.0\n"
@@ -468,7 +468,7 @@ void test_mtl_file_parse_single_material(void **state) {
 void test_mtl_file_parse_multiple_materials(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "newmtl Material1\n"
             "Kd 0.8 0.0 0.2\n"
             "newmtl Material2\n"
@@ -494,7 +494,7 @@ void test_mtl_file_parse_multiple_materials(void **state) {
 void test_mtl_file_parse_emission_map(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "newmtl Material1\n"
             "map_Ke textures/emission.tga\n";
 
@@ -515,7 +515,7 @@ void test_mtl_file_parse_emission_map(void **state) {
 void test_mtl_file_parse_invalid_format(void **state) {
     unused(state);
 
-    const uint8_t str[] =
+    uint8_t const str[] =
             "newmtl Material1\n"
             "Kd 0.8 0.0\n"; // missing a component in Kd
 
@@ -528,17 +528,17 @@ void test_mtl_file_parse_invalid_format(void **state) {
     assert_int_equal(err, ERROR_INVALID_FORMAT);
 }
 
-struct Position {
+typedef struct Position {
     float x, y;
-} typedef Position;
+} Position;
 
-struct Velocity {
+typedef struct Velocity {
     float x, y;
-} typedef Velocity;
+} Velocity;
 
-struct Health {
+typedef struct Health {
     int value;
-} typedef Health;
+} Health;
 
 DECLARE_COMPONENT_ID(Position);
 DECLARE_COMPONENT_ID(Velocity);

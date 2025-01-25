@@ -11,7 +11,6 @@ add_project_arguments(
     '-Wno-empty-translation-unit',
     '-Wno-gnu-statement-expression-from-macro-expansion',
     '-Wno-gnu-zero-variadic-macro-arguments',
-    '-Wno-gnu-alignof-expression',
     '-Wno-zero-length-array',
     '-Wimplicit-fallthrough',
     # '-D_GNU_SOURCE',
@@ -38,6 +37,7 @@ glfw_dep = dependency('glfw3', required: true)
 opengl_dep = dependency('opengl', required: true)
 
 m_dep = cc.find_library('m', required: true)
+c_dep = cc.find_library('c', required: true)
 
 sunset_inc = include_directories('include/', 'include/sunset/')
 
@@ -59,7 +59,7 @@ sunset_files = [
   'src/events.c',
   'src/json.c',
   # 'src/physics2.c',
-  'src/bitmap.c',
+  'src/bitmask.c',
   'src/shader.c',
   'src/ecs.c',
   'src/base64.c',
@@ -108,6 +108,7 @@ executable(
     sunset_dep,
     cglm_dep,
     m_dep,
+    c_dep,
   ],
   include_directories: [sunset_inc],
 )

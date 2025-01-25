@@ -49,4 +49,4 @@ int load_image_file(char const *path, Image *image_out);
 
 void show_image_grayscale(Image const *image);
 
-void show_image_grayscale_at(Image const *image, struct point pos);
+void show_image_grayscale_at(Image const *image, Point pos);

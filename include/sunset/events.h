@@ -5,18 +5,20 @@
 
 #include <cglm/types.h>
 
+#include "bitmask.h"
+#include "internal/utils.h"
 #include "sunset/geometry.h"
 #include "sunset/vector.h"
 
 typedef struct EngineContext EngineContext;
 typedef struct Event Event;
 
-struct EventHandler {
+typedef struct EventHandler {
     void *local_context;
     void (*handler_fn)(EngineContext *engine_context,
             void *local_context,
             Event event);
-} typedef EventHandler;
+} EventHandler;
 
 enum SystemEvents {
     SYSTEM_EVENT_TICK,
@@ -25,9 +27,10 @@ enum SystemEvents {
 
     // input events
     SYSTEM_EVENT_MOUSE_MOVE,
-    SYSTEM_EVENT_KEY_UP,
-    SYSTEM_EVENT_KEY_DOWN,
     SYSTEM_EVENT_MOUSE_CLICK,
+    SYSTEM_EVENT_KEY_REPEAT,
+    SYSTEM_EVENT_KEY_PRESSED,
+    SYSTEM_EVENT_KEY_DOWN,
 
     // maybe this shouldn't be here
     SYSTEM_EVENT_COLLISION,
@@ -61,10 +64,23 @@ struct collision_event {
 static_assert(
         sizeof(struct collision_event) <= 60, "collision_event too large");
 
+typedef enum MouseButton {
+    MOUSE_BUTTON_LEFT = sunset_flag(0),
+    MOUSE_BUTTON_RIGHT = sunset_flag(1),
+    MOUSE_BUTTON_MIDDLE = sunset_flag(2),
+    MOUSE_BUTTON_UNKNOWN = sunset_flag(3),
+    NUM_MOUSE_BUTTONS = 4,
+} MouseButton;
+
 typedef struct MouseMoveEvent {
-    struct point offset;
-    struct point absolute;
+    Point offset;
+    Point absolute;
+    Bitmask mouse_buttons;
 } MouseMoveEvent;
+
+typedef struct MouseClickEvent {
+    MouseButton button;
+} MouseClickEvent;
 
 typedef uint32_t EventId;
 

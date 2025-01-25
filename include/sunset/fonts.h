@@ -11,15 +11,14 @@ struct glyph {
     int advance_x;
 };
 
-struct font {
+typedef struct Font {
     struct glyph *glyphs;
     uint32_t *glyph_map;
     size_t num_glyphs;
-};
+} Font;
 
-int load_font_psf2(char const *path, struct font *font_out);
+int load_font_psf2(char const *path, Font *font_out);
 
-struct glyph const *font_get_glyph(
-        struct font const *font, uint32_t codepoint);
+struct glyph const *font_get_glyph(Font const *font, uint32_t codepoint);
 
-void font_destroy(struct font *font);
+void font_destroy(Font *font);

@@ -8,7 +8,7 @@
 
 #include "sunset/geometry.h"
 
-struct rect rect_from_center(struct point center, struct point size) {
+struct rect rect_from_center(Point center, Point size) {
     return (struct rect){
             .x = center.x - size.x / 2,
             .y = center.y - size.y / 2,
@@ -42,19 +42,19 @@ bool rect_contains(struct rect parent, struct rect child) {
             && (child.y + child.h) <= (parent.y + parent.h);
 }
 
-struct point rect_center(struct rect rect) {
-    return (struct point){
+Point rect_center(struct rect rect) {
+    return (Point){
             .x = rect.x + rect.w / 2,
             .y = rect.y + rect.h / 2,
     };
 }
 
-struct point rect_size(struct rect rect) {
-    return (struct point){rect.w, rect.h};
+Point rect_size(struct rect rect) {
+    return (Point){rect.w, rect.h};
 }
 
-struct point rect_get_origin(struct rect rect) {
-    return (struct point){.x = rect.x, .y = rect.y};
+Point rect_get_origin(struct rect rect) {
+    return (Point){.x = rect.x, .y = rect.y};
 }
 
 struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n) {
@@ -102,7 +102,7 @@ AABB from_rect(struct rect rect) {
             {rect.x + rect.w, rect.y + rect.h, 0.0f}};
 }
 
-bool point_within_rect(struct point position, struct rect rect) {
+bool point_within_rect(Point position, struct rect rect) {
     return position.x >= rect.x && position.x <= rect.x + rect.w
             && position.y >= rect.y && position.y <= rect.y + rect.h;
 }

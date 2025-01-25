@@ -9,10 +9,10 @@
 
 typedef ssize_t (*ReadFn)(void *ctx, size_t count, void *buf);
 
-struct Reader {
+typedef struct Reader {
     void *ctx;
     ReadFn read;
-} typedef Reader;
+} Reader;
 
 void reader_init(Reader *reader, void *ctx, ReadFn read);
 
@@ -28,10 +28,10 @@ ssize_t reader_read_to_vec(
 
 typedef ssize_t (*WriteFn)(void *ctx, void const *buf, size_t count);
 
-struct Writer {
+typedef struct Writer {
     void *ctx;
     WriteFn write;
-} typedef Writer;
+} Writer;
 
 void writer_init(Writer *writer, void *ctx, WriteFn write);
 

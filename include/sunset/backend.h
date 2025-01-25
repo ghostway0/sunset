@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "sunset/byte_stream.h"
 #include "sunset/input.h"
 #include "sunset/render.h"
 #include "sunset/shader.h"
@@ -68,3 +67,5 @@ void backend_show_mouse(RenderContext *context);
 InputState backend_capture_input(RenderContext *context);
 
 RenderConfig backend_get_params();
+
+void backend_generate_input_events(RenderContext *context);

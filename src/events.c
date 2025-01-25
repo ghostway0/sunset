@@ -2,7 +2,6 @@
 #include <stdint.h>
 
 #include "internal/mem_utils.h"
-#include "log.h"
 #include "sunset/vector.h"
 
 #include "sunset/events.h"

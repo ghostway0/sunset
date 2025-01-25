@@ -8,12 +8,10 @@
 #include <unistd.h>
 // clang-format on
 
-#include "byte_stream.h"
 #include "internal/utils.h"
 #include "sunset/errors.h"
 #include "sunset/json.h"
-#include "sunset/vfs.h"
-#include "vector.h"
+#include "sunset/vector.h"
 
 void test_json_parse_simple_object(void **state) {
     unused(state);

@@ -1,7 +1,9 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <cglm/types.h>
+#include <pthread.h>
 
+#include "bitmask.h"
 #include "sunset/commands.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
@@ -82,7 +84,7 @@ struct compiled_font {
 };
 
 // backend-specific data
-struct RenderContext {
+typedef struct RenderContext {
     size_t screen_width, screen_height;
     GLFWwindow *window;
     GLFWcursor *cursor;
@@ -96,13 +98,19 @@ struct RenderContext {
     vector(struct atlas) atlases;
     GLuint texture_atlas;
 
-    struct point mouse;
+    Point mouse;
     bool first_mouse;
+    Bitmask mouse_buttons;
+
+    Bitmask keyboard_state;
+    Bitmask state_temp;
 
     EventQueue *event_queue;
 
     CommandBuffer command_buffer;
-} typedef RenderContext;
+
+    pthread_mutex_t lock;
+} RenderContext;
 
 uint32_t backend_register_mesh(RenderContext *context, Mesh mesh);
 
@@ -242,5 +250,5 @@ typedef enum Key {
     KEY_RIGHT_ALT = GLFW_KEY_RIGHT_ALT,
     KEY_RIGHT_SUPER = GLFW_KEY_RIGHT_SUPER,
     KEY_MENU = GLFW_KEY_MENU,
-    HIGHEST_KEY,
+    HIGHEST_KEY = GLFW_KEY_LAST + 1,
 } Key;

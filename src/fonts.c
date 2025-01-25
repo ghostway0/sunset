@@ -27,7 +27,7 @@ enum {
     PSF2_HAS_FONT_BBX = 1 << 11,
 };
 
-struct PSF2Header {
+typedef struct PSF2Header {
     uint8_t magic[4];
     uint32_t version;
     uint32_t headersize;
@@ -35,7 +35,7 @@ struct PSF2Header {
     uint32_t length;
     uint32_t charsize;
     uint32_t height, width;
-} typedef PSF2Header;
+} PSF2Header;
 
 static void flip_image(Image *image) {
     Color *flipped_pixels =
@@ -53,7 +53,7 @@ static void flip_image(Image *image) {
 }
 
 static int load_glyphs(
-        VfsFile *file, PSF2Header const *header, struct font *font_out) {
+        VfsFile *file, PSF2Header const *header, Font *font_out) {
     uint8_t *bitmap = sunset_malloc(header->height * header->width);
     uint8_t row_size = (header->width + 7) / 8;
 
@@ -95,7 +95,7 @@ static int load_glyphs(
     return 0;
 }
 
-static int correct_glyph_table(VfsFile *file, struct font *font_out) {
+static int correct_glyph_table(VfsFile *file, Font *font_out) {
     for (size_t glyph_index = 0; glyph_index < font_out->num_glyphs;
             glyph_index++) {
         uint8_t length;
@@ -128,7 +128,7 @@ static int correct_glyph_table(VfsFile *file, struct font *font_out) {
     return 0;
 }
 
-int load_font_psf2(char const *path, struct font *font_out) {
+int load_font_psf2(char const *path, Font *font_out) {
     int retval = 0;
 
     VfsFile file;
@@ -152,8 +152,8 @@ int load_font_psf2(char const *path, struct font *font_out) {
     }
 
     vfs_file_seek(&file,
-            font_out->num_glyphs * header.charsize + header.headersize,
-            VFS_SEEK_SET);
+            VFS_SEEK_SET,
+            font_out->num_glyphs * header.charsize + header.headersize);
 
     if (header.flags & PSF2_HAS_UNICODE_TABLE) {
         retval = correct_glyph_table(&file, font_out);
@@ -164,8 +164,7 @@ cleanup:
     return retval;
 }
 
-struct glyph const *font_get_glyph(
-        struct font const *font, uint32_t codepoint) {
+struct glyph const *font_get_glyph(Font const *font, uint32_t codepoint) {
     if (codepoint > 0x10FFFF) {
         return NULL;
     }
@@ -179,7 +178,7 @@ struct glyph const *font_get_glyph(
     return &font->glyphs[glyph_index];
 }
 
-void font_destroy(struct font *font) {
+void font_destroy(Font *font) {
     for (size_t i = 0; i < font->num_glyphs; ++i) {
         free(font->glyphs[i].image.pixels);
     }

@@ -96,7 +96,7 @@ void show_image_grayscale(Image const *image) {
     }
 }
 
-void show_image_grayscale_at(Image const *image, struct point pos) {
+void show_image_grayscale_at(Image const *image, Point pos) {
     for (size_t y = 0; y < image->h; y++) {
         printf("\033[%u;%uH",
                 (uint32_t)pos.y + (uint32_t)y,

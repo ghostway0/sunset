@@ -1,7 +1,7 @@
-#ifndef BTREE_H
-#define BTREE_H
+#ifndef SUNSET_BTREE_H_
+#define SUNSET_BTREE_H_
 
-#include "internal/math.h"
+#include "math.h"
 
 typedef struct BTreeNode BTreeNode;
 
@@ -50,4 +50,4 @@ void btree_init(CompareFn compare,
 
 void btree_destroy(BTree *btree, DestroyFn destroyer);
 
-#endif // BTREE_H
+#endif // SUNSET_BTREE_H_

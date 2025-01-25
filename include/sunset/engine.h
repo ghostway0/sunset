@@ -15,7 +15,7 @@ typedef struct UIContext UIContext;
 
 typedef void *PluginHandle;
 
-struct EngineContext {
+typedef struct EngineContext {
     vector(UIContext) ui_contexts;
     UIContext *active_ui;
 
@@ -31,7 +31,7 @@ struct EngineContext {
     Camera camera;
 
     float dt;
-} typedef EngineContext;
+} EngineContext;
 
 // engine context setup:
 // 1. default ui_context
@@ -40,17 +40,17 @@ struct EngineContext {
 // 4. event_queue
 // 5. dt (60 fps default for now?)
 
-enum MouseMode {
+typedef enum MouseMode {
     MOUSE_MODE_DISABLED,
     MOUSE_MODE_SHOW,
-} typedef MouseMode;
+} MouseMode;
 
-struct Plugin {
+typedef struct Plugin {
     char const *object_path;
     Digest expected_digest;
-} typedef Plugin;
+} Plugin;
 
-struct Game {
+typedef struct Game {
     AABB bounds;
 
     World world;
@@ -60,7 +60,7 @@ struct Game {
     vector(char const *) resources;
 
     Signature sig;
-} typedef Game;
+} Game;
 
 // external API
 

@@ -3,24 +3,25 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "camera.h"
-#include "cglm/types.h"
-#include "fonts.h"
-#include "images.h"
+#include <cglm/types.h>
+#include <log.h>
+
 #include "internal/mem_utils.h"
 #include "internal/time_utils.h"
-#include "log.h"
 #include "sunset/backend.h"
 #include "sunset/bitmask.h"
+#include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/ecs.h"
 #include "sunset/errors.h"
 #include "sunset/events.h"
+#include "sunset/fonts.h"
+#include "sunset/images.h"
 #include "sunset/octree.h"
 #include "sunset/render.h"
 #include "sunset/rman.h"
 #include "sunset/ui.h"
-#include "vector.h"
+#include "sunset/vector.h"
 
 #include "sunset/engine.h"
 
@@ -194,8 +195,9 @@ void render_world(
             mat4 model;
             calculate_model_matrix(transform, model);
 
-            cmdbuf_add_mesh(
-                    cmdbuf, renderable->mesh, renderable->texture, model);
+            cmdbuf_add_multiple(cmdbuf,
+                    renderable->commands,
+                    vector_size(renderable->commands));
         }
 
         worldit_advance(&it);
@@ -206,23 +208,9 @@ static void camera_viewport_handler(
         EngineContext *, void *ctx, Event const event) {
     Camera *camera = ctx;
 
-    struct point *viewport_dims = (struct point *)event.data;
+    Point *viewport_dims = (Point *)event.data;
 
-    camera_init(
-            (CameraState){
-                    {0.0f, 0.0f, 0.0f},
-                    {0.0f, 1.0f, 0.0f},
-                    0.0f,
-                    0.0f,
-
-            },
-            (CameraOptions){
-                    0.1f,
-                    100.0f,
-                    45.0f,
-                    viewport_dims->y / viewport_dims->x,
-            },
-            camera);
+    camera_set_aspect_ratio(camera, viewport_dims->y / viewport_dims->x);
 }
 
 static void clicked(EngineContext *) {
@@ -245,15 +233,15 @@ int engine_run(RenderConfig render_config, Game const *game) {
             (EventHandler){.handler_fn = camera_viewport_handler,
                     .local_context = &context.camera});
 
-    struct font font;
-    assert(load_font_psf2("font.psf", &font) == 0);
+    Font font;
+    load_font_psf2("font.psf", &font);
 
     UIContext uictx = {};
     ui_init(&uictx);
 
     Widget *widget1 = sunset_malloc(sizeof(Widget));
     *widget1 = (Widget){.tag = WIDGET_TEXT,
-            .text = {"test", &font},
+            .text = {"test", &font, 24},
             .active = true,
             .bounds = {100, 80, 100, 10},
             .parent = NULL,
@@ -272,7 +260,7 @@ int engine_run(RenderConfig render_config, Game const *game) {
 
     Widget *widget3 = sunset_malloc(sizeof(Widget));
     *widget3 = (Widget){.tag = WIDGET_TEXT,
-            .text = {"fun", &font},
+            .text = {"fun", &font, 24},
             .bounds = {30, 30, 0, 0},
             .style = {.relative = true},
             .active = true};
@@ -283,11 +271,7 @@ int engine_run(RenderConfig render_config, Game const *game) {
     while (!backend_should_stop(&context.render_context)) {
         Time timespec = get_time();
 
-        // TODO: handle input using backend
-        // InputState instate =
-        // backend_capture_input(context.render_context);
-        // event_queue_process_one(..., SYSTEM_EVENT_INPUT_SNIPPET);
-        // ? event_queue_process()
+        backend_generate_input_events(&context.render_context);
 
         if ((retval = engine_tick(&context))) {
             goto cleanup;
@@ -295,6 +279,9 @@ int engine_run(RenderConfig render_config, Game const *game) {
 
         // multi camera?
         render_world(&context.world, &context.camera, &context.cmdbuf);
+
+        [[maybe_unused]]
+        uint64_t frame_time = time_since_us(timespec);
 
         backend_draw(&context.render_context,
                 &context.cmdbuf,

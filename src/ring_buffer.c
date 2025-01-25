@@ -67,6 +67,7 @@ void ring_buffer_pop_wait(
             > ring_buffer->tail) {
     }
 
+    [[maybe_unused]]
     int err = ring_buffer_pop(ring_buffer, data_out);
     assert(err == 0);
 }

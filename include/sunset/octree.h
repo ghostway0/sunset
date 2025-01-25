@@ -7,23 +7,23 @@
 
 #define DEFAULT_MAX_OCTREE_DEPTH 8
 
-struct OcTreeNode {
+typedef struct OcTreeNode {
     struct OcTreeNode *children[8];
     struct OcTreeNode *parent;
     AABB bounds;
     size_t depth;
     void *data;
     bool dirty;
-} typedef OcTreeNode;
+} OcTreeNode;
 
-struct OcTree {
+typedef struct OcTree {
     struct OcTreeNode *root;
     size_t max_depth;
 
     bool (*should_split)(struct OcTree *tree, OcTreeNode *node);
     void *(*split_i)(struct OcTree *tree, void *data, AABB bounds);
     void (*destroy_data)(void *data);
-} typedef OcTree;
+} OcTree;
 
 void octree_init(size_t max_depth,
         bool (*should_split)(OcTree *, OcTreeNode *),

@@ -9,13 +9,16 @@
 #include "sunset/geometry.h"
 #include "sunset/vector.h"
 
-struct RenderConfig {
+typedef struct CommandBuffer CommandBuffer;
+typedef struct Command Command;
+
+typedef struct RenderConfig {
     size_t window_width, window_height;
     char const *window_title;
 
     size_t preferred_gpu;
     bool enable_vsync;
-} typedef RenderConfig;
+} RenderConfig;
 
 typedef struct Transform {
     AABB bounding_box;
@@ -24,17 +27,17 @@ typedef struct Transform {
     float scale;
 } Transform;
 
+typedef void (*RenderFn)(CommandBuffer *cmdbuf);
+
 typedef struct Renderable {
-    // TODO: where should this Index live?
-    Index mesh;
-    Index texture;
+    vector(Command) commands;
 } Renderable;
 
-struct Chunk {
+typedef struct Chunk {
     AABB bounds;
     vector(Index) entities;
     size_t id;
-} typedef Chunk;
+} Chunk;
 
 typedef enum WindowPoint {
     WINDOW_TOP_LEFT,

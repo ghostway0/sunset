@@ -9,7 +9,7 @@
 #include "sunset/render.h"
 #include "sunset/ring_buffer.h"
 
-struct font;
+typedef struct Font Font;
 
 enum command_type : uint8_t {
     COMMAND_NOP,
@@ -26,161 +26,151 @@ enum command_type : uint8_t {
     NUM_COMMANDS,
 };
 
-struct command_nop {};
+typedef struct CommandNop {
+} CommandNop;
 
-struct command_line {
-    struct point from;
-    struct point to;
-};
+typedef struct CommandLine {
+    Point from;
+    Point to;
+} CommandLine;
 
-struct command_rect {
+typedef struct CommandRect {
     WindowPoint origin;
     struct rect bounds;
     Color color;
-};
+} CommandRect;
 
-struct command_filled_rect {
+typedef struct CommandFilledRect {
     WindowPoint origin;
     struct rect rect;
     Color color;
-};
+} CommandFilledRect;
 
-struct command_arc {
-    struct point center;
+typedef struct CommandArc {
+    Point center;
     uint32_t r;
     float a0;
     float a1;
-};
+} CommandArc;
 
-struct command_filled_arc {
-    struct point center;
+typedef struct CommandFilledArc {
+    Point center;
     uint32_t r;
     float a0;
     float a1;
-};
+} CommandFilledArc;
 
-struct command_text {
-    struct point start;
-    struct font *font;
+typedef struct CommandText {
+    Point start;
+    Font *font;
     char const *text;
     uint32_t text_len;
+    size_t size;
     WindowPoint origin;
-};
+} CommandText;
 
-struct command_image {
-    struct point pos;
+typedef struct CommandImage {
+    Point pos;
     Image image;
-};
+} CommandImage;
 
-struct command_mesh {
+typedef struct CommandMesh {
     bool instanced;
     bool textured;
     uint32_t mesh_id;
     uint32_t texture_id;
     mat4 transform;
-};
+} CommandMesh;
 
-struct command_set_zindex {
+typedef struct CommandSetZIndex {
     size_t zindex;
-};
+} CommandSetZIndex;
 
 struct command_custom {
     struct program *program;
 };
 
-struct command {
+typedef struct Command {
     enum command_type type;
     uint8_t seq_num;
 
     union {
-        struct command_nop nop;
-        struct command_line line;
-        struct command_rect rect;
-        struct command_filled_rect filled_rect;
-        struct command_arc arc;
-        struct command_filled_arc filled_arc;
-        struct command_text text;
-        struct command_image image;
-        struct command_mesh mesh;
-        struct command_set_zindex set_zindex;
+        CommandNop nop;
+        CommandLine line;
+        CommandRect rect;
+        CommandFilledRect filled_rect;
+        CommandArc arc;
+        CommandFilledArc filled_arc;
+        CommandText text;
+        CommandImage image;
+        CommandMesh mesh;
+        CommandSetZIndex set_zindex;
         struct command_custom custom;
     } data;
-};
+} Command;
 
-void command_nop_init(struct command *command);
+void command_nop_init(Command *command);
 
-void command_line_init(
-        struct command *command, struct point from, struct point to);
+void command_line_init(Command *command, Point from, Point to);
 
-void command_rect_init(struct command *command,
+void command_rect_init(Command *command,
         struct rect rect,
         Color color,
         WindowPoint origin);
 
-void command_filled_rect_init(struct command *command,
+void command_filled_rect_init(Command *command,
         struct rect rect,
         Color color,
         WindowPoint origin);
 
-void command_arc_init(struct command *command,
-        struct point center,
-        int r,
-        float a0,
-        float a1);
+void command_arc_init(
+        Command *command, Point center, int r, float a0, float a1);
 
-void command_filled_arc_init(struct command *command,
-        struct point center,
-        uint32_t r,
-        float a0,
-        float a1);
+void command_filled_arc_init(
+        Command *command, Point center, uint32_t r, float a0, float a1);
 
-void command_text_init(struct command *command,
-        struct point start,
-        struct font *font,
+void command_text_init(Command *command,
+        Point start,
+        Font *font,
         char const *text,
         uint32_t text_len,
+        size_t size,
         WindowPoint origin);
 
-void command_image_init(struct command *command,
-        struct point pos,
-        Image const *image);
+void command_image_init(Command *command, Point pos, Image const *image);
 
-void command_custom_init(struct command *command, struct program *program);
+void command_custom_init(Command *command, struct program *program);
 
-void command_mesh_init(struct command *command,
+void command_mesh_init(Command *command,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform);
 
-void command_set_zindex_init(struct command *command, size_t zindex);
+void command_set_zindex_init(Command *command, size_t zindex);
 
-struct CommandBufferOptions {
+typedef struct CommandBufferOptions {
     size_t buffer_size;
-} typedef CommandBufferOptions;
+} CommandBufferOptions;
 
-#define COMMAND_BUFFER_DEFAULT                                             \
-    (CommandBufferOptions) {                                               \
-        .buffer_size = 1024                                                \
-    }
+#define COMMAND_BUFFER_DEFAULT (CommandBufferOptions){.buffer_size = 1024}
 
-struct CommandBuffer {
+typedef struct CommandBuffer {
     RingBuffer ring_buffer;
-} typedef CommandBuffer;
+} CommandBuffer;
 
 void cmdbuf_init(CommandBuffer *cmdbuf, CommandBufferOptions options);
 
 void cmdbuf_destroy(CommandBuffer *cmdbuf);
 
-void cmdbuf_append(CommandBuffer *cmdbuf, struct command const *command);
+void cmdbuf_append(CommandBuffer *cmdbuf, Command const *command);
 
-int cmdbuf_pop(CommandBuffer *cmdbuf, struct command *command_out);
+int cmdbuf_pop(CommandBuffer *cmdbuf, Command *command_out);
 
 void cmdbuf_clear(CommandBuffer *cmdbuf);
 
 void cmdbuf_add_nop(CommandBuffer *cmdbuf);
 
-void cmdbuf_add_line(
-        CommandBuffer *cmdbuf, struct point from, struct point to);
+void cmdbuf_add_line(CommandBuffer *cmdbuf, Point from, Point to);
 
 void cmdbuf_add_rect(CommandBuffer *cmdbuf,
         struct rect rect,
@@ -192,27 +182,21 @@ void cmdbuf_add_filled_rect(CommandBuffer *cmdbuf,
         Color color,
         WindowPoint origin);
 
-void cmdbuf_add_arc(CommandBuffer *cmdbuf,
-        struct point center,
-        size_t r,
-        float a0,
-        float a1);
+void cmdbuf_add_arc(
+        CommandBuffer *cmdbuf, Point center, size_t r, float a0, float a1);
 
-void cmdbuf_add_filled_arc(CommandBuffer *cmdbuf,
-        struct point center,
-        size_t r,
-        float a0,
-        float a1);
+void cmdbuf_add_filled_arc(
+        CommandBuffer *cmdbuf, Point center, size_t r, float a0, float a1);
 
 void cmdbuf_add_text(CommandBuffer *cmdbuf,
-        struct point start,
-        struct font *font,
+        Point start,
+        Font *font,
         char const *text,
         uint32_t text_len,
+        size_t size,
         WindowPoint origin);
 
-void cmdbuf_add_image(
-        CommandBuffer *cmdbuf, struct point pos, Image const *image);
+void cmdbuf_add_image(CommandBuffer *cmdbuf, Point pos, Image const *image);
 
 void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
         uint32_t mesh_id,
@@ -222,3 +206,6 @@ void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
 void cmdbuf_add_set_zindex(CommandBuffer *cmdbuf, size_t zindex);
 
 bool cmdbuf_empty(CommandBuffer *cmdbuf);
+
+void cmdbuf_add_multiple(
+        CommandBuffer *cmdbuf, Command const *commands, size_t count);
