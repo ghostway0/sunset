@@ -159,3 +159,9 @@ void octree_destroy(OcTree *tree) {
 
     destroy_node(tree->root, tree->destroy_data);
 }
+
+void *octree_init_resource(void) {
+    OcTree *octree = sunset_malloc(sizeof(OcTree));
+
+    return octree;
+}

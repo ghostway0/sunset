@@ -44,3 +44,5 @@ void octnode_init(size_t depth,
 void *octr_query(OcTree const *tree, vec3 position);
 
 void *octr_get_mutable(OcTree *tree, vec3 position);
+
+void *octree_init_resource(void);

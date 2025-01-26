@@ -11,6 +11,7 @@
 
 typedef struct CommandBuffer CommandBuffer;
 typedef struct Command Command;
+typedef struct Camera Camera;
 
 typedef struct RenderConfig {
     size_t window_width, window_height;
@@ -50,3 +51,6 @@ extern DECLARE_COMPONENT_ID(Transform);
 extern DECLARE_COMPONENT_ID(Renderable);
 
 void calculate_model_matrix(Transform const *transform, mat4 model_matrix);
+
+void render_world(
+        World const *world, Camera const *camera, CommandBuffer *cmdbuf);

@@ -9,7 +9,6 @@
 #include "internal/mem_utils.h"
 #include "internal/time_utils.h"
 #include "sunset/backend.h"
-#include "sunset/bitmask.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/ecs.h"
@@ -18,7 +17,6 @@
 #include "sunset/fonts.h"
 #include "sunset/images.h"
 #include "sunset/input.h"
-#include "sunset/octree.h"
 #include "sunset/render.h"
 #include "sunset/rman.h"
 #include "sunset/ui.h"
@@ -153,19 +151,6 @@ static int engine_setup(EngineContext *context,
     return 0;
 }
 
-void engine_destroy(EngineContext *context) {
-    for (size_t i = 0; i < vector_size(context->loaded_plugins); i++) {
-        unload_plugin(context, context->loaded_plugins[i]);
-    }
-}
-
-// XXX: where should this be?
-void *octree_init_resource(void) {
-    OcTree *octree = sunset_malloc(sizeof(OcTree));
-
-    return octree;
-}
-
 static int engine_tick(EngineContext *context) {
     event_queue_process_one(context,
             &context->event_queue,
@@ -178,37 +163,6 @@ static int engine_tick(EngineContext *context) {
     return 0;
 }
 
-void render_world(
-        World const *world, Camera const *camera, CommandBuffer *cmdbuf) {
-    Bitmask mask;
-    bitmask_init_empty(ECS_MAX_COMPONENTS, &mask);
-    bitmask_set(&mask, COMPONENT_ID(Renderable));
-    bitmask_set(&mask, COMPONENT_ID(Transform));
-
-    WorldIterator it = worldit_create(world, mask);
-
-    while (worldit_is_valid(&it)) {
-        Renderable *renderable =
-                worldit_get_component(&it, COMPONENT_ID(Renderable));
-        Transform *transform =
-                worldit_get_component(&it, COMPONENT_ID(Transform));
-
-        // HACK: when I transition to my own math library, const
-        // when unmutable would be a rule
-        if (camera_box_within_frustum(
-                    (Camera *)camera, transform->bounding_box)) {
-            mat4 model;
-            calculate_model_matrix(transform, model);
-
-            cmdbuf_add_multiple(cmdbuf,
-                    renderable->commands,
-                    vector_size(renderable->commands));
-        }
-
-        worldit_advance(&it);
-    }
-}
-
 static void camera_viewport_handler(
         EngineContext *, void *ctx, Event const event) {
     Camera *camera = ctx;
@@ -218,6 +172,7 @@ static void camera_viewport_handler(
     camera_set_aspect_ratio(camera, viewport_dims->y / viewport_dims->x);
 }
 
+// temporary
 static void clicked(EngineContext *) {
     log_debug("clicked!");
 }
@@ -240,10 +195,17 @@ static void thing2(
     uint32_t *focus =
             rman_get(&engine_context->rman, RESOURCE_ID(input_focus));
 
-    if (click->button == MOUSE_BUTTON_LEFT && *focus == FOCUS_NULL) {
-        // focus engine
-        *focus = 3;
+    if (click->button == MOUSE_BUTTON_LEFT
+            && one_matches(*focus, FOCUS_NULL, FOCUS_NULL)) {
+        *focus = FOCUS_MAIN;
         backend_hide_mouse(&engine_context->render_context);
+    }
+}
+// temporary
+
+void engine_destroy(EngineContext *context) {
+    for (size_t i = 0; i < vector_size(context->loaded_plugins); i++) {
+        unload_plugin(context, context->loaded_plugins[i]);
     }
 }
 
