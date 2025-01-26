@@ -3,7 +3,6 @@
 
 #include "internal/mem_utils.h"
 #include "internal/utils.h"
-#include "log.h"
 #include "sunset/backend.h"
 #include "sunset/commands.h"
 #include "sunset/engine.h"
@@ -89,8 +88,10 @@ static void key_handler(EngineContext *context, void *, Event event) {
 
     Key *key = (Key *)event.data;
 
-    if (*key == KEY_BACKSPACE && vector_size(current->input.text) > 0) {
-        vector_pop_back(current->input.text);
+    if (*key == KEY_BACKSPACE) {
+        if (vector_size(current->input.text) > 0) {
+            vector_pop_back(current->input.text);
+        }
     } else {
         vector_append(current->input.text, *key);
     }

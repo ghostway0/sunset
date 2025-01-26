@@ -287,3 +287,7 @@ void *ecs_get_component(
 
     return ecs_component_from_ptr(world, eptr, component_id);
 }
+//
+// void ecs_save(World *world, Writer *writer) {
+//     
+// }

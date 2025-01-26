@@ -1,7 +1,6 @@
 Big:
 * Animation system
 * World builder
-* UI
 
 Todo:
  [ ] fix physics to be a system
@@ -12,7 +11,7 @@ Todo:
  [ ] save a `World`
  [ ] reflection for entities
  [X] get rid of `Scene`
- [ ] add Focus enum to resource manager and use it in controllers
+ [X] add Focus enum to resource manager and use it in controllers
 
 Low:
  [ ] fonts should be grayscale, and then you can choose text color in command
