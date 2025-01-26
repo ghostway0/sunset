@@ -289,5 +289,5 @@ void *ecs_get_component(
 }
 //
 // void ecs_save(World *world, Writer *writer) {
-//     
+//
 // }

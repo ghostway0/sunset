@@ -8,6 +8,7 @@
 #include "sunset/engine.h"
 #include "sunset/events.h"
 #include "sunset/geometry.h"
+#include "sunset/input.h"
 #include "sunset/render.h"
 #include "sunset/rman.h"
 #include "sunset/vector.h"
@@ -99,7 +100,9 @@ static void key_handler(EngineContext *context, void *, Event event) {
 
 static void mouse_move_handler(
         EngineContext *context, void *, Event event) {
-    if (!context->active_ui) {
+    uint32_t *focus = rman_get(&context->rman, RESOURCE_ID(input_focus));
+
+    if (!context->active_ui || !one_matches(*focus, FOCUS_UI, FOCUS_NULL)) {
         return;
     }
 
@@ -113,7 +116,6 @@ static void mouse_move_handler(
     context->active_ui->current_widget =
             find_active_widget(current, mouse_move->absolute);
 
-    Focus *focus = rman_get(&context->rman, RESOURCE_ID(input_focus));
     *focus = context->active_ui->current_widget ? FOCUS_UI : FOCUS_NULL;
 }
 
@@ -288,9 +290,4 @@ void ui_setup(EngineContext *context) {
             (EventHandler){NULL, tick_handler});
 
     vector_init(context->ui_contexts);
-
-    Focus *focus = sunset_malloc(sizeof(Focus));
-    *focus = FOCUS_NULL;
-
-    REGISTER_RESOURCE(&context->rman, input_focus, focus);
 }

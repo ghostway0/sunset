@@ -17,6 +17,7 @@
 #include "sunset/events.h"
 #include "sunset/fonts.h"
 #include "sunset/images.h"
+#include "sunset/input.h"
 #include "sunset/octree.h"
 #include "sunset/render.h"
 #include "sunset/rman.h"
@@ -145,6 +146,8 @@ static int engine_setup(EngineContext *context,
 
     ui_setup(context);
 
+    input_setup(context);
+
     context->dt = FRAME_TIME_S;
 
     return 0;
@@ -219,6 +222,31 @@ static void clicked(EngineContext *) {
     log_debug("clicked!");
 }
 
+static void thing(
+        EngineContext *engine_context, void *, Event const event) {
+    Key *key = (Key *)event.data;
+
+    if (*key == KEY_ESCAPE) {
+        uint32_t *focus =
+                rman_get(&engine_context->rman, RESOURCE_ID(input_focus));
+        *focus = FOCUS_UI;
+        backend_show_mouse(&engine_context->render_context);
+    }
+}
+
+static void thing2(
+        EngineContext *engine_context, void *, Event const event) {
+    MouseClickEvent *click = (MouseClickEvent *)event.data;
+    uint32_t *focus =
+            rman_get(&engine_context->rman, RESOURCE_ID(input_focus));
+
+    if (click->button == MOUSE_BUTTON_LEFT && *focus == FOCUS_NULL) {
+        // focus engine
+        *focus = 3;
+        backend_hide_mouse(&engine_context->render_context);
+    }
+}
+
 int engine_run(RenderConfig render_config, Game const *game) {
     int retval = 0;
     EngineContext context = {0};
@@ -227,8 +255,6 @@ int engine_run(RenderConfig render_config, Game const *game) {
         return retval;
     }
 
-    rman_get_or_init(&context.rman, OcTree, octree_init_resource);
-
     // FIXME: this is not really nice
     event_queue_add_handler(&context.event_queue,
             SYSTEM_EVENT_VIEWPORT_CHANGED,
@@ -236,6 +262,13 @@ int engine_run(RenderConfig render_config, Game const *game) {
                     .local_context = &context.camera});
 
     // temporary
+    event_queue_add_handler(&context.event_queue,
+            SYSTEM_EVENT_MOUSE_CLICK,
+            (EventHandler){.handler_fn = thing2, .local_context = NULL});
+    event_queue_add_handler(&context.event_queue,
+            SYSTEM_EVENT_KEY_PRESSED,
+            (EventHandler){.handler_fn = thing, .local_context = NULL});
+
     Font font;
     load_font_psf2("font.psf", &font);
 

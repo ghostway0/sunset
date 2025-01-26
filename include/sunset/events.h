@@ -5,9 +5,6 @@
 
 #include <cglm/types.h>
 
-#include "bitmask.h"
-#include "internal/utils.h"
-#include "sunset/geometry.h"
 #include "sunset/vector.h"
 
 typedef struct EngineContext EngineContext;
@@ -63,24 +60,6 @@ struct collision_event {
 
 static_assert(
         sizeof(struct collision_event) <= 60, "collision_event too large");
-
-typedef enum MouseButton {
-    MOUSE_BUTTON_LEFT = sunset_flag(0),
-    MOUSE_BUTTON_RIGHT = sunset_flag(1),
-    MOUSE_BUTTON_MIDDLE = sunset_flag(2),
-    MOUSE_BUTTON_UNKNOWN = sunset_flag(3),
-    NUM_MOUSE_BUTTONS = 4,
-} MouseButton;
-
-typedef struct MouseMoveEvent {
-    Point offset;
-    Point absolute;
-    Bitmask mouse_buttons;
-} MouseMoveEvent;
-
-typedef struct MouseClickEvent {
-    MouseButton button;
-} MouseClickEvent;
 
 typedef uint32_t EventId;
 

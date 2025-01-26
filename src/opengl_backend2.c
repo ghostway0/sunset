@@ -9,15 +9,16 @@
 #include <cglm/types.h>
 #include <log.h>
 
-#include "bitmask.h"
 #include "internal/math.h"
 #include "internal/utils.h"
+#include "sunset/bitmask.h"
 #include "sunset/commands.h"
 #include "sunset/config.h"
 #include "sunset/errors.h"
 #include "sunset/events.h"
 #include "sunset/fonts.h"
 #include "sunset/geometry.h"
+#include "sunset/input.h"
 #include "sunset/map.h"
 #include "sunset/opengl_backend.h"
 #include "sunset/render.h"
@@ -344,6 +345,8 @@ static void mouse_move_callback(
         GLFWwindow *window, double xpos, double ypos) {
     RenderContext *context = glfwGetWindowUserPointer(window);
 
+    pthread_mutex_lock(&context->lock);
+
     if (context->first_mouse) {
         context->mouse = (Point){xpos, ypos};
     }
@@ -356,6 +359,8 @@ static void mouse_move_callback(
                     .absolute = {xpos, ypos},
                     .mouse_buttons = context->mouse_buttons,
             });
+
+    pthread_mutex_unlock(&context->lock);
 }
 
 static MouseButton sys_to_mouse_button(int button) {
@@ -397,9 +402,13 @@ static int setup_mouse(RenderContext *context) {
 
 static void framebuffer_size_callback(
         GLFWwindow *window, int width, int height) {
-    glViewport(0, 0, width, height);
     RenderContext *render_context = glfwGetWindowUserPointer(window);
 
+    pthread_mutex_lock(&render_context->lock);
+
+    glViewport(0, 0, width, height);
+
+    render_context->first_mouse = true;
     render_context->screen_width = width;
     render_context->screen_height = height;
 
@@ -414,6 +423,8 @@ static void framebuffer_size_callback(
     events_push(render_context->event_queue,
             SYSTEM_EVENT_VIEWPORT_CHANGED,
             (Point){.x = width, .y = height});
+
+    pthread_mutex_unlock(&render_context->lock);
 }
 
 int backend_setup(RenderContext *context,

@@ -56,12 +56,6 @@ typedef struct UIContext {
     Widget *current_widget;
 } UIContext;
 
-typedef enum Focus {
-    FOCUS_NULL,
-    FOCUS_UI,
-    FOCUS_MAIN,
-} Focus;
-
 void ui_setup(EngineContext *context);
 
 void ui_init(UIContext *ui_out);

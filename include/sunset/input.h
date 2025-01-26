@@ -3,25 +3,37 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "internal/btree.h"
+#include "internal/utils.h"
 #include "sunset/bitmask.h"
-#include "sunset/events.h"
+#include "sunset/geometry.h"
+#include "sunset/rman.h"
 
-typedef struct InputState {
-    Bitmask keys;
-} InputState;
+typedef struct EngineContext EngineContext;
 
-typedef struct InputBinding {
-    BTree btree;
-    EventQueue *event_queue;
-} InputBinding;
+typedef enum MouseButton {
+    MOUSE_BUTTON_LEFT = sunset_flag(0),
+    MOUSE_BUTTON_RIGHT = sunset_flag(1),
+    MOUSE_BUTTON_MIDDLE = sunset_flag(2),
+    MOUSE_BUTTON_UNKNOWN = sunset_flag(3),
+    NUM_MOUSE_BUTTONS = 4,
+} MouseButton;
 
-void inputbinding_init(EventQueue *event_queue, InputBinding *binding_out);
+typedef struct MouseMoveEvent {
+    Point offset;
+    Point absolute;
+    Bitmask mouse_buttons;
+} MouseMoveEvent;
 
-void inputbinding_destroy(InputBinding *binding);
+typedef struct MouseClickEvent {
+    MouseButton button;
+} MouseClickEvent;
 
-void binding_add(
-        InputBinding *binding, Bitmask const *comb, EventId event_id);
+typedef enum Focus {
+    FOCUS_NULL,
+    FOCUS_UI,
+    FOCUS_MAIN,
+} Focus;
 
-bool binding_query(
-        InputBinding const *binding, InputState const *input_state);
+extern DECLARE_RESOURCE_ID(input_focus);
+
+void input_setup(EngineContext *engine_context);
