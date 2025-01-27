@@ -31,5 +31,5 @@ void *rman_get(ResourceManager *rman, size_t id);
         if (!__ptr) {                                                      \
             _rman_register_resource(rman, rinit());                        \
         }                                                                  \
-        __ptr;                                                             \
+        rman_get(rman, RESOURCE_ID(name));                                 \
     })

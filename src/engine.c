@@ -1,12 +1,12 @@
 #include <dlfcn.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 
 #include <cglm/types.h>
 #include <log.h>
 
-#include "internal/mem_utils.h"
 #include "internal/time_utils.h"
 #include "sunset/backend.h"
 #include "sunset/camera.h"
@@ -14,8 +14,6 @@
 #include "sunset/ecs.h"
 #include "sunset/errors.h"
 #include "sunset/events.h"
-#include "sunset/fonts.h"
-#include "sunset/images.h"
 #include "sunset/input.h"
 #include "sunset/render.h"
 #include "sunset/rman.h"
@@ -26,30 +24,6 @@
 
 static float const FRAME_TIME_S = 1.0f / 60.0f;
 
-// TODO: use the rman
-/*
-struct physics_context {
-    struct scene *scene;
-    struct physics physics;
-    struct event_queue *event_queue;
-};
-
-void example_setup_physics(EngineContext *engine_context) {
-    struct physics *physics = malloc(sizeof(struct physics));
-    physics_init(physics);
-
-    event_queue_add_handler(&engine_context->event_queue,
-            SYSTEM_EVENT_TICK,
-            (struct event_handler){.local_context = physics,
-                    .handler_fn = physics_callback});
-}
-
-void example_destroy_physics(void *local_context) {
-    struct physics *physics = local_context;
-    physics_destroy(physics);
-}
-*/
-
 typedef int (*PluginLoadFn)(EngineContext *context);
 typedef int (*PluginUnloadFn)(EngineContext *context);
 
@@ -59,7 +33,8 @@ static int load_plugin(EngineContext *context,
     int err;
     // verify digest?
 
-    void *handle = dlopen(plugin->object_path, RTLD_NOW);
+    void *handle = dlopen(plugin->object_path, RTLD_LAZY);
+
     if (!handle) {
         // XXX:
         return -ERROR_IO;
@@ -84,7 +59,7 @@ static int unload_plugin(EngineContext *context, void *handle) {
     PluginUnloadFn unload_fn = dlsym(handle, "plugin_unload");
 
     if (!unload_fn) {
-        return -ERROR_INVALID_PLUGIN;
+        return 0;
     }
 
     return unload_fn(context);
@@ -172,37 +147,6 @@ static void camera_viewport_handler(
     camera_set_aspect_ratio(camera, viewport_dims->y / viewport_dims->x);
 }
 
-// temporary
-static void clicked(EngineContext *) {
-    log_debug("clicked!");
-}
-
-static void thing(
-        EngineContext *engine_context, void *, Event const event) {
-    Key *key = (Key *)event.data;
-
-    if (*key == KEY_ESCAPE) {
-        uint32_t *focus =
-                rman_get(&engine_context->rman, RESOURCE_ID(input_focus));
-        *focus = FOCUS_UI;
-        backend_show_mouse(&engine_context->render_context);
-    }
-}
-
-static void thing2(
-        EngineContext *engine_context, void *, Event const event) {
-    MouseClickEvent *click = (MouseClickEvent *)event.data;
-    uint32_t *focus =
-            rman_get(&engine_context->rman, RESOURCE_ID(input_focus));
-
-    if (click->button == MOUSE_BUTTON_LEFT
-            && one_matches(*focus, FOCUS_NULL, FOCUS_NULL)) {
-        *focus = FOCUS_MAIN;
-        backend_hide_mouse(&engine_context->render_context);
-    }
-}
-// temporary
-
 void engine_destroy(EngineContext *context) {
     for (size_t i = 0; i < vector_size(context->loaded_plugins); i++) {
         unload_plugin(context, context->loaded_plugins[i]);
@@ -222,58 +166,6 @@ int engine_run(RenderConfig render_config, Game const *game) {
             SYSTEM_EVENT_VIEWPORT_CHANGED,
             (EventHandler){.handler_fn = camera_viewport_handler,
                     .local_context = &context.camera});
-
-    // temporary
-    event_queue_add_handler(&context.event_queue,
-            SYSTEM_EVENT_MOUSE_CLICK,
-            (EventHandler){.handler_fn = thing2, .local_context = NULL});
-    event_queue_add_handler(&context.event_queue,
-            SYSTEM_EVENT_KEY_PRESSED,
-            (EventHandler){.handler_fn = thing, .local_context = NULL});
-
-    Font font;
-    load_font_psf2("font.psf", &font);
-
-    UIContext uictx = {};
-    ui_init(&uictx);
-
-    Widget *widget1 = sunset_malloc(sizeof(Widget));
-    *widget1 = (Widget){.tag = WIDGET_TEXT,
-            .text = {"test", &font, 24},
-            .active = true,
-            .bounds = {100, 80, 100, 10},
-            .parent = NULL,
-            .children = NULL};
-    ui_add_widget(uictx.root, widget1);
-
-    Widget *widget2 = sunset_malloc(sizeof(Widget));
-    *widget2 = (Widget){.tag = WIDGET_BUTTON,
-            .button = {.clicked_callback = clicked},
-            .bounds = {100, 100, 100, 100},
-            .active = true,
-            .parent = NULL,
-            .style = {.color = COLOR_WHITE, .solid = false},
-            .children = NULL};
-    ui_add_widget(uictx.root, widget2);
-
-    Widget *widget3 = sunset_malloc(sizeof(Widget));
-    *widget3 = (Widget){.tag = WIDGET_TEXT,
-            .text = {"fun", &font, 24},
-            .bounds = {30, 30, 0, 0},
-            .style = {.relative = true},
-            .active = true};
-    ui_add_widget(widget2, widget3);
-
-    Widget *widget4 = sunset_malloc(sizeof(Widget));
-    *widget4 = (Widget){.tag = WIDGET_INPUT,
-            .input = {.text = NULL, .font = &font, 24},
-            .bounds = {30, 30, 100, 100},
-            .style = {.color = COLOR_WHITE},
-            .active = true};
-    ui_add_widget(uictx.root, widget4);
-
-    context.active_ui = &uictx;
-    // temporary
 
     while (!backend_should_stop(&context.render_context)) {
         Time timespec = get_time();

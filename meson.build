@@ -97,6 +97,21 @@ sunset_dep = declare_dependency(
   include_directories: [sunset_inc],
 )
 
+mods_lib = shared_library(
+  'mods',
+  files('mods/thing.c'),
+  dependencies: [
+    glew_dep,
+    glfw_dep,
+    opengl_dep,
+    sunset_dep,
+    logc_dep,
+    cglm_dep,
+    m_dep,
+  ],
+  include_directories: [sunset_inc],
+)
+
 executable(
   'sunset',
   files('src/main.c'),

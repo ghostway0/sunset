@@ -3,7 +3,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "geometry.h"
+#include "sunset/geometry.h"
+#include "sunset/rman.h"
 
 #define DEFAULT_MAX_OCTREE_DEPTH 8
 
@@ -46,3 +47,5 @@ void *octr_query(OcTree const *tree, vec3 position);
 void *octr_get_mutable(OcTree *tree, vec3 position);
 
 void *octree_init_resource(void);
+
+extern DECLARE_RESOURCE_ID(OcTree);
