@@ -15,8 +15,6 @@
 
 #include "sunset/ui.h"
 
-DECLARE_RESOURCE_ID(input_focus);
-
 // NOTE: this could be done with entities and plugins
 
 static Widget *find_active_widget(Widget *current, Point mouse) {

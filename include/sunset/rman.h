@@ -24,12 +24,3 @@ typedef struct ResourceManager {
 void rman_init(ResourceManager *rman_out);
 
 void *rman_get(ResourceManager *rman, size_t id);
-
-#define rman_get_or_init(rman, name, rinit)                                \
-    ({                                                                     \
-        void *__ptr = rman_get(rman, RESOURCE_ID(name));                   \
-        if (!__ptr) {                                                      \
-            _rman_register_resource(rman, rinit());                        \
-        }                                                                  \
-        rman_get(rman, RESOURCE_ID(name));                                 \
-    })

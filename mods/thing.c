@@ -58,8 +58,10 @@ int plugin_load(EngineContext *engine_context) {
             SYSTEM_EVENT_KEY_PRESSED,
             (EventHandler){.handler_fn = thing, .local_context = NULL});
 
-    Font *font = rman_get_or_init(
-            &engine_context->rman, default_font, init_default_font);
+    Font *font = sunset_malloc(sizeof(Font));
+    load_font_psf2("font.psf", font);
+
+    REGISTER_RESOURCE(&engine_context->rman, default_font, font);
 
     UIContext *uictx = sunset_malloc(sizeof(UIContext));
     ui_init(uictx);

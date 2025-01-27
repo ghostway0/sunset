@@ -87,7 +87,7 @@ int main() {
     vector_init(game.plugins);
     vector_init(game.resources);
 
-    vector_append(game.plugins, (Plugin){.object_path = "build/libmods.dylib"});
+    vector_append(game.plugins, (Plugin){.object_path = "build/libmods.so"});
 
     engine_run(render_config, &game);
 

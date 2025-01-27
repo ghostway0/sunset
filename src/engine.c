@@ -106,6 +106,12 @@ static int engine_setup(EngineContext *context,
 
     // engine setup
 
+    ui_setup(context);
+
+    input_setup(context);
+
+    context->dt = FRAME_TIME_S;
+
     vector_init(context->loaded_plugins);
     vector_resize(context->loaded_plugins, vector_size(game->plugins));
 
@@ -116,12 +122,6 @@ static int engine_setup(EngineContext *context,
             return err;
         }
     }
-
-    ui_setup(context);
-
-    input_setup(context);
-
-    context->dt = FRAME_TIME_S;
 
     return 0;
 }
