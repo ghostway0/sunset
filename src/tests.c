@@ -21,6 +21,7 @@
 #include "sunset/mtl_file.h"
 #include "sunset/obj_file.h"
 #include "sunset/ring_buffer.h"
+#include "vector.h"
 
 struct element {
     int x;
@@ -218,203 +219,6 @@ void test_base64_invalid_input(void **state) {
 //     quad_tree_destroy(&tree);
 // }
 
-void test_obj_model_parse_empty(void **state) {
-    unused(state);
-
-    uint8_t const str[] = "";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(model.vertices), 0);
-    assert_int_equal(vector_size(model.normals), 0);
-    assert_int_equal(vector_size(model.texcoords), 0);
-    assert_int_equal(vector_size(model.faces), 0);
-    assert_null(model.material_lib);
-    assert_null(model.object_name);
-
-    obj_model_destroy(&model);
-}
-
-void test_obj_model_parse_vertices(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "v 1.0 -1.0 -1.0\n"
-            "v 1.0 -1.0 1.0\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(model.vertices), 2);
-    assert_float_equal(model.vertices[0][0], 1.0f, EPSILON);
-
-    obj_model_destroy(&model);
-}
-
-void test_obj_model_parse_normals(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "vn 0.0 -1.0 0.0\n"
-            "vn 0.0 1.0 0.0\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(model.normals), 2);
-    assert_float_equal(model.normals[0][1], -1.0f, EPSILON);
-
-    obj_model_destroy(&model);
-}
-
-void test_obj_model_parse_texcoords(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "vt 0.625 0.5\n"
-            "vt 0.875 0.5\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(model.texcoords), 2);
-    assert_float_equal(model.texcoords[0][0], 0.625f, EPSILON);
-
-    obj_model_destroy(&model);
-}
-
-void test_obj_model_parse_faces(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "v 1.0 -1.0 -1.0\n"
-            "v 1.0 -1.0 1.0\n"
-            "v -1.0 -1.0 1.0\n"
-            "f 1/1/1 2/2/1 3/3/1\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(model.faces), 1);
-    assert_int_equal(vector_size(model.faces[0]), 3);
-    assert_int_equal(model.faces[0][0].vertex_index, 0);
-
-    obj_model_destroy(&model);
-}
-
-void test_obj_model_parse_material_lib(void **state) {
-    unused(state);
-
-    uint8_t const str[] = "mtllib my_material.mtl\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, 0);
-
-    assert_string_equal(model.material_lib, "my_material.mtl");
-
-    obj_model_destroy(&model);
-}
-
-void test_obj_model_parse_object_name(void **state) {
-    unused(state);
-
-    uint8_t const str[] = "o MyObject\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, 0);
-
-    assert_string_equal(model.object_name, "MyObject");
-
-    obj_model_destroy(&model);
-}
-
-void test_obj_model_parse_invalid_faces(void **state) {
-    unused(state);
-    uint8_t const str[] =
-            "v 1.0 -1.0 -1.0\n"
-            "v 1.0 -1.0 1.0\n"
-            "v -1.0 -1.0 1.0\n"
-            "f 1/2 2//1 3\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, ERROR_INVALID_FORMAT);
-}
-
-void test_obj_model_parse_partial_faces(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "v 1.0 -1.0 -1.0\n"
-            "v 1.0 -1.0 1.0\n"
-            "v -1.0 -1.0 1.0\n"
-            "f 1//2 2//1 3//3\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    struct obj_model model;
-    int err = obj_model_parse(&reader, &model);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(model.faces), 1);
-
-    assert_int_equal(model.faces[0][0].vertex_index, 0);
-    assert_int_equal(model.faces[0][0].texcoord_index, 0xFFFFFFFF);
-    assert_int_equal(model.faces[0][0].normal_index, 1);
-
-    assert_int_equal(model.faces[0][1].vertex_index, 1);
-    assert_int_equal(model.faces[0][1].texcoord_index, 0xFFFFFFFF);
-    assert_int_equal(model.faces[0][1].normal_index, 0);
-
-    assert_int_equal(model.faces[0][2].vertex_index, 2);
-    assert_int_equal(model.faces[0][2].texcoord_index, 0xFFFFFFFF);
-    assert_int_equal(model.faces[0][2].normal_index, 2);
-
-    obj_model_destroy(&model);
-}
-
 void test_mtl_file_parse_empty(void **state) {
     unused(state);
 
@@ -424,13 +228,15 @@ void test_mtl_file_parse_empty(void **state) {
     bstream_from_ro(str, sizeof(str) - 1, &stream);
     Reader reader = {.ctx = &stream, .read = bstream_read};
 
-    struct mtl_file mtl;
-    int err = mtl_file_parse(&reader, &mtl);
+    vector(Material) mtls;
+    vector_init(mtls);
+
+    int err = mtl_file_parse(&reader, &mtls);
     assert_int_equal(err, 0);
 
-    assert_int_equal(vector_size(mtl.materials), 0);
+    assert_int_equal(vector_size(mtls), 0);
 
-    mtl_file_destroy(&mtl);
+    vector_destroy(mtls);
 }
 
 void test_mtl_file_parse_single_material(void **state) {
@@ -448,21 +254,21 @@ void test_mtl_file_parse_single_material(void **state) {
     bstream_from_ro(str, sizeof(str) - 1, &stream);
     Reader reader = {.ctx = &stream, .read = bstream_read};
 
-    struct mtl_file mtl;
-    int err = mtl_file_parse(&reader, &mtl);
+    vector(Material) mtls;
+    vector_init(mtls);
+
+    int err = mtl_file_parse(&reader, &mtls);
     assert_int_equal(err, 0);
 
-    assert_int_equal(vector_size(mtl.materials), 1);
-    assert_string_equal(mtl.materials[0].name, "Material1");
-    assert_float_equal(mtl.materials[0].kd[0], 0.8f, EPSILON);
-    assert_float_equal(mtl.materials[0].kd[1], 0.0f, EPSILON);
-    assert_float_equal(mtl.materials[0].kd[2], 0.2f, EPSILON);
-    assert_float_equal(mtl.materials[0].ks[0], 1.0f, EPSILON);
-    assert_float_equal(mtl.materials[0].ns, 100.0f, EPSILON);
-    assert_float_equal(mtl.materials[0].d, 1.0f, EPSILON);
-    assert_string_equal(mtl.materials[0].map_kd, "textures/diffuse.png");
-
-    mtl_file_destroy(&mtl);
+    assert_int_equal(vector_size(mtls), 1);
+    assert_string_equal(mtls[0].name, "Material1");
+    assert_float_equal(mtls[0].kd[0], 0.8f, EPSILON);
+    assert_float_equal(mtls[0].kd[1], 0.0f, EPSILON);
+    assert_float_equal(mtls[0].kd[2], 0.2f, EPSILON);
+    assert_float_equal(mtls[0].ks[0], 1.0f, EPSILON);
+    assert_float_equal(mtls[0].ns, 100.0f, EPSILON);
+    assert_float_equal(mtls[0].d, 1.0f, EPSILON);
+    assert_string_equal(mtls[0].map_kd, "textures/diffuse.png");
 }
 
 void test_mtl_file_parse_multiple_materials(void **state) {
@@ -479,16 +285,16 @@ void test_mtl_file_parse_multiple_materials(void **state) {
     bstream_from_ro(str, sizeof(str) - 1, &stream);
     Reader reader = {.ctx = &stream, .read = bstream_read};
 
-    struct mtl_file mtl;
-    int err = mtl_file_parse(&reader, &mtl);
+    vector(Material) mtls;
+    vector_init(mtls);
+
+    int err = mtl_file_parse(&reader, &mtls);
     assert_int_equal(err, 0);
 
-    assert_int_equal(vector_size(mtl.materials), 2);
-    assert_string_equal(mtl.materials[0].name, "Material1");
-    assert_string_equal(mtl.materials[1].name, "Material2");
-    assert_string_equal(mtl.materials[1].map_kd, "textures/diffuse2.jpg");
-
-    mtl_file_destroy(&mtl);
+    assert_int_equal(vector_size(mtls), 2);
+    assert_string_equal(mtls[0].name, "Material1");
+    assert_string_equal(mtls[1].name, "Material2");
+    assert_string_equal(mtls[1].map_kd, "textures/diffuse2.jpg");
 }
 
 void test_mtl_file_parse_emission_map(void **state) {
@@ -502,14 +308,14 @@ void test_mtl_file_parse_emission_map(void **state) {
     bstream_from_ro(str, sizeof(str) - 1, &stream);
     Reader reader = {.ctx = &stream, .read = bstream_read};
 
-    struct mtl_file mtl;
-    int err = mtl_file_parse(&reader, &mtl);
+    vector(Material) mtls;
+    vector_init(mtls);
+
+    int err = mtl_file_parse(&reader, &mtls);
     assert_int_equal(err, 0);
 
-    assert_int_equal(vector_size(mtl.materials), 1);
-    assert_string_equal(mtl.materials[0].map_ke, "textures/emission.tga");
-
-    mtl_file_destroy(&mtl);
+    assert_int_equal(vector_size(mtls), 1);
+    assert_string_equal(mtls[0].map_ke, "textures/emission.tga");
 }
 
 void test_mtl_file_parse_invalid_format(void **state) {
@@ -523,8 +329,10 @@ void test_mtl_file_parse_invalid_format(void **state) {
     bstream_from_ro(str, sizeof(str) - 1, &stream);
     Reader reader = {.ctx = &stream, .read = bstream_read};
 
-    struct mtl_file mtl;
-    int err = mtl_file_parse(&reader, &mtl);
+    vector(Material) mtls;
+    vector_init(mtls);
+
+    int err = mtl_file_parse(&reader, &mtls);
     assert_int_equal(err, ERROR_INVALID_FORMAT);
 }
 
@@ -664,15 +472,6 @@ int main(void) {
             cmocka_unit_test(test_base64_encode),
             cmocka_unit_test(test_base64_decode),
             cmocka_unit_test(test_base64_invalid_input),
-            cmocka_unit_test(test_obj_model_parse_empty),
-            cmocka_unit_test(test_obj_model_parse_vertices),
-            cmocka_unit_test(test_obj_model_parse_normals),
-            cmocka_unit_test(test_obj_model_parse_texcoords),
-            cmocka_unit_test(test_obj_model_parse_faces),
-            cmocka_unit_test(test_obj_model_parse_material_lib),
-            cmocka_unit_test(test_obj_model_parse_object_name),
-            cmocka_unit_test(test_obj_model_parse_invalid_faces),
-            cmocka_unit_test(test_obj_model_parse_partial_faces),
             cmocka_unit_test(test_mtl_file_parse_empty),
             cmocka_unit_test(test_mtl_file_parse_single_material),
             cmocka_unit_test(test_mtl_file_parse_multiple_materials),

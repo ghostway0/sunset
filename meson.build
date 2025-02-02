@@ -140,6 +140,12 @@ tests_exe = executable(
   include_directories: [sunset_inc],
 )
 
+test(
+  'tests',
+  tests_exe,
+  suite: 'tests',
+)
+
 json_test_exe = executable(
   'json_test',
   files('src/json_test.c'),
@@ -152,13 +158,25 @@ json_test_exe = executable(
 )
 
 test(
-  'tests',
-  tests_exe,
+  'json_test',
+  json_test_exe,
   suite: 'tests',
 )
 
+obj_tests_exe = executable(
+  'obj_tests',
+  files('src/obj_test.c'),
+  dependencies: [
+    cmocka_dep,
+    sunset_dep,
+    cglm_dep,
+    m_dep,
+  ],
+  include_directories: [sunset_inc],
+)
+
 test(
-  'json_test',
-  json_test_exe,
+  'obj_tests',
+  obj_tests_exe,
   suite: 'tests',
 )

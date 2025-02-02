@@ -8,25 +8,23 @@
 
 typedef struct Reader Reader;
 
-struct face_element {
+typedef struct FaceElement {
     uint32_t vertex_index;
     uint32_t texcoord_index;
     uint32_t normal_index;
-};
+} FaceElement;
 
-struct obj_model {
+typedef struct Model {
     vector(vec3) vertices;
     vector(vec3) normals;
     vector(vec2) texcoords;
-    vector(vector(struct face_element)) faces;
+    vector(vector(FaceElement)) faces;
     char *material_lib;
     char *object_name;
-};
-
-void obj_model_destroy(struct obj_model *model);
+} Model;
 
 /// assumptions:
 /// - the OBJ file represents a single object/mesh.
 /// - the object has a single material applied to it.
 /// - the file adheres to Blender's typical OBJ export conventions.
-int obj_model_parse(Reader *reader, struct obj_model *model_out);
+int obj_model_parse(Reader *reader, vector(Model) *models_out);

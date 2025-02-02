@@ -4,7 +4,6 @@
 #include <string.h>
 
 #include "sunset/bitmask.h"
-#include "sunset/io.h"
 #include "sunset/vector.h"
 
 #include "sunset/ecs.h"

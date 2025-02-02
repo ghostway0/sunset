@@ -7,17 +7,26 @@
 #include <cglm/types.h>
 #include <log.h>
 
-#include "internal/utils.h"
 #include "sunset/errors.h"
 #include "sunset/io.h"
 #include "sunset/obj_file.h"
 #include "sunset/vector.h"
 
+void model_init(Model *model_out) {
+    vector_init(model_out->vertices);
+    vector_init(model_out->normals);
+    vector_init(model_out->texcoords);
+    vector_init(model_out->faces);
+
+    model_out->object_name = NULL;
+    model_out->material_lib = NULL;
+}
+
 static int parse_face_element(
-        char *str, size_t vertex_count, struct face_element *face_out) {
+        char *str, size_t vertex_count, FaceElement *face_out) {
     char *token;
 
-    memset(face_out, 0xFFFFFFFF, sizeof(struct face_element));
+    memset(face_out, 0xFFFFFFFF, sizeof(FaceElement));
 
     enum {
         FACE_PARSING_INITIAL,
@@ -77,14 +86,14 @@ static int parse_face_element(
 
 static int parse_face(char const *str,
         size_t vertex_count,
-        vector(struct face_element) face_out) {
+        vector(FaceElement) face_out) {
     int retval = 0;
     char *duped_str = sunset_strdup(str);
     char *dup_original = duped_str;
 
     char *token;
     while ((token = strsep(&duped_str, " ")) != NULL) {
-        struct face_element current_face;
+        FaceElement current_face;
 
         if ((retval = parse_face_element(
                      token, vertex_count, &current_face))) {
@@ -98,7 +107,7 @@ static int parse_face(char const *str,
     return retval;
 }
 
-void obj_model_destroy(struct obj_model *model) {
+void obj_model_destroy(Model *model) {
     for (size_t i = 0; i < vector_size(model->faces); i++) {
         if (model->faces[i] != NULL) {
             vector_destroy(model->faces[i]);
@@ -110,40 +119,38 @@ void obj_model_destroy(struct obj_model *model) {
     vector_destroy(model->normals);
     vector_destroy(model->vertices);
     free(model->material_lib);
-    free(model->object_name);
 
     model->material_lib = NULL;
-    model->object_name = NULL;
 }
 
-static void obj_model_init(struct obj_model *model_out) {
-    vector_init(model_out->vertices);
-    vector_init(model_out->normals);
-    vector_init(model_out->texcoords);
-    vector_init(model_out->faces);
-
-    model_out->material_lib = NULL;
-    model_out->object_name = NULL;
+bool model_is_empty(Model const *model) {
+    return vector_size(model->vertices) == 0
+            && vector_size(model->normals) == 0
+            && vector_size(model->texcoords) == 0
+            && vector_size(model->faces) == 0 && model->object_name == NULL
+            && model->material_lib == NULL;
 }
 
 /// assumptions:
 /// - the OBJ file represents a single object/mesh.
 /// - the object has a single material applied to it.
 /// - the file adheres to Blender's typical OBJ export conventions.
-int obj_model_parse(Reader *reader, struct obj_model *model_out) {
+int obj_model_parse(Reader *reader, vector(Model) * models_out) {
     int retval = 0;
     size_t line_number = 1;
-
-    obj_model_init(model_out);
+    size_t initial_size = vector_size(*models_out);
 
     vector(uint8_t) line_buffer;
     vector_init(line_buffer);
+
+    Model current_model;
+    model_init(&current_model);
 
     while (true) {
         vector_clear(line_buffer);
 
         if (reader_read_until(reader, '\n', &line_buffer) == 0) {
-            return 0;
+            break;
         }
 
         line_buffer[vector_size(line_buffer) - 1] = '\0';
@@ -164,7 +171,7 @@ int obj_model_parse(Reader *reader, struct obj_model *model_out) {
                             == 3
                     ? 0
                     : ERROR_INVALID_FORMAT;
-            vector_append_copy(model_out->vertices, vertex);
+            vector_append_copy(current_model.vertices, vertex);
         } else if (strncmp(line, "vn ", 3) == 0) {
             vec3 normal;
             retval = sscanf(line + 3,
@@ -175,34 +182,39 @@ int obj_model_parse(Reader *reader, struct obj_model *model_out) {
                             == 3
                     ? 0
                     : ERROR_INVALID_FORMAT;
-            vector_append_copy(model_out->normals, normal);
+            vector_append_copy(current_model.normals, normal);
         } else if (strncmp(line, "vt ", 3) == 0) {
             vec2 texcoord;
             retval = sscanf(line + 3, "%f %f", &texcoord[0], &texcoord[1])
                             == 2
                     ? 0
                     : ERROR_INVALID_FORMAT;
-            vector_append_copy(model_out->texcoords, texcoord);
+            vector_append_copy(current_model.texcoords, texcoord);
         } else if (strncmp(line, "f ", 2) == 0) {
-            size_t vertex_count = vector_size(model_out->vertices);
-            size_t face_count = vector_size(model_out->faces);
+            size_t vertex_count = vector_size(current_model.vertices);
+            size_t face_count = vector_size(current_model.faces);
 
-            vector_resize(model_out->faces, face_count + 1);
-            vector_init(model_out->faces[face_count]);
+            vector_resize(current_model.faces, face_count + 1);
+            vector_init(current_model.faces[face_count]);
 
-            retval = parse_face(
-                    line + 2, vertex_count, model_out->faces[face_count]);
-        } else if (strncmp(line, "mtllib ", 7) == 0) {
-            assert(model_out->material_lib == NULL);
-            model_out->material_lib = sunset_strdup(line + 7);
+            retval = parse_face(line + 2,
+                    vertex_count,
+                    current_model.faces[face_count]);
         } else if (strncmp(line, "g ", 2) == 0
                 || strncmp(line, "o ", 2) == 0) {
-            assert(model_out->object_name == NULL);
-            model_out->object_name = sunset_strdup(line + 2);
+            if (!model_is_empty(&current_model)) {
+                vector_append(*models_out, current_model);
+                model_init(&current_model);
+            }
+
+            current_model.object_name = strdup(line + 2);
+        } else if (strncmp(line, "mtllib ", 7) == 0) {
+            if (current_model.material_lib) {
+                retval = ERROR_INVALID_FORMAT;
+            }
+
+            current_model.material_lib = sunset_strdup(line + 7);
         } else {
-            log_warn("unsupported element at line %zu: %s",
-                    line_number,
-                    line);
         }
 
         if (retval) {
@@ -213,10 +225,20 @@ int obj_model_parse(Reader *reader, struct obj_model *model_out) {
         line_number++;
     }
 
-    vector_destroy(line_buffer);
-    if (retval) {
-        obj_model_destroy(model_out);
+    if (!model_is_empty(&current_model)) {
+        vector_append(*models_out, current_model);
     }
+
+    if (retval) {
+        for (size_t i = initial_size - 1; i < vector_size(models_out);
+                i++) {
+            obj_model_destroy(*models_out + i);
+        }
+
+        vector_resize(*models_out, initial_size);
+    }
+
+    vector_destroy(line_buffer);
 
     return retval;
 }

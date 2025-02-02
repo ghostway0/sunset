@@ -7,33 +7,31 @@
 #include <cglm/types.h>
 #include <log.h>
 
-#include "internal/utils.h"
 #include "sunset/errors.h"
 #include "sunset/io.h"
-#include "sunset/mtl_file.h"
 #include "sunset/vector.h"
 
-static void mtl_material_init(struct mtl_material *material) {
-    memset(material, 0, sizeof(struct mtl_material));
-    material->d = 1.0f;
+#include "sunset/mtl_file.h"
+
+static void material_init(Material *material_out) {
+    memset(material_out, 0, sizeof(Material));
+    material_out->d = 1.0f;
 }
 
-int mtl_file_parse(Reader *reader, struct mtl_file *mtl_out) {
+int mtl_file_parse(Reader *reader, vector(Material) * materials_out) {
     int retval = 0;
     size_t line_number = 1;
-
-    vector_init(mtl_out->materials);
 
     vector(uint8_t) line_buffer;
     vector_init(line_buffer);
 
-    struct mtl_material *current_material = NULL;
+    Material *current_material = NULL;
 
     while (true) {
         vector_clear(line_buffer);
 
         if (reader_read_until(reader, '\n', &line_buffer) == 0) {
-            return 0;
+            break;
         }
 
         line_buffer[vector_size(line_buffer) - 1] = '\0';
@@ -45,11 +43,11 @@ int mtl_file_parse(Reader *reader, struct mtl_file *mtl_out) {
         }
 
         if (strncmp(line, "newmtl ", 7) == 0) {
-            size_t material_count = vector_size(mtl_out->materials);
-            vector_resize(mtl_out->materials, material_count + 1);
-            current_material = &mtl_out->materials[material_count];
-            mtl_material_init(current_material);
-            current_material->name = sunset_strdup(line + 7);
+            size_t material_count = vector_size(*materials_out);
+            vector_resize(*materials_out, material_count + 1);
+            current_material = *materials_out + material_count;
+            material_init(current_material);
+            current_material->name = strdup(line + 7);
         } else if (strncmp(line, "Kd ", 3) == 0) {
             assert(current_material != NULL);
             retval = sscanf(line + 3,
@@ -101,18 +99,12 @@ int mtl_file_parse(Reader *reader, struct mtl_file *mtl_out) {
     }
 
     vector_destroy(line_buffer);
-    if (retval) {
-        mtl_file_destroy(mtl_out);
-    }
 
     return retval;
 }
 
-void mtl_file_destroy(struct mtl_file *mtl) {
-    for (size_t i = 0; i < vector_size(mtl->materials); i++) {
-        free(mtl->materials[i].name);
-        free(mtl->materials[i].map_kd);
-        free(mtl->materials[i].map_ke);
-    }
-    vector_destroy(mtl->materials);
+void material_destroy(Material *mtl) {
+    free(mtl->name);
+    free(mtl->map_kd);
+    free(mtl->map_ke);
 }

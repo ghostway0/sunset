@@ -79,7 +79,7 @@ struct vector_metadata {
             meta->capacity *= 2;                                           \
             _Pragma("GCC diagnostic push");                                \
             PRAGMA_DISABLE_PTR_WARN                                        \
-            meta = (struct vector_metadata *)realloc(meta,                 \
+            meta = (struct vector_metadata *)sunset_realloc(meta,          \
                     sizeof(struct vector_metadata)                         \
                             + sizeof(*(v)) * meta->capacity);              \
             _Pragma("GCC diagnostic pop");                                 \
@@ -134,13 +134,17 @@ struct vector_metadata {
         struct vector_metadata *meta = _vector_metadata(v);                \
         if (meta->capacity < new_size) {                                   \
             meta->capacity = new_size;                                     \
-            meta = (struct vector_metadata *)realloc(meta,                 \
+            meta = (struct vector_metadata *)sunset_realloc(meta,          \
                     sizeof(struct vector_metadata)                         \
                             + sizeof(*(v)) * meta->capacity);              \
             assert(meta);                                                  \
             v = (void *)(meta + 1);                                        \
         }                                                                  \
-        memset(v + meta->size, 0, (new_size - meta->size) * sizeof(*v));   \
+        if (new_size > meta->size) {                                       \
+            memset(v + meta->size,                                         \
+                    0,                                                     \
+                    (new_size - meta->size) * sizeof(*v));                 \
+        }                                                                  \
         meta->size = new_size;                                             \
     } while (0)
 
