@@ -180,3 +180,21 @@ test(
   obj_tests_exe,
   suite: 'tests',
 )
+
+mtl_tests_exe = executable(
+  'mtl_tests',
+  files('src/obj_test.c'),
+  dependencies: [
+    cmocka_dep,
+    sunset_dep,
+    cglm_dep,
+    m_dep,
+  ],
+  include_directories: [sunset_inc],
+)
+
+test(
+  'mtl_tests',
+  mtl_tests_exe,
+  suite: 'tests',
+)

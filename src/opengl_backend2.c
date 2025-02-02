@@ -8,9 +8,12 @@
 #include <cglm/mat4.h>
 #include <cglm/types.h>
 #include <log.h>
+#include <stdlib.h>
 
 #include "internal/math.h"
+#include "internal/mem_utils.h"
 #include "internal/utils.h"
+#include "obj_file.h"
 #include "sunset/bitmask.h"
 #include "sunset/commands.h"
 #include "sunset/config.h"
@@ -158,6 +161,68 @@ static int compile_shader_into(GLuint shader, char const *source) {
     return 0;
 }
 
+static int compile_model(
+        Model const *model, struct compiled_mesh *mesh_out) {
+    glGenVertexArrays(1, &mesh_out->vao);
+    glGenBuffers(1, &mesh_out->vbo);
+    glGenBuffers(1, &mesh_out->ebo);
+
+    glBindVertexArray(mesh_out->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh_out->vbo);
+    glBufferData(GL_ARRAY_BUFFER,
+            vector_size(model->vertices) * sizeof(vec3),
+            model->vertices,
+            GL_STATIC_DRAW);
+
+    size_t total_indices = 0;
+    for (size_t i = 0; i < vector_size(model->faces); i++) {
+        total_indices += (vector_size(model->faces[i]) - 2) * 3;
+    }
+
+    uint32_t *ibo =
+            (uint32_t *)sunset_malloc(total_indices * sizeof(uint32_t));
+
+    size_t index = 0;
+    for (size_t i = 0; i < vector_size(model->faces); i++) {
+        vector(FaceElement) face = model->faces[i];
+
+        for (size_t j = 2; j < vector_size(face); j++) {
+            ibo[index++] = face[0].vertex_index;
+            ibo[index++] = face[j - 1].vertex_index;
+            ibo[index++] = face[j].vertex_index;
+        }
+    }
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_out->ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+            total_indices * sizeof(uint32_t),
+            ibo,
+            GL_STATIC_DRAW);
+
+    free(ibo);
+
+    // position
+    glVertexAttribPointer(
+            0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    // texture
+    glVertexAttribPointer(1,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            5 * sizeof(float),
+            (void *)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    mesh_out->num_indices = total_indices;
+
+    return 0;
+}
+
+[[deprecated("bitchhhhh")]]
+[[maybe_unused]]
 static int compile_mesh(Mesh const *mesh, struct compiled_mesh *mesh_out) {
     glGenVertexArrays(1, &mesh_out->vao);
     glGenBuffers(1, &mesh_out->vbo);
@@ -240,9 +305,9 @@ void backend_destroy_program(struct program *program) {
     glDeleteProgram((GLuint)program->handle);
 }
 
-uint32_t backend_register_mesh(RenderContext *context, Mesh mesh) {
+uint32_t backend_register_mesh(RenderContext *context, Model mesh) {
     struct compiled_mesh compiled_mesh;
-    if (compile_mesh(&mesh, &compiled_mesh) != 0) {
+    if (compile_model(&mesh, &compiled_mesh) != 0) {
         return -1;
     }
 
@@ -286,7 +351,7 @@ static int setup_default_shaders(RenderContext *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -523,7 +588,7 @@ void backend_generate_input_events(RenderContext *context) {
     }
 }
 
-// static struct rect get_atlas_region(
+// static Rect get_atlas_region(
 //         struct atlas *atlas, size_t width, size_t height) {
 //     // resize to the max of w and h
 //
@@ -550,7 +615,7 @@ int backend_register_texture(RenderContext *context, Image const *texture) {
 /// registered in this atlas. the ids are guaranteed to be in-order.
 int backend_register_texture_atlas(RenderContext *context,
         Image const *atlas_image,
-        struct rect *bounds,
+        Rect *bounds,
         size_t num_textures,
         uint32_t *first_id_out) {
     if (vector_size(context->textures) >= (uint32_t)-1) {
@@ -948,7 +1013,7 @@ bool backend_should_stop(RenderContext *context) {
 
 static void run_rect_command(RenderContext *context, CommandRect command) {
     Color color = command.color;
-    struct rect rect = command.bounds;
+    Rect rect = command.bounds;
 
     float r = color.r / 255.0f;
     float g = color.g / 255.0f;
@@ -1014,7 +1079,7 @@ static void run_rect_command(RenderContext *context, CommandRect command) {
 
 static void run_fill_rect_command(
         RenderContext *context, CommandFilledRect command) {
-    struct rect rect = command.rect;
+    Rect rect = command.rect;
     Color color = command.color;
 
     float r = color.r / 255.0f;

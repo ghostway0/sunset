@@ -12,16 +12,11 @@
 #include "internal/utils.h"
 #include "sunset/base64.h"
 #include "sunset/bitmask.h"
-#include "sunset/byte_stream.h"
 #include "sunset/camera.h"
 #include "sunset/ecs.h"
-#include "sunset/errors.h"
 #include "sunset/images.h"
-#include "sunset/io.h"
-#include "sunset/mtl_file.h"
-#include "sunset/obj_file.h"
 #include "sunset/ring_buffer.h"
-#include "vector.h"
+#include "sunset/vector.h"
 
 struct element {
     int x;
@@ -219,123 +214,6 @@ void test_base64_invalid_input(void **state) {
 //     quad_tree_destroy(&tree);
 // }
 
-void test_mtl_file_parse_empty(void **state) {
-    unused(state);
-
-    uint8_t const str[] = "";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    vector(Material) mtls;
-    vector_init(mtls);
-
-    int err = mtl_file_parse(&reader, &mtls);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(mtls), 0);
-
-    vector_destroy(mtls);
-}
-
-void test_mtl_file_parse_single_material(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "newmtl Material1\n"
-            "Kd 0.8 0.0 0.2\n"
-            "Ks 1.0 1.0 1.0\n"
-            "Ns 100.0\n"
-            "d 1.0\n"
-            "map_Kd textures/diffuse.png\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    vector(Material) mtls;
-    vector_init(mtls);
-
-    int err = mtl_file_parse(&reader, &mtls);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(mtls), 1);
-    assert_string_equal(mtls[0].name, "Material1");
-    assert_float_equal(mtls[0].kd[0], 0.8f, EPSILON);
-    assert_float_equal(mtls[0].kd[1], 0.0f, EPSILON);
-    assert_float_equal(mtls[0].kd[2], 0.2f, EPSILON);
-    assert_float_equal(mtls[0].ks[0], 1.0f, EPSILON);
-    assert_float_equal(mtls[0].ns, 100.0f, EPSILON);
-    assert_float_equal(mtls[0].d, 1.0f, EPSILON);
-    assert_string_equal(mtls[0].map_kd, "textures/diffuse.png");
-}
-
-void test_mtl_file_parse_multiple_materials(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "newmtl Material1\n"
-            "Kd 0.8 0.0 0.2\n"
-            "newmtl Material2\n"
-            "Kd 0.1 0.5 0.9\n"
-            "map_Kd textures/diffuse2.jpg\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    vector(Material) mtls;
-    vector_init(mtls);
-
-    int err = mtl_file_parse(&reader, &mtls);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(mtls), 2);
-    assert_string_equal(mtls[0].name, "Material1");
-    assert_string_equal(mtls[1].name, "Material2");
-    assert_string_equal(mtls[1].map_kd, "textures/diffuse2.jpg");
-}
-
-void test_mtl_file_parse_emission_map(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "newmtl Material1\n"
-            "map_Ke textures/emission.tga\n";
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    vector(Material) mtls;
-    vector_init(mtls);
-
-    int err = mtl_file_parse(&reader, &mtls);
-    assert_int_equal(err, 0);
-
-    assert_int_equal(vector_size(mtls), 1);
-    assert_string_equal(mtls[0].map_ke, "textures/emission.tga");
-}
-
-void test_mtl_file_parse_invalid_format(void **state) {
-    unused(state);
-
-    uint8_t const str[] =
-            "newmtl Material1\n"
-            "Kd 0.8 0.0\n"; // missing a component in Kd
-
-    ByteStream stream;
-    bstream_from_ro(str, sizeof(str) - 1, &stream);
-    Reader reader = {.ctx = &stream, .read = bstream_read};
-
-    vector(Material) mtls;
-    vector_init(mtls);
-
-    int err = mtl_file_parse(&reader, &mtls);
-    assert_int_equal(err, ERROR_INVALID_FORMAT);
-}
-
 typedef struct Position {
     float x, y;
 } Position;
@@ -472,11 +350,6 @@ int main(void) {
             cmocka_unit_test(test_base64_encode),
             cmocka_unit_test(test_base64_decode),
             cmocka_unit_test(test_base64_invalid_input),
-            cmocka_unit_test(test_mtl_file_parse_empty),
-            cmocka_unit_test(test_mtl_file_parse_single_material),
-            cmocka_unit_test(test_mtl_file_parse_multiple_materials),
-            cmocka_unit_test(test_mtl_file_parse_emission_map),
-            cmocka_unit_test(test_mtl_file_parse_invalid_format),
             cmocka_unit_test(test_ecs),
     };
 

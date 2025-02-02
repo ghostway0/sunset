@@ -8,8 +8,8 @@
 
 #include "sunset/geometry.h"
 
-struct rect rect_from_center(Point center, Point size) {
-    return (struct rect){
+Rect rect_from_center(Point center, Point size) {
+    return (Rect){
             .x = center.x - size.x / 2,
             .y = center.y - size.y / 2,
             .w = size.x,
@@ -17,18 +17,18 @@ struct rect rect_from_center(Point center, Point size) {
     };
 }
 
-bool is_zero_rect(struct rect rect) {
+bool is_zero_rect(Rect rect) {
     return rect.x == 0.0 && rect.y == 0.0 && rect.h == 0.0 && rect.w == 0.0;
 }
 
-struct rect rect_closure(struct rect a, struct rect b) {
+Rect rect_closure(Rect a, Rect b) {
     float min_x = min(a.x, b.x);
     float min_y = min(a.y, b.y);
 
     float max_x = max(a.x + a.w, b.x + b.w);
     float max_y = max(a.y + a.h, b.y + b.h);
 
-    return (struct rect){
+    return (Rect){
             .x = min_x,
             .y = min_y,
             .h = max_y - min_y,
@@ -36,35 +36,35 @@ struct rect rect_closure(struct rect a, struct rect b) {
     };
 }
 
-bool rect_contains(struct rect parent, struct rect child) {
+bool rect_contains(Rect parent, Rect child) {
     return child.x >= parent.x && child.y >= parent.y
             && (child.x + child.w) <= (parent.x + parent.w)
             && (child.y + child.h) <= (parent.y + parent.h);
 }
 
-Point rect_center(struct rect rect) {
+Point rect_center(Rect rect) {
     return (Point){
             .x = rect.x + rect.w / 2,
             .y = rect.y + rect.h / 2,
     };
 }
 
-Point rect_size(struct rect rect) {
+Point rect_size(Rect rect) {
     return (Point){rect.w, rect.h};
 }
 
-Point rect_get_origin(struct rect rect) {
+Point rect_get_origin(Rect rect) {
     return (Point){.x = rect.x, .y = rect.y};
 }
 
-struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n) {
+Rect rect_subdivide_i(Rect rect, size_t i, size_t n) {
     assert(i < n);
     assert(n > 0);
 
     size_t w = rect.w / n;
     size_t h = rect.h / n;
 
-    return (struct rect){
+    return (Rect){
             .x = rect.x + (i % n) * w,
             .y = rect.y + (i / n) * h,
             .w = w,
@@ -97,12 +97,12 @@ bool aabb_contains_point(AABB aabb, vec3 point) {
     return true;
 }
 
-AABB from_rect(struct rect rect) {
+AABB from_rect(Rect rect) {
     return (AABB){{rect.x, rect.y, 0.0f},
             {rect.x + rect.w, rect.y + rect.h, 0.0f}};
 }
 
-bool point_within_rect(Point position, struct rect rect) {
+bool point_within_rect(Point position, Rect rect) {
     return position.x >= rect.x && position.x <= rect.x + rect.w
             && position.y >= rect.y && position.y <= rect.y + rect.h;
 }
@@ -113,7 +113,7 @@ bool position_within_aabb(vec3 position, AABB aabb) {
             && position[2] >= aabb.min[2] && position[2] <= aabb.max[2];
 }
 
-float rect_distance_to_camera(vec3 camera_position, struct rect rect) {
+float rect_distance_to_camera(vec3 camera_position, Rect rect) {
     vec3 center = {
             rect.x + (float)rect.w / 2, rect.y + (float)rect.h / 2, 0.0f};
 

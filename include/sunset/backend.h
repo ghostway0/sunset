@@ -51,7 +51,7 @@ void backend_set_user_context(RenderContext *context, void *user_context);
 
 int backend_register_texture_atlas(RenderContext *context,
         Image const *atlas_image,
-        struct rect *bounds,
+        Rect *bounds,
         size_t num_textures,
         uint32_t *first_id_out);
 

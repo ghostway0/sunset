@@ -8,6 +8,7 @@
 #include <log.h>
 
 #include "sunset/errors.h"
+#include "sunset/geometry.h"
 #include "sunset/io.h"
 #include "sunset/obj_file.h"
 #include "sunset/vector.h"
@@ -53,13 +54,12 @@ static int parse_face_element(
         errno = 0;
         int64_t value = strtol(token, NULL, 10);
 
-        // NOTE: does not support negative indices
-        if (errno == ERANGE || value <= 0 || value > UINT32_MAX) {
+        if (errno == ERANGE || value > UINT32_MAX) {
             log_error("cannot take this at face value.");
             return ERROR_INVALID_FORMAT;
         }
 
-        index = (uint32_t)value - 1;
+        index = value > 0 ? (uint32_t)value - 1 : vertex_count - value;
 
         if (index >= vertex_count) {
             log_error("face index larger than vertex count");

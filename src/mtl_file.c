@@ -7,6 +7,7 @@
 #include <cglm/types.h>
 #include <log.h>
 
+#include "images.h"
 #include "sunset/errors.h"
 #include "sunset/io.h"
 #include "sunset/vector.h"
@@ -80,10 +81,12 @@ int mtl_file_parse(Reader *reader, vector(Material) * materials_out) {
                     : ERROR_INVALID_FORMAT;
         } else if (strncmp(line, "map_Kd ", 7) == 0) {
             assert(current_material != NULL);
-            current_material->map_kd = sunset_strdup(line + 7);
+            char const *filename = line + 7;
+            retval = load_image_file(filename, &current_material->map_kd);
         } else if (strncmp(line, "map_Ke ", 7) == 0) {
             assert(current_material != NULL);
-            current_material->map_ke = sunset_strdup(line + 7);
+            char const *filename = line + 7;
+            retval = load_image_file(filename, &current_material->map_ke);
         } else {
             log_warn("unsupported element at line %zu: %s",
                     line_number,
@@ -105,6 +108,6 @@ int mtl_file_parse(Reader *reader, vector(Material) * materials_out) {
 
 void material_destroy(Material *mtl) {
     free(mtl->name);
-    free(mtl->map_kd);
-    free(mtl->map_ke);
+    image_destroy(&mtl->map_kd);
+    image_destroy(&mtl->map_ke);
 }

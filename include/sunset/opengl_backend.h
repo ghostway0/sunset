@@ -4,6 +4,7 @@
 #include <pthread.h>
 
 #include "bitmask.h"
+#include "obj_file.h"
 #include "sunset/commands.h"
 #include "sunset/geometry.h"
 #include "sunset/map.h"
@@ -66,7 +67,7 @@ struct instancing_buffer {
 
 struct compiled_texture {
     uint32_t atlas_id;
-    struct rect bounds;
+    Rect bounds;
 };
 
 struct atlas {
@@ -112,7 +113,7 @@ typedef struct RenderContext {
     pthread_mutex_t lock;
 } RenderContext;
 
-uint32_t backend_register_mesh(RenderContext *context, Mesh mesh);
+uint32_t backend_register_mesh(RenderContext *context, Model mesh);
 
 void backend_draw_mesh(struct compiled_mesh *mesh);
 

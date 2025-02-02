@@ -7,7 +7,7 @@
 
 struct glyph {
     Image image;
-    struct rect bounds;
+    Rect bounds;
     int advance_x;
 };
 

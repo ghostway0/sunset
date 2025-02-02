@@ -1,12 +1,13 @@
 #pragma once
 
 #include <stddef.h>
-
-#include "sunset/geometry.h"
+#include <stdint.h>
 
 #define COLOR_WHITE color_from_rgb(255, 255, 255)
 #define COLOR_BLACK color_from_rgb(0, 0, 0)
 #define COLOR_TRANSPARENT (Color){0}
+
+typedef struct Point Point;
 
 enum image_format {
     IMAGE_FORMAT_GRAY,

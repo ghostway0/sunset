@@ -36,13 +36,13 @@ typedef struct CommandLine {
 
 typedef struct CommandRect {
     WindowPoint origin;
-    struct rect bounds;
+    Rect bounds;
     Color color;
 } CommandRect;
 
 typedef struct CommandFilledRect {
     WindowPoint origin;
-    struct rect rect;
+    Rect rect;
     Color color;
 } CommandFilledRect;
 
@@ -114,12 +114,12 @@ void command_nop_init(Command *command);
 void command_line_init(Command *command, Point from, Point to);
 
 void command_rect_init(Command *command,
-        struct rect rect,
+        Rect rect,
         Color color,
         WindowPoint origin);
 
 void command_filled_rect_init(Command *command,
-        struct rect rect,
+        Rect rect,
         Color color,
         WindowPoint origin);
 
@@ -173,12 +173,12 @@ void cmdbuf_add_nop(CommandBuffer *cmdbuf);
 void cmdbuf_add_line(CommandBuffer *cmdbuf, Point from, Point to);
 
 void cmdbuf_add_rect(CommandBuffer *cmdbuf,
-        struct rect rect,
+        Rect rect,
         Color color,
         WindowPoint origin);
 
 void cmdbuf_add_filled_rect(CommandBuffer *cmdbuf,
-        struct rect rect,
+        Rect rect,
         Color color,
         WindowPoint origin);
 

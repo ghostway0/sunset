@@ -15,7 +15,7 @@ void command_line_init(Command *command, Point from, Point to) {
 }
 
 void command_rect_init(Command *command,
-        struct rect rect,
+        Rect rect,
         Color color,
         WindowPoint origin) {
     command->type = COMMAND_RECT;
@@ -23,7 +23,7 @@ void command_rect_init(Command *command,
 }
 
 void command_filled_rect_init(Command *command,
-        struct rect rect,
+        Rect rect,
         Color color,
         WindowPoint origin) {
     command->type = COMMAND_FILLED_RECT;
@@ -93,7 +93,7 @@ void cmdbuf_add_line(CommandBuffer *cmdbuf, Point from, Point to) {
 }
 
 void cmdbuf_add_rect(CommandBuffer *cmdbuf,
-        struct rect rect,
+        Rect rect,
         Color color,
         WindowPoint origin) {
     Command command;
@@ -102,7 +102,7 @@ void cmdbuf_add_rect(CommandBuffer *cmdbuf,
 }
 
 void cmdbuf_add_filled_rect(CommandBuffer *cmdbuf,
-        struct rect rect,
+        Rect rect,
         Color color,
         WindowPoint origin) {
     Command command;

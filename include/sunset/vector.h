@@ -159,3 +159,11 @@ struct vector_metadata {
         }                                                                  \
         _meta->size--;                                                     \
     } while (0)
+
+#define vector_to_owned(v)                                                 \
+    ({                                                                     \
+        struct vector_metadata *meta = _vector_metadata(v);                \
+        void *out = sunset_malloc(meta->size * sizeof(*(v)));              \
+        memcpy(out, v, meta->size * sizeof(*(v)));                         \
+        out;                                                               \
+    })

@@ -21,7 +21,7 @@ typedef struct Widget {
     Style style;
     vector(struct Widget *) children;
     struct Widget *parent;
-    struct rect bounds;
+    Rect bounds;
     /// if inactive, all children are disabled
     bool active;
 

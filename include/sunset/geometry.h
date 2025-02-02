@@ -6,6 +6,8 @@
 #include <cglm/types.h>
 #include <cglm/vec3.h>
 
+#include "sunset/images.h"
+
 #define vec3_format "vec3(%f, %f, %f)"
 #define vec3_args(v) v[0], v[1], v[2]
 
@@ -26,29 +28,29 @@ typedef struct Point {
     float y;
 } Point;
 
-struct rect {
+typedef struct Rect {
     float x;
     float y;
     float w;
     float h;
-};
+} Rect;
 
-struct rect rect_from_center(Point center, Point size);
+Rect rect_from_center(Point center, Point size);
 
-struct rect rect_closure(struct rect a, struct rect b);
+Rect rect_closure(Rect a, Rect b);
 
-bool is_zero_rect(struct rect rect);
+bool is_zero_rect(Rect rect);
 
-bool rect_contains(struct rect parent, struct rect child);
+bool rect_contains(Rect parent, Rect child);
 
-Point rect_center(struct rect rect);
+Point rect_center(Rect rect);
 
-Point rect_size(struct rect rect);
+Point rect_size(Rect rect);
 
-Point rect_get_origin(struct rect rect);
+Point rect_get_origin(Rect rect);
 
 // subdivide and get the ith quadrant
-struct rect rect_subdivide_i(struct rect rect, size_t i, size_t n);
+Rect rect_subdivide_i(Rect rect, size_t i, size_t n);
 
 typedef struct AABB {
     vec3 min;
@@ -70,17 +72,27 @@ typedef struct Mesh {
     size_t num_texcoords;
 } Mesh;
 
+typedef struct Material {
+    vec3 kd; // diffuse color
+    vec3 ks; // specular color
+    float ns; // specular exponent
+    float d; // dissolve (transparency)
+    Image map_kd; // diffuse texture map
+    Image map_ke; // emission texture map
+    char *name;
+} Material;
+
 AABB aabb_subdivide_i(AABB aabb, size_t i, size_t n);
 
 bool aabb_contains_point(AABB aabb, vec3 point);
 
-AABB from_rect(struct rect rect);
+AABB from_rect(Rect rect);
 
-bool point_within_rect(Point position, struct rect rect);
+bool point_within_rect(Point position, Rect rect);
 
 bool position_within_aabb(vec3 position, AABB aabb);
 
-float rect_distance_to_camera(vec3 camera_position, struct rect rect);
+float rect_distance_to_camera(vec3 camera_position, Rect rect);
 
 float aabb_get_radius(AABB *aabb);
 

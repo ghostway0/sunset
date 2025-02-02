@@ -64,7 +64,7 @@ static int load_glyphs(
         font_out->glyphs[i].image.pixels = sunset_calloc(
                 header->width * header->height, sizeof(Color));
 
-        font_out->glyphs[i].bounds = (struct rect){
+        font_out->glyphs[i].bounds = (Rect){
                 .x = 0,
                 .y = 0,
                 .w = header->width,
