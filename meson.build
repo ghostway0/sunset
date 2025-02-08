@@ -19,6 +19,9 @@ add_project_arguments(
   language: 'c',
 )
 
+add_project_link_arguments(['-export-dynamic',], language: 'c')
+    
+
 render_backend = get_option('render_backend')
 
 if render_backend == 'opengl'

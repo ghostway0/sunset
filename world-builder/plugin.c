@@ -1,22 +1,23 @@
 #include <stdint.h>
 
+#include <cglm/affine.h>
 #include <cglm/mat4.h>
 #include <cglm/vec3.h>
+#include <log.h>
 
-#include "geometry.h"
-#include "images.h"
-#include "log.h"
-#include "obj_file.h"
 #include "sunset/bitmask.h"
 #include "sunset/camera.h"
 #include "sunset/ecs.h"
 #include "sunset/engine.h"
 #include "sunset/events.h"
+#include "sunset/geometry.h"
+#include "sunset/images.h"
 #include "sunset/input.h"
+#include "sunset/obj_file.h"
 #include "sunset/render.h"
 #include "sunset/rman.h"
 #include "sunset/vector.h"
-#include "vfs.h"
+#include "sunset/vfs.h"
 
 typedef struct Clickable {
     void (*clicked_callback)(EngineContext *, EntityPtr clicked_entity);
@@ -51,9 +52,7 @@ static void object_click_handler(EngineContext *engine_context,
         if (camera_crosshair_over(
                     &engine_context->camera, &transform->bounding_box)
                 && clickable->clicked_callback) {
-            log_debug("clicked %zu %zu", eptr.archetype, eptr.element);
             clickable->clicked_callback(engine_context, eptr);
-            break;
         }
 
         worldit_advance(&it);
@@ -61,11 +60,6 @@ static void object_click_handler(EngineContext *engine_context,
 
     worldit_destroy(&it);
 }
-
-typedef struct AxisGizmo {
-    Index target_entity;
-    vec3 axis;
-} AxisGizmo;
 
 DECLARE_COMPONENT_ID(AxisGizmo);
 
@@ -112,7 +106,7 @@ static void player_controller_handler(
             glm_vec3_copy(camera->right, direction);
             break;
         case KEY_ESCAPE:
-            *focus = FOCUS_UI;
+            *focus = FOCUS_NULL;
             backend_show_mouse(&engine_context->render_context);
             return;
         default:
@@ -120,7 +114,6 @@ static void player_controller_handler(
     }
 
     camera_move_scaled(camera, direction, engine_context->dt);
-    log_debug("current position " vec3_format, vec3_args(camera->position));
 }
 
 DECLARE_RESOURCE_ID(axis_arrow_mesh);
@@ -151,24 +144,27 @@ static void thing2(
 void spawn_axis_arrow(EngineContext *engine_context,
         Transform const *transform,
         EntityPtr parent,
+        vec3 axis,
         uint32_t texture) {
-    uint32_t *mesh =
-            rman_get(&engine_context->rman, RESOURCE_ID(axis_arrow_mesh));
-
     Renderable rend;
     vector_init(rend.commands);
 
     Command mesh_cmd = {.type = COMMAND_MESH,
-            .mesh = {.mesh_id = *mesh,
+            .mesh = {.mesh_id = 0,
                     .transform = {},
                     .texture_id = texture}};
-    calculate_model_matrix(transform, mesh_cmd.mesh.transform);
+
+    Transform new_transform = *transform;
+    glm_vec3_add(new_transform.position, axis, new_transform.position);
+
+    calculate_model_matrix(&new_transform, mesh_cmd.mesh.transform);
     vector_append(rend.commands, mesh_cmd);
 
     AxisArrow arrow = {.parent = parent};
 
     EntityBuilder builder;
     entity_builder_init(&builder, &engine_context->world);
+    entity_builder_add(&builder, COMPONENT_ID(Transform), &new_transform);
     entity_builder_add(&builder, COMPONENT_ID(Renderable), &rend);
     entity_builder_add(&builder, COMPONENT_ID(AxisArrow), &arrow);
     entity_builder_finish(&builder);
@@ -182,21 +178,28 @@ void spawn_axis_arrows(EngineContext *engine_context, EntityPtr target) {
         return;
     }
 
-    uint32_t *texture1 = rman_get(
-            &engine_context->rman, RESOURCE_ID(axis_arrow_texture1));
-    uint32_t *texture2 = rman_get(
-            &engine_context->rman, RESOURCE_ID(axis_arrow_texture2));
-    uint32_t *texture3 = rman_get(
-            &engine_context->rman, RESOURCE_ID(axis_arrow_texture3));
+    // uint32_t *texture1 = rman_get(
+    //         &engine_context->rman, RESOURCE_ID(axis_arrow_texture1));
+    // uint32_t *texture2 = rman_get(
+    //         &engine_context->rman, RESOURCE_ID(axis_arrow_texture2));
+    // uint32_t *texture3 = rman_get(
+    //         &engine_context->rman, RESOURCE_ID(axis_arrow_texture3));
 
-    spawn_axis_arrow(engine_context, target_t, target, *texture1);
-    spawn_axis_arrow(engine_context, target_t, target, *texture2);
-    spawn_axis_arrow(engine_context, target_t, target, *texture3);
+    spawn_axis_arrow(
+            engine_context, target_t, target, engine_context->camera.up, 0);
+    // spawn_axis_arrow(engine_context, target_t, target, 0);
+    // spawn_axis_arrow(engine_context, target_t, target, 0);
+}
+
+static void log_thing(EngineContext *engine_context, EntityPtr eptr) {
+    spawn_axis_arrows(engine_context, eptr);
 }
 
 void test_stuff(EngineContext *engine_context) {
     vector(Model) models;
     vector_init(models);
+
+    REGISTER_COMPONENT(&engine_context->world, AxisArrow);
 
     VfsFile file;
     vfs_open("test.obj", VFS_OPEN_MODE_READ, &file);
@@ -232,6 +235,8 @@ void test_stuff(EngineContext *engine_context) {
             .rotation = {},
     };
 
+    aabb_translate(&transform.bounding_box, transform.position);
+
     Command mesh_cmd = {.type = COMMAND_MESH,
             .mesh = {
                     .mesh_id = 0, .transform = {}, .texture_id = first_id}};
@@ -239,14 +244,13 @@ void test_stuff(EngineContext *engine_context) {
 
     vector_append(rend.commands, mesh_cmd);
 
-    Clickable clickable = {.clicked_callback = NULL};
+    Clickable clickable = {.clicked_callback = log_thing};
 
     EntityBuilder builder;
     entity_builder_init(&builder, &engine_context->world);
     entity_builder_add(&builder, COMPONENT_ID(Renderable), &rend);
     entity_builder_add(&builder, COMPONENT_ID(Transform), &transform);
     entity_builder_add(&builder, COMPONENT_ID(Clickable), &clickable);
-    // ugh. externs don't get resolved from so's (makes sense lol).
     entity_builder_finish(&builder);
 }
 

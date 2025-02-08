@@ -104,6 +104,6 @@ bool ray_intersects_aabb(
         vec3 ray_origin, vec3 const ray_dir, const AABB *box, vec3 hit_out);
 
 #define aabb_format "aabb(min: " vec3_format ", max: " vec3_format ")"
-#define aabb_args(b) vec3_args(b.min), vec3_args(b.max)
+#define aabb_args(b) vec3_args((b).min), vec3_args((b).max)
 
 void aabb_closest_point(AABB const *aabb, vec3 point, vec3 closest_out);

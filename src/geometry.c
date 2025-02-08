@@ -7,6 +7,7 @@
 #include "internal/math.h"
 #include "internal/mem_utils.h"
 #include "internal/utils.h"
+#include "log.h"
 
 #include "sunset/geometry.h"
 

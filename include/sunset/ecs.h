@@ -12,8 +12,8 @@
 #define ECS_MAX_COMPONENTS 64
 
 #define COMPONENT_ID(type) _component_id_##type
-#define DECLARE_COMPONENT_ID(type) size_t COMPONENT_ID(type)
-#define DEFINE_COMPONENT_ID(type, id) COMPONENT_ID(type) = id;
+#define DECLARE_COMPONENT_ID(type)                                         \
+    __attribute__((weak)) size_t COMPONENT_ID(type)
 
 typedef struct Writer Writer;
 typedef struct World World;
@@ -24,8 +24,8 @@ size_t _ecs_register_component(
         World *world, size_t component_size, char const *component_name);
 
 #define REGISTER_COMPONENT(world, type)                                    \
-    DEFINE_COMPONENT_ID(type,                                              \
-            _ecs_register_component(world, sizeof(type), stringify(type)))
+    COMPONENT_ID(type) =                                                   \
+            _ecs_register_component(world, sizeof(type), stringify(type))
 
 typedef struct Column {
     Bitmask mask;

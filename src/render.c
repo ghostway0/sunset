@@ -1,7 +1,6 @@
 #include <cglm/affine.h>
 #include <cglm/mat4.h>
 
-#include "log.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/ecs.h"
@@ -45,7 +44,6 @@ void render_world(
     WorldIterator it = worldit_create(world, mask);
 
     while (worldit_is_valid(&it)) {
-        log_debug("what the fuck");
         Renderable *renderable =
                 worldit_get_component(&it, COMPONENT_ID(Renderable));
         Transform *transform =

@@ -33,7 +33,7 @@ static int load_plugin(EngineContext *context,
     int err;
     // verify digest?
 
-    void *handle = dlopen(plugin->object_path, RTLD_LAZY);
+    void *handle = dlopen(plugin->object_path, RTLD_NOW | RTLD_GLOBAL);
 
     if (!handle) {
         // XXX:
@@ -97,8 +97,8 @@ static int engine_setup(EngineContext *context,
             },
             (CameraOptions){
                     glm_rad(45.0f),
-                    0.1f,
-                    0.001f,
+                    1.0f,
+                    0.005f,
                     (float)render_config.window_height
                             / (float)render_config.window_width,
             },

@@ -31,7 +31,6 @@ static void iterator_advance_archetype(WorldIterator *iterator) {
                 &iterator->world->archetypes[iterator->current_archetype];
 
         if (!bitmask_is_superset(&archetype->mask, &iterator->mask)) {
-            log_debug("%b %b", archetype->mask.chunks[0], iterator->mask.chunks[0]);
             iterator->current_archetype++;
         } else {
             break;
