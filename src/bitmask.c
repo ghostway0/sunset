@@ -74,6 +74,10 @@ bool bitmask_is_eql(Bitmask const *bitmask, Bitmask const *other) {
 
 /// checks whether `bitmask` is a superset of `other`.
 bool bitmask_is_superset(Bitmask const *bitmask, Bitmask const *other) {
+    if (bitmask->num_chunks > other->num_chunks) {
+        return false;
+    }
+
     for (size_t i = 0; i < bitmask->num_chunks; ++i) {
         if ((bitmask->chunks[i] & other->chunks[i]) != other->chunks[i]) {
             return false;

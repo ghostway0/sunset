@@ -5,6 +5,8 @@
 #include <cglm/vec3.h>
 
 #include "internal/math.h"
+#include "internal/mem_utils.h"
+#include "internal/utils.h"
 
 #include "sunset/geometry.h"
 
@@ -159,4 +161,32 @@ void aabb_closest_point(AABB const *aabb, vec3 point, vec3 closest_out) {
     for (size_t i = 0; i < 3; i++) {
         closest_out[i] = fmax(aabb->min[i], fmin(point[i], aabb->max[i]));
     }
+}
+
+bool ray_intersects_aabb(vec3 ray_origin,
+        vec3 const ray_dir,
+        const AABB *box,
+        vec3 hit_out) {
+    float tmin = 0.0f;
+    float tmax = FLT_MAX;
+
+    for (int i = 0; i < 3; ++i) {
+        float inv_dir = 1.0f / (ray_dir[i] + EPSILON);
+
+        float t1 = (box->min[i] - ray_origin[i]) * inv_dir;
+        float t2 = (box->max[i] - ray_origin[i]) * inv_dir;
+        if (t1 > t2) {
+            swap(t1, t2);
+        }
+
+        tmin = max(tmin, t1);
+        tmax = min(tmax, t2);
+    }
+
+    if (hit_out) {
+        glm_vec3_copy(ray_origin, hit_out);
+        glm_vec3_muladds(ray_origin, tmin, hit_out);
+    }
+
+    return tmax >= tmin;
 }

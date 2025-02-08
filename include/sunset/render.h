@@ -10,6 +10,7 @@
 #include "sunset/vector.h"
 
 typedef struct CommandBuffer CommandBuffer;
+typedef struct EngineContext EngineContext;
 typedef struct Command Command;
 typedef struct Camera Camera;
 
@@ -54,3 +55,5 @@ void calculate_model_matrix(Transform const *transform, mat4 model_matrix);
 
 void render_world(
         World const *world, Camera const *camera, CommandBuffer *cmdbuf);
+
+void render_setup(EngineContext *engine_context);

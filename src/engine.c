@@ -96,13 +96,15 @@ static int engine_setup(EngineContext *context,
 
             },
             (CameraOptions){
+                    glm_rad(45.0f),
                     0.1f,
-                    100.0f,
-                    45.0f,
+                    0.001f,
                     (float)render_config.window_height
                             / (float)render_config.window_width,
             },
             &context->camera);
+
+    render_setup(context);
 
     // engine setup
 

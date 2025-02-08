@@ -3,9 +3,7 @@
 #include <stddef.h>
 
 #include "internal/utils.h"
-
-typedef struct Writer Writer;
-typedef struct Reader Reader;
+#include "sunset/io.h"
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 

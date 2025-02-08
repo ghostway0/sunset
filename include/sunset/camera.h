@@ -57,3 +57,5 @@ bool camera_box_within_frustum(Camera *camera, AABB aabb);
 void camera_set_rotation(Camera *camera, float x_angle, float y_angle);
 
 void camera_set_aspect_ratio(Camera *camera, float ratio);
+
+bool camera_crosshair_over(Camera *camera, AABB const *bounding_box);

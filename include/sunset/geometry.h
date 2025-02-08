@@ -100,6 +100,9 @@ void aabb_get_center(AABB *aabb, vec3 center_out);
 
 void aabb_extend_to(AABB *aabb, vec3 point);
 
+bool ray_intersects_aabb(
+        vec3 ray_origin, vec3 const ray_dir, const AABB *box, vec3 hit_out);
+
 #define aabb_format "aabb(min: " vec3_format ", max: " vec3_format ")"
 #define aabb_args(b) vec3_args(b.min), vec3_args(b.max)
 

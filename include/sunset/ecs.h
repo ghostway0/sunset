@@ -78,8 +78,7 @@ void *ecs_get_component(
         World *world, uint32_t entity_id, uint32_t component_id);
 
 void entity_builder_init(EntityBuilder *builder, World *world);
-void entity_builder_add_component(
-        EntityBuilder *builder, size_t id, void *component);
+void entity_builder_add(EntityBuilder *builder, size_t id, void *component);
 Index entity_builder_finish(EntityBuilder *builder);
 
 WorldIterator worldit_create(World const *world, Bitmask mask);

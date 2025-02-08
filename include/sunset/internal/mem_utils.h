@@ -24,5 +24,15 @@
 #define sunset_strdup(ptr) sunset_memory(strdup, ptr);
 
 #define swap_if(predicate, a, b)                                           \
-    a = (predicate) ? (b) : (a);                                           \
-    b = (predicate) ? (a) : (b);
+    ({                                                                     \
+        auto __tmp = a;                                                    \
+        a = (predicate) ? (b) : (a);                                       \
+        b = (predicate) ? __tmp : (b);                                     \
+    })
+
+#define swap(a, b)                                                         \
+    ({                                                                     \
+        auto __tmp = a;                                                    \
+        a = (b);                                                           \
+        b = __tmp;                                                         \
+    })

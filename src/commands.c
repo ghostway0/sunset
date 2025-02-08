@@ -11,7 +11,7 @@ void command_nop_init(Command *command) {
 
 void command_line_init(Command *command, Point from, Point to) {
     command->type = COMMAND_LINE;
-    command->data.line = (CommandLine){from, to};
+    command->line = (CommandLine){from, to};
 }
 
 void command_rect_init(Command *command,
@@ -19,7 +19,7 @@ void command_rect_init(Command *command,
         Color color,
         WindowPoint origin) {
     command->type = COMMAND_RECT;
-    command->data.rect = (CommandRect){origin, rect, color};
+    command->rect = (CommandRect){origin, rect, color};
 }
 
 void command_filled_rect_init(Command *command,
@@ -27,19 +27,19 @@ void command_filled_rect_init(Command *command,
         Color color,
         WindowPoint origin) {
     command->type = COMMAND_FILLED_RECT;
-    command->data.filled_rect = (CommandFilledRect){origin, rect, color};
+    command->filled_rect = (CommandFilledRect){origin, rect, color};
 }
 
 void command_arc_init(
         Command *command, Point center, int r, float a0, float a1) {
     command->type = COMMAND_ARC;
-    command->data.arc = (CommandArc){center, r, a0, a1};
+    command->arc = (CommandArc){center, r, a0, a1};
 }
 
 void command_filled_arc_init(
         Command *command, Point center, uint32_t r, float a0, float a1) {
     command->type = COMMAND_FILLED_ARC;
-    command->data.filled_arc = (struct CommandFilledArc){center, r, a0, a1};
+    command->filled_arc = (struct CommandFilledArc){center, r, a0, a1};
 }
 
 void command_text_init(Command *command,
@@ -50,13 +50,13 @@ void command_text_init(Command *command,
         size_t size,
         WindowPoint origin) {
     command->type = COMMAND_TEXT;
-    command->data.text =
+    command->text =
             (struct CommandText){start, font, text, text_len, size, origin};
 }
 
 void command_image_init(Command *command, Point pos, Image const *image) {
     command->type = COMMAND_IMAGE;
-    command->data.image = (CommandImage){pos, *image};
+    command->image = (CommandImage){pos, *image};
 }
 
 void cmdbuf_init(CommandBuffer *cmdbuf, CommandBufferOptions options) {
@@ -143,37 +143,20 @@ void cmdbuf_add_image(
     cmdbuf_append(cmdbuf, &command);
 }
 
-void cmdbuf_add_custom_command(CommandBuffer *cmdbuf,
-        uint8_t command_type,
-        uint8_t seq_num,
-        void *data) {
-    Command command;
-    command.type = command_type;
-    command.seq_num = seq_num;
-    memcpy(&command.data, data, sizeof(command.data));
-    cmdbuf_append(cmdbuf, &command);
-}
-
-// TODO: add arguments
-void command_custom_init(Command *command, struct program *program) {
-    command->type = COMMAND_CUSTOM;
-    command->data.custom.program = program;
-}
-
 void command_mesh_init(Command *command,
         uint32_t mesh_id,
         uint32_t texture_id,
         mat4 transform) {
     command->type = COMMAND_MESH;
-    command->data.mesh = (CommandMesh){
-            true,
+    command->mesh = (CommandMesh){
+            false,
             false,
             mesh_id,
             texture_id,
             GLM_MAT4_IDENTITY_INIT,
     };
 
-    glm_mat4_copy(transform, command->data.mesh.transform);
+    glm_mat4_copy(transform, command->mesh.transform);
 }
 
 void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
@@ -191,7 +174,7 @@ bool cmdbuf_empty(CommandBuffer *cmdbuf) {
 
 void command_set_zindex_init(Command *command, size_t z) {
     command->type = COMMAND_SET_ZINDEX;
-    command->data.set_zindex = (CommandSetZIndex){z};
+    command->set_zindex = (CommandSetZIndex){z};
 }
 
 void cmdbuf_add_set_zindex(CommandBuffer *cmdbuf, size_t z) {

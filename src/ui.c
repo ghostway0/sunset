@@ -270,22 +270,22 @@ void ui_destroy(UIContext *ui) {
 void ui_setup(EngineContext *context) {
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_MOUSE_MOVE,
-            (EventHandler){context, mouse_move_handler});
+            (EventHandler){mouse_move_handler, context});
 
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_MOUSE_CLICK,
-            (EventHandler){context, mouse_click_handler});
+            (EventHandler){mouse_click_handler, context});
 
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_KEY_PRESSED,
-            (EventHandler){context, key_handler});
+            (EventHandler){key_handler, context});
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_KEY_REPEAT,
-            (EventHandler){context, key_handler});
+            (EventHandler){key_handler, context});
 
     event_queue_add_handler(&context->event_queue,
             SYSTEM_EVENT_TICK,
-            (EventHandler){NULL, tick_handler});
+            (EventHandler){.handler_fn = tick_handler});
 
     vector_init(context->ui_contexts);
 }

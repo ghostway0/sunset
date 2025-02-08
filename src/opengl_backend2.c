@@ -113,8 +113,7 @@ const struct program_config instanced_textured_program_config = {
                 "void main() {\n"
                 "    mat4 transform = transforms[gl_InstanceID];\n"
                 "    gl_Position = projection * view * transform * "
-                "vec4(aPos, "
-                "1.0);\n"
+                "vec4(aPos, 1.0);\n"
                 "    TexCoords = aTexCoords;\n"
                 "}\n",
         .fragment = textured_fragment_shader_source,
@@ -166,6 +165,7 @@ static int compile_model(
     glGenVertexArrays(1, &mesh_out->vao);
     glGenBuffers(1, &mesh_out->vbo);
     glGenBuffers(1, &mesh_out->ebo);
+    glGenBuffers(1, &mesh_out->tbo);
 
     glBindVertexArray(mesh_out->vao);
 
@@ -173,6 +173,12 @@ static int compile_model(
     glBufferData(GL_ARRAY_BUFFER,
             vector_size(model->vertices) * sizeof(vec3),
             model->vertices,
+            GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh_out->tbo);
+    glBufferData(GL_ARRAY_BUFFER,
+            vector_size(model->texcoords) * sizeof(vec2),
+            model->texcoords,
             GL_STATIC_DRAW);
 
     size_t total_indices = 0;
@@ -203,60 +209,18 @@ static int compile_model(
     free(ibo);
 
     // position
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_out->vbo);
     glVertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+            0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
     // texture
-    glVertexAttribPointer(1,
-            2,
-            GL_FLOAT,
-            GL_FALSE,
-            5 * sizeof(float),
-            (void *)(3 * sizeof(float)));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_out->tbo);
+    glVertexAttribPointer(
+            1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(1);
 
     mesh_out->num_indices = total_indices;
-
-    return 0;
-}
-
-[[deprecated("bitchhhhh")]]
-[[maybe_unused]]
-static int compile_mesh(Mesh const *mesh, struct compiled_mesh *mesh_out) {
-    glGenVertexArrays(1, &mesh_out->vao);
-    glGenBuffers(1, &mesh_out->vbo);
-    glGenBuffers(1, &mesh_out->ebo);
-
-    glBindVertexArray(mesh_out->vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mesh_out->vbo);
-    glBufferData(GL_ARRAY_BUFFER,
-            mesh->num_vertices * sizeof(vec3),
-            mesh->vertices,
-            GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_out->ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-            mesh->num_indices * sizeof(uint32_t),
-            mesh->indices,
-            GL_STATIC_DRAW);
-
-    // position
-    glVertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-
-    // texture
-    glVertexAttribPointer(1,
-            2,
-            GL_FLOAT,
-            GL_FALSE,
-            5 * sizeof(float),
-            (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    mesh_out->num_indices = mesh->num_indices;
 
     return 0;
 }
@@ -343,7 +307,7 @@ static int add_preconfigured_shader(
 static int setup_default_shaders(RenderContext *context) {
     int retval = 0;
 
-    if ((retval = add_preconfigured_shader(textured_program_config,
+    if ((retval = add_preconfigured_shader(default_program_config,
                  &context->backend_programs[PROGRAM_DRAW_MESH]))) {
         return retval;
     }
@@ -351,7 +315,7 @@ static int setup_default_shaders(RenderContext *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -414,16 +378,21 @@ static void mouse_move_callback(
 
     if (context->first_mouse) {
         context->mouse = (Point){xpos, ypos};
+        context->first_mouse = false;
+        pthread_mutex_unlock(&context->lock);
+        return;
     }
 
     events_push(context->event_queue,
             SYSTEM_EVENT_MOUSE_MOVE,
             (MouseMoveEvent){
-                    .offset = {xpos - context->mouse.x,
-                            ypos - context->mouse.y},
+                    .offset = {context->mouse.x - xpos,
+                            context->mouse.y - ypos},
                     .absolute = {xpos, ypos},
                     .mouse_buttons = context->mouse_buttons,
             });
+
+    context->mouse = (Point){xpos, ypos};
 
     pthread_mutex_unlock(&context->lock);
 }
@@ -791,6 +760,7 @@ static void draw_instanced_mesh(RenderContext *context,
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
 
     use_program(program);
 
@@ -862,6 +832,7 @@ static int run_mesh_command(RenderContext *context, CommandMesh command) {
         // (?) bind texture
 
         glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
 
         use_program(program);
@@ -1161,19 +1132,19 @@ void backend_draw(RenderContext *context,
             case COMMAND_NOP:
                 break;
             case COMMAND_FILLED_RECT:
-                run_fill_rect_command(context, command.data.filled_rect);
+                run_fill_rect_command(context, command.filled_rect);
                 break;
             case COMMAND_RECT:
-                run_rect_command(context, command.data.rect);
+                run_rect_command(context, command.rect);
                 break;
             case COMMAND_MESH:
-                run_mesh_command(context, command.data.mesh);
+                run_mesh_command(context, command.mesh);
                 break;
             case COMMAND_TEXT:
-                run_text_command(context, command.data.text);
+                run_text_command(context, command.text);
                 break;
             case COMMAND_SET_ZINDEX: {
-                size_t zindex = command.data.set_zindex.zindex;
+                size_t zindex = command.set_zindex.zindex;
                 float depth_offset = zindex * 0.1;
                 glDepthRange(0.0 + depth_offset, 1.0 - depth_offset);
 

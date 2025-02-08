@@ -1,12 +1,22 @@
 #include <cglm/affine.h>
 #include <cglm/mat4.h>
 
-#include "sunset/render.h"
+#include "log.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
+#include "sunset/ecs.h"
+#include "sunset/events.h"
+#include "sunset/engine.h"
+
+#include "sunset/render.h"
 
 DECLARE_COMPONENT_ID(Transform);
 DECLARE_COMPONENT_ID(Renderable);
+
+void render_setup(EngineContext *engine_context) {
+    REGISTER_COMPONENT(&engine_context->world, Transform);
+    REGISTER_COMPONENT(&engine_context->world, Renderable);
+}
 
 void calculate_model_matrix(Transform const *transform, mat4 model_matrix) {
     glm_mat4_identity(model_matrix);
@@ -35,6 +45,7 @@ void render_world(
     WorldIterator it = worldit_create(world, mask);
 
     while (worldit_is_valid(&it)) {
+        log_debug("what the fuck");
         Renderable *renderable =
                 worldit_get_component(&it, COMPONENT_ID(Renderable));
         Transform *transform =
@@ -55,4 +66,3 @@ void render_world(
         worldit_advance(&it);
     }
 }
-

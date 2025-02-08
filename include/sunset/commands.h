@@ -22,7 +22,6 @@ enum command_type : uint8_t {
     COMMAND_IMAGE,
     COMMAND_MESH,
     COMMAND_SET_ZINDEX,
-    COMMAND_CUSTOM,
     NUM_COMMANDS,
 };
 
@@ -86,10 +85,6 @@ typedef struct CommandSetZIndex {
     size_t zindex;
 } CommandSetZIndex;
 
-struct command_custom {
-    struct program *program;
-};
-
 typedef struct Command {
     enum command_type type;
     uint8_t seq_num;
@@ -105,23 +100,18 @@ typedef struct Command {
         CommandImage image;
         CommandMesh mesh;
         CommandSetZIndex set_zindex;
-        struct command_custom custom;
-    } data;
+    };
 } Command;
 
 void command_nop_init(Command *command);
 
 void command_line_init(Command *command, Point from, Point to);
 
-void command_rect_init(Command *command,
-        Rect rect,
-        Color color,
-        WindowPoint origin);
+void command_rect_init(
+        Command *command, Rect rect, Color color, WindowPoint origin);
 
-void command_filled_rect_init(Command *command,
-        Rect rect,
-        Color color,
-        WindowPoint origin);
+void command_filled_rect_init(
+        Command *command, Rect rect, Color color, WindowPoint origin);
 
 void command_arc_init(
         Command *command, Point center, int r, float a0, float a1);
@@ -138,8 +128,6 @@ void command_text_init(Command *command,
         WindowPoint origin);
 
 void command_image_init(Command *command, Point pos, Image const *image);
-
-void command_custom_init(Command *command, struct program *program);
 
 void command_mesh_init(Command *command,
         uint32_t mesh_id,
@@ -172,15 +160,11 @@ void cmdbuf_add_nop(CommandBuffer *cmdbuf);
 
 void cmdbuf_add_line(CommandBuffer *cmdbuf, Point from, Point to);
 
-void cmdbuf_add_rect(CommandBuffer *cmdbuf,
-        Rect rect,
-        Color color,
-        WindowPoint origin);
+void cmdbuf_add_rect(
+        CommandBuffer *cmdbuf, Rect rect, Color color, WindowPoint origin);
 
-void cmdbuf_add_filled_rect(CommandBuffer *cmdbuf,
-        Rect rect,
-        Color color,
-        WindowPoint origin);
+void cmdbuf_add_filled_rect(
+        CommandBuffer *cmdbuf, Rect rect, Color color, WindowPoint origin);
 
 void cmdbuf_add_arc(
         CommandBuffer *cmdbuf, Point center, size_t r, float a0, float a1);

@@ -1,15 +1,22 @@
-#include <cglm/vec3.h>
 #include <stdint.h>
 
-#include "bitmask.h"
-#include "cglm/mat4.h"
+#include <cglm/mat4.h>
+#include <cglm/vec3.h>
+
+#include "geometry.h"
 #include "images.h"
-#include "internal/utils.h"
+#include "log.h"
+#include "obj_file.h"
+#include "sunset/bitmask.h"
 #include "sunset/camera.h"
 #include "sunset/ecs.h"
 #include "sunset/engine.h"
+#include "sunset/events.h"
 #include "sunset/input.h"
+#include "sunset/render.h"
 #include "sunset/rman.h"
+#include "sunset/vector.h"
+#include "vfs.h"
 
 typedef struct Clickable {
     void (*clicked_callback)(EngineContext *, EntityPtr clicked_entity);
@@ -17,29 +24,35 @@ typedef struct Clickable {
 
 DECLARE_COMPONENT_ID(Clickable);
 
-static void object_click_handler(EngineContext *ctx, void *, Event event) {
-    uint32_t *focus = rman_get(&ctx->rman, RESOURCE_ID(input_focus));
+static void object_click_handler(EngineContext *engine_context,
+        void * /*local_context*/,
+        Event /*event*/) {
+    uint32_t *focus =
+            rman_get(&engine_context->rman, RESOURCE_ID(input_focus));
 
-    if (*focus != FOCUS_MAIN)
+    if (*focus != FOCUS_MAIN) {
         return;
+    }
 
     Bitmask bitmask;
     bitmask_init_empty(ECS_MAX_COMPONENTS, &bitmask);
     bitmask_set(&bitmask, COMPONENT_ID(Clickable));
     bitmask_set(&bitmask, COMPONENT_ID(Transform));
 
-    WorldIterator it = worldit_create(&ctx->world, bitmask);
-
+    WorldIterator it = worldit_create(&engine_context->world, bitmask);
     while (worldit_is_valid(&it)) {
         EntityPtr eptr = worldit_get_entityptr(&it);
 
         Transform *transform = ecs_component_from_ptr(
-                &ctx->world, eptr, COMPONENT_ID(Transform));
+                &engine_context->world, eptr, COMPONENT_ID(Transform));
         Clickable *clickable = ecs_component_from_ptr(
-                &ctx->world, eptr, COMPONENT_ID(Clickable));
+                &engine_context->world, eptr, COMPONENT_ID(Clickable));
 
-        if (camera_is_over(&ctx->camera, transform->bounding_box, 0.05f)) {
-            clickable->clicked_callback(ctx, eptr);
+        if (camera_crosshair_over(
+                    &engine_context->camera, &transform->bounding_box)
+                && clickable->clicked_callback) {
+            log_debug("clicked %zu %zu", eptr.archetype, eptr.element);
+            clickable->clicked_callback(engine_context, eptr);
             break;
         }
 
@@ -56,71 +69,21 @@ typedef struct AxisGizmo {
 
 DECLARE_COMPONENT_ID(AxisGizmo);
 
-static void on_axis_clicked(EngineContext *ctx, EntityPtr arrow_entity) {
-    AxisGizmo *gizmo = ecs_component_from_ptr(
-            &ctx->world, arrow_entity, COMPONENT_ID(AxisGizmo));
-    Transform *target_t = ecs_get_component(
-            &ctx->world, gizmo->target_entity, COMPONENT_ID(Transform));
+static void player_controller_handler_mouse(
+        EngineContext *engine_context, void *, Event const event) {
+    uint32_t *focus =
+            rman_get(&engine_context->rman, RESOURCE_ID(input_focus));
 
-    unused(gizmo);
-    unused(target_t);
-    // drag_state.is_dragging = true;
-    // drag_state.target_entity = gizmo->target_entity;
-    // glm_vec3_copy(gizmo->axis, drag_state.axis);
-    // glm_vec3_copy(target_t->position, drag_state.initial_pos);
+    if (*focus != FOCUS_MAIN) {
+        return;
+    }
+
+    MouseMoveEvent *mouse_move = (MouseMoveEvent *)event.data;
+
+    camera_rotate_scaled(&engine_context->camera,
+            mouse_move->offset.x,
+            mouse_move->offset.y);
 }
-
-static void on_mouse_drag(EngineContext *ctx, Event e) {
-    unused(ctx);
-    unused(e);
-    // if (!drag_state.is_dragging) return;
-    //
-    // float delta_x = e->x - drag_state.initial_mouse_x;
-    // float delta = delta_x * 0.01f; // Sensitivity adjustment
-    //
-    // Transform *t = ecs_get_component(&ctx->world,
-    // drag_state.target_entity, COMPONENT_ID(Transform));
-    // glm_vec3_muladds(drag_state.axis, delta, t->position);
-}
-
-// void spawn_axis_arrows(EngineContext *ctx, Index target) {
-//     Transform *target_t =
-//             ecs_get_component(&ctx->world, target,
-//             COMPONENT_ID(Transform));
-//
-//     if (!target_t) {
-//         return;
-//     }
-//
-//     vec3 axes[] = {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-//
-//     for (int i = 0; i < 3; i++) {
-//         EntityBuilder builder;
-//         entity_builder_init(&builder, &ctx->world);
-//
-//         Transform arrow_t = *target_t;
-//         glm_vec3_add(arrow_t.position, axes[i], arrow_t.position);
-//
-//         Renderable rend = {.commands = vector_create(Command)};
-//         Command line_cmd = {.type = COMMAND_LINE,
-//                 .data.line = {.from = target_t->position,
-//                         .to = arrow_t.position}};
-//         vector_append(rend.commands, line_cmd);
-//
-//         Clickable clk = {.clicked_callback = on_axis_clicked};
-//         AxisGizmo gizmo = {.target_entity = target, .axis = axes[i]};
-//
-//         entity_builder_add_component(
-//                 &builder, COMPONENT_ID(Transform), &arrow_t);
-//         entity_builder_add_component(
-//                 &builder, COMPONENT_ID(Renderable), &rend);
-//         entity_builder_add_component(
-//                 &builder, COMPONENT_ID(Clickable), &clk);
-//         entity_builder_add_component(
-//                 &builder, COMPONENT_ID(AxisGizmo), &gizmo);
-//         entity_builder_finish(&builder);
-//     }
-// }
 
 static void player_controller_handler(
         EngineContext *engine_context, void *, Event event) {
@@ -135,25 +98,18 @@ static void player_controller_handler(
     Camera *camera = &engine_context->camera;
 
     vec3 direction;
-
     switch (*key) {
         case KEY_W:
             glm_vec3_copy(camera->direction, direction);
             break;
-        case KEY_S:
-            glm_vec3_negate_to(camera->direction, direction);
-            break;
         case KEY_A:
             glm_vec3_negate_to(camera->right, direction);
             break;
+        case KEY_S:
+            glm_vec3_negate_to(camera->direction, direction);
+            break;
         case KEY_D:
             glm_vec3_copy(camera->right, direction);
-            break;
-        case KEY_U:
-            glm_vec3_copy(camera->up, direction);
-            break;
-        case KEY_N:
-            glm_vec3_negate_to(camera->up, direction);
             break;
         case KEY_ESCAPE:
             *focus = FOCUS_UI;
@@ -164,78 +120,155 @@ static void player_controller_handler(
     }
 
     camera_move_scaled(camera, direction, engine_context->dt);
+    log_debug("current position " vec3_format, vec3_args(camera->position));
 }
 
-DECLARE_RESOURCE_ID(axis_arrow);
+DECLARE_RESOURCE_ID(axis_arrow_mesh);
 
-void spawn_axis_arrows(EngineContext *ctx, Index target) {
-    Transform *target_t =
-            ecs_get_component(&ctx->world, target, COMPONENT_ID(Transform));
-    if (!target_t)
+DECLARE_RESOURCE_ID(axis_arrow_texture1);
+DECLARE_RESOURCE_ID(axis_arrow_texture2);
+DECLARE_RESOURCE_ID(axis_arrow_texture3);
+
+typedef struct AxisArrow {
+    EntityPtr parent;
+} AxisArrow;
+
+DECLARE_COMPONENT_ID(AxisArrow);
+
+static void thing2(
+        EngineContext *engine_context, void *, Event const event) {
+    MouseClickEvent *click = (MouseClickEvent *)event.data;
+    uint32_t *focus =
+            rman_get(&engine_context->rman, RESOURCE_ID(input_focus));
+
+    if (click->button == MOUSE_BUTTON_LEFT
+            && one_matches(*focus, FOCUS_NULL, FOCUS_NULL)) {
+        *focus = FOCUS_MAIN;
+        backend_hide_mouse(&engine_context->render_context);
+    }
+}
+
+void spawn_axis_arrow(EngineContext *engine_context,
+        Transform const *transform,
+        EntityPtr parent,
+        uint32_t texture) {
+    uint32_t *mesh =
+            rman_get(&engine_context->rman, RESOURCE_ID(axis_arrow_mesh));
+
+    Renderable rend;
+    vector_init(rend.commands);
+
+    Command mesh_cmd = {.type = COMMAND_MESH,
+            .mesh = {.mesh_id = *mesh,
+                    .transform = {},
+                    .texture_id = texture}};
+    calculate_model_matrix(transform, mesh_cmd.mesh.transform);
+    vector_append(rend.commands, mesh_cmd);
+
+    AxisArrow arrow = {.parent = parent};
+
+    EntityBuilder builder;
+    entity_builder_init(&builder, &engine_context->world);
+    entity_builder_add(&builder, COMPONENT_ID(Renderable), &rend);
+    entity_builder_add(&builder, COMPONENT_ID(AxisArrow), &arrow);
+    entity_builder_finish(&builder);
+}
+
+void spawn_axis_arrows(EngineContext *engine_context, EntityPtr target) {
+    Transform const *target_t = ecs_component_from_ptr(
+            &engine_context->world, target, COMPONENT_ID(Transform));
+
+    if (!target_t) {
         return;
+    }
 
-    // uint32_t *arrow_mesh_id = rman_get(&ctx->rman, RESOURCE_ID(axis_arrow));
-    //
-    // struct {
-    //     vec3 axis;
-    //     Color color;
-    // } axes[] = {{color_from_rgb(255, 0, 0)},
-    //         {GLM_YUP, color_from_rgb(0, 255, 0)},
-    //         {GLM_ZUP, color_from_rgb(0, 0, 255)}};
-    //
-    // uint32_t texture = 0;
-    //
-    // for (int i = 0; i < 3; i++) {
-    //     EntityBuilder builder;
-    //     entity_builder_init(&builder, &ctx->world);
-    //
-    //     // Copy target position and add slight offset
-    //     Transform arrow_t;
-    //     glm_vec3_copy(target_t->position, arrow_t.position);
-    //     glm_vec3_add(arrow_t.position, axes[i].axis, arrow_t.position);
-    //     glm_vec3_copy(GLM_VEC3_ZERO, arrow_t.rotation);
-    //     arrow_t.scale = 0.2f; // Scale down arrows
-    //
-    //     // Create renderable component with mesh
-    //     Renderable rend;
-    //     vector_init(rend.commands);
-    //
-    //     Command mesh_cmd = {.type = COMMAND_MESH,
-    //             .data.mesh = {.mesh_id = *arrow_mesh_id,
-    //                     .transform = GLM_MAT4_IDENTITY_INIT,
-    //                     .texture_id = texture}};
-    //
-    //     // Position mesh at arrow location
-    //     glm_translate(mesh_cmd.data.mesh.transform, arrow_t.position);
-    //     glm_scale_uni(mesh_cmd.data.mesh.transform, arrow_t.scale);
-    //
-    //     vector_append(rend.commands, mesh_cmd);
-    //
-    //     // Set up clickable component
-    //     Clickable clk;
-    //     clk.clicked_callback = on_axis_clicked;
-    //
-    //     // Set up axis gizmo component
-    //     AxisGizmo gizmo;
-    //     gizmo.target_entity = target;
-    //     glm_vec3_copy(axes[i].axis, gizmo.axis);
-    //
-    //     // Add components
-    //     entity_builder_add_component(
-    //             &builder, COMPONENT_ID(Transform), &arrow_t);
-    //     entity_builder_add_component(
-    //             &builder, COMPONENT_ID(Renderable), &rend);
-    //     entity_builder_add_component(
-    //             &builder, COMPONENT_ID(Clickable), &clk);
-    //     entity_builder_add_component(
-    //             &builder, COMPONENT_ID(AxisGizmo), &gizmo);
-    //
-    //     entity_builder_finish(&builder);
-    // }
+    uint32_t *texture1 = rman_get(
+            &engine_context->rman, RESOURCE_ID(axis_arrow_texture1));
+    uint32_t *texture2 = rman_get(
+            &engine_context->rman, RESOURCE_ID(axis_arrow_texture2));
+    uint32_t *texture3 = rman_get(
+            &engine_context->rman, RESOURCE_ID(axis_arrow_texture3));
+
+    spawn_axis_arrow(engine_context, target_t, target, *texture1);
+    spawn_axis_arrow(engine_context, target_t, target, *texture2);
+    spawn_axis_arrow(engine_context, target_t, target, *texture3);
+}
+
+void test_stuff(EngineContext *engine_context) {
+    vector(Model) models;
+    vector_init(models);
+
+    VfsFile file;
+    vfs_open("test.obj", VFS_OPEN_MODE_READ, &file);
+    Reader r = vfs_file_reader(&file);
+
+    obj_model_parse(&r, &models);
+
+    Renderable rend;
+    vector_init(rend.commands);
+
+    backend_register_mesh(&engine_context->render_context, models[0]);
+
+    Image texture;
+    load_image_file("utc16.tga", &texture);
+
+    Rect bounds[] = {{0, 0, texture.w, texture.h}};
+
+    uint32_t first_id;
+    backend_register_texture_atlas(&engine_context->render_context,
+            &texture,
+            bounds,
+            1,
+            &first_id);
+
+    Transform transform = {
+            .bounding_box =
+                    {
+                            .min = {0.0, 0.0, 0.0},
+                            .max = {1.0, 1.0, 1.0},
+                    },
+            .position = {0.0, 0.0, -1.0},
+            .scale = 1.0,
+            .rotation = {},
+    };
+
+    Command mesh_cmd = {.type = COMMAND_MESH,
+            .mesh = {
+                    .mesh_id = 0, .transform = {}, .texture_id = first_id}};
+    calculate_model_matrix(&transform, mesh_cmd.mesh.transform);
+
+    vector_append(rend.commands, mesh_cmd);
+
+    Clickable clickable = {.clicked_callback = NULL};
+
+    EntityBuilder builder;
+    entity_builder_init(&builder, &engine_context->world);
+    entity_builder_add(&builder, COMPONENT_ID(Renderable), &rend);
+    entity_builder_add(&builder, COMPONENT_ID(Transform), &transform);
+    entity_builder_add(&builder, COMPONENT_ID(Clickable), &clickable);
+    // ugh. externs don't get resolved from so's (makes sense lol).
+    entity_builder_finish(&builder);
 }
 
 int plugin_load(EngineContext *engine_context) {
     REGISTER_COMPONENT(&engine_context->world, Clickable);
+
+    event_queue_add_handler(&engine_context->event_queue,
+            SYSTEM_EVENT_KEY_DOWN,
+            (EventHandler){.handler_fn = player_controller_handler});
+
+    event_queue_add_handler(&engine_context->event_queue,
+            SYSTEM_EVENT_MOUSE_CLICK,
+            (EventHandler){.handler_fn = object_click_handler});
+
+    event_queue_add_handler(&engine_context->event_queue,
+            SYSTEM_EVENT_MOUSE_CLICK,
+            (EventHandler){.handler_fn = thing2});
+    event_queue_add_handler(&engine_context->event_queue,
+            SYSTEM_EVENT_MOUSE_MOVE,
+            (EventHandler){.handler_fn = player_controller_handler_mouse});
+
+    test_stuff(engine_context);
 
     return 0;
 }

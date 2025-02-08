@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "log.h"
 #include "sunset/bitmask.h"
 #include "sunset/vector.h"
 
@@ -23,21 +24,17 @@ static Archetype *get_archetype(World *world, Bitmask const *mask) {
     return NULL;
 }
 
-static void iterator_advance_internal(WorldIterator *iterator) {
+static void iterator_advance_archetype(WorldIterator *iterator) {
     while (iterator->current_archetype
             < vector_size(iterator->world->archetypes)) {
         Archetype *archetype =
                 &iterator->world->archetypes[iterator->current_archetype];
 
-        if (bitmask_is_superset(&archetype->mask, &iterator->mask)) {
-            if (iterator->current_element < archetype->num_elements) {
-                return;
-            } else {
-                iterator->current_archetype++;
-                iterator->current_element = 0;
-            }
-        } else {
+        if (!bitmask_is_superset(&archetype->mask, &iterator->mask)) {
+            log_debug("%b %b", archetype->mask.chunks[0], iterator->mask.chunks[0]);
             iterator->current_archetype++;
+        } else {
+            break;
         }
     }
 }
@@ -84,7 +81,7 @@ WorldIterator worldit_create(World const *world, Bitmask mask) {
             .current_archetype = 0,
             .current_element = 0,
     };
-    iterator_advance_internal(&iterator);
+    iterator_advance_archetype(&iterator);
     return iterator;
 }
 
@@ -96,7 +93,7 @@ void worldit_advance(WorldIterator *iterator) {
     } else {
         iterator->current_archetype++;
         iterator->current_element = 0;
-        iterator_advance_internal(iterator);
+        iterator_advance_archetype(iterator);
     }
 }
 
@@ -121,6 +118,11 @@ void *worldit_get_component(WorldIterator *iterator, Index component_id) {
     Column *column = &archetype->columns[column_index];
 
     return &column->data[iterator->current_element * column->element_size];
+}
+
+EntityPtr worldit_get_entityptr(WorldIterator *iterator) {
+    return (EntityPtr){.archetype = iterator->current_archetype,
+            .element = iterator->current_element};
 }
 
 void worldit_destroy(WorldIterator *iterator) {
@@ -215,7 +217,7 @@ void entity_builder_destroy(EntityBuilder *builder) {
     vector_destroy(builder->component_ids);
 }
 
-void entity_builder_add_component(
+void entity_builder_add(
         EntityBuilder *builder, size_t id, void *component) {
     bitmask_set(&builder->mask, id);
 

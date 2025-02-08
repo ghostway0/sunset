@@ -78,7 +78,7 @@ void test_camera_movement(void **state) {
     camera_rotate_absolute(&camera, GLM_PI / 2, 0.0f);
 
     vec3 direction = {1.0f, 0.0f, 0.0f};
-    camera_move_scaled(&camera, direction);
+    camera_move_scaled(&camera, direction, 1.0f);
 
     assert_float_equal(camera.position[0], 100.0f, EPSILON);
     assert_float_equal(camera.position[1], 0.0f, EPSILON);
@@ -247,9 +247,9 @@ void test_ecs(void **state) {
     Health hea = {100};
 
     entity_builder_init(&builder, &ecs);
-    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel);
-    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos);
-    entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea);
+    entity_builder_add(&builder, COMPONENT_ID(Velocity), &vel);
+    entity_builder_add(&builder, COMPONENT_ID(Position), &pos);
+    entity_builder_add(&builder, COMPONENT_ID(Health), &hea);
     entity_builder_finish(&builder);
 
     Position pos2 = {3.0f, 4.0f};
@@ -257,17 +257,17 @@ void test_ecs(void **state) {
     Health hea2 = {50};
 
     entity_builder_init(&builder, &ecs);
-    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel2);
-    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos2);
-    entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea2);
+    entity_builder_add(&builder, COMPONENT_ID(Velocity), &vel2);
+    entity_builder_add(&builder, COMPONENT_ID(Position), &pos2);
+    entity_builder_add(&builder, COMPONENT_ID(Health), &hea2);
     Index e2 = entity_builder_finish(&builder);
 
     Position pos3 = {4.0f, 5.0f};
     Velocity vel3 = {0.0f, 0.0f};
 
     entity_builder_init(&builder, &ecs);
-    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel3);
-    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos3);
+    entity_builder_add(&builder, COMPONENT_ID(Velocity), &vel3);
+    entity_builder_add(&builder, COMPONENT_ID(Position), &pos3);
     entity_builder_finish(&builder);
 
     Bitmask system_mask;
@@ -330,9 +330,9 @@ void test_ecs(void **state) {
     Health hea4 = {1.0f};
 
     entity_builder_init(&builder, &ecs);
-    entity_builder_add_component(&builder, COMPONENT_ID(Velocity), &vel4);
-    entity_builder_add_component(&builder, COMPONENT_ID(Position), &pos4);
-    entity_builder_add_component(&builder, COMPONENT_ID(Health), &hea4);
+    entity_builder_add(&builder, COMPONENT_ID(Velocity), &vel4);
+    entity_builder_add(&builder, COMPONENT_ID(Position), &pos4);
+    entity_builder_add(&builder, COMPONENT_ID(Health), &hea4);
     Index e4 = entity_builder_finish(&builder);
 
     {

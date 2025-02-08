@@ -29,6 +29,7 @@ typedef enum MeshType {
 struct compiled_mesh {
     uint32_t id;
     GLuint vao;
+    GLuint tbo;
     GLuint vbo;
     GLuint ebo;
     size_t num_indices;

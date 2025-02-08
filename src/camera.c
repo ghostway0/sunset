@@ -6,6 +6,8 @@
 #include <cglm/vec3.h>
 
 #include "internal/math.h"
+#include "internal/mem_utils.h"
+#include "internal/utils.h"
 #include "sunset/geometry.h"
 
 #include "sunset/camera.h"
@@ -169,4 +171,9 @@ void camera_set_aspect_ratio(Camera *camera, float ratio) {
 
     calculate_projection_matrix(
             camera, camera->aspect_ratio, camera->projection_matrix);
+}
+
+bool camera_crosshair_over(Camera *camera, AABB const *bounding_box) {
+    return ray_intersects_aabb(
+            camera->position, camera->direction, bounding_box, NULL);
 }

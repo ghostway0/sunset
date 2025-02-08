@@ -11,10 +11,10 @@ typedef struct EngineContext EngineContext;
 typedef struct Event Event;
 
 typedef struct EventHandler {
-    void *local_context;
     void (*handler_fn)(EngineContext *engine_context,
             void *local_context,
             Event event);
+    void *local_context;
 } EventHandler;
 
 enum SystemEvents {
