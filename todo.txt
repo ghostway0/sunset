@@ -1,13 +1,12 @@
 Big:
-* Animation system
 * World builder
+* Animation system
 
 Todo:
  [ ] fix physics to be a system
  [X] find how octree should be handled
- [ ] mtl and obj file parsing should output standard types
+ [X] mtl and obj file parsing should output standard types
  [ ] animation file format
- [ ] change mesh structure
  [ ] save a `World`
  [ ] reflection for entities
  [X] get rid of `Scene`

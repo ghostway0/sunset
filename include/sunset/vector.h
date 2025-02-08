@@ -25,6 +25,16 @@ struct vector_metadata {
         v = (void *)(meta + 1);                                            \
     } while (0);
 
+#define vector_create(T)                                                   \
+    ({                                                                     \
+        struct vector_metadata *meta =                                     \
+                (struct vector_metadata *)sunset_malloc(                   \
+                        sizeof(struct vector_metadata) + sizeof(T) * 16);  \
+        meta->size = 0;                                                    \
+        meta->capacity = 16;                                               \
+        (void *)(meta + 1);                                                \
+    })
+
 #define vector_destroy(v)                                                  \
     do {                                                                   \
         free(_vector_metadata(v));                                         \

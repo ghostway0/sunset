@@ -112,6 +112,21 @@ mods_lib = shared_library(
   include_directories: [sunset_inc],
 )
 
+world_builder = shared_library(
+  'builder',
+  files('world-builder/plugin.c'),
+  dependencies: [
+    glew_dep,
+    glfw_dep,
+    opengl_dep,
+    sunset_dep,
+    logc_dep,
+    cglm_dep,
+    m_dep,
+  ],
+  include_directories: [sunset_inc],
+)
+
 executable(
   'sunset',
   files('src/main.c'),

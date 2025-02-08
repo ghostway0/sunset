@@ -44,7 +44,7 @@ void camera_rotate_scaled(Camera *camera, float x_angle, float y_angle);
 
 void camera_move_absolute(Camera *camera, vec3 direction);
 
-void camera_move_scaled(Camera *camera, vec3 direction);
+void camera_move_scaled(Camera *camera, vec3 direction, float dt);
 
 void camera_recalculate_vectors(Camera *camera);
 

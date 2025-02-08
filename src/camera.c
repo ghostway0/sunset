@@ -114,8 +114,9 @@ void camera_move_absolute(Camera *camera, vec3 direction) {
     calculate_view_matrix(camera, camera->view_matrix);
 }
 
-void camera_move_scaled(Camera *camera, vec3 direction) {
+void camera_move_scaled(Camera *camera, vec3 direction, float dt) {
     glm_vec3_scale(direction, camera->speed, direction);
+    glm_vec3_scale(direction, dt, direction);
     camera_move_absolute(camera, direction);
 }
 
