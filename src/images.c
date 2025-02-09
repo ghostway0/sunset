@@ -4,10 +4,10 @@
 #include "sunset/byte_stream.h"
 #include "sunset/errors.h"
 #include "sunset/filesystem.h"
+#include "sunset/geometry.h"
 #include "sunset/io.h"
 #include "sunset/tga.h"
 #include "sunset/vfs.h"
-#include "sunset/geometry.h"
 
 #include "sunset/images.h"
 

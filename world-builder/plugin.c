@@ -150,9 +150,7 @@ void spawn_axis_arrow(EngineContext *engine_context,
     vector_init(rend.commands);
 
     Command mesh_cmd = {.type = COMMAND_MESH,
-            .mesh = {.mesh_id = 0,
-                    .transform = {},
-                    .texture_id = texture}};
+            .mesh = {.mesh_id = 0, .transform = {}, .texture_id = texture}};
 
     Transform new_transform = *transform;
     glm_vec3_add(new_transform.position, axis, new_transform.position);
@@ -238,8 +236,10 @@ void test_stuff(EngineContext *engine_context) {
     aabb_translate(&transform.bounding_box, transform.position);
 
     Command mesh_cmd = {.type = COMMAND_MESH,
-            .mesh = {
-                    .mesh_id = 0, .transform = {}, .texture_id = first_id}};
+            .mesh = {.instanced = true,
+                    .mesh_id = 0,
+                    .transform = {},
+                    .texture_id = first_id}};
     calculate_model_matrix(&transform, mesh_cmd.mesh.transform);
 
     vector_append(rend.commands, mesh_cmd);

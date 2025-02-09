@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #include <cglm/types.h>
 
@@ -28,4 +28,4 @@ typedef struct Model {
 /// - the OBJ file represents a single object/mesh.
 /// - the object has a single material applied to it.
 /// - the file adheres to Blender's typical OBJ export conventions.
-int obj_model_parse(Reader *reader, vector(Model) *models_out);
+int obj_model_parse(Reader *reader, vector(Model) * models_out);

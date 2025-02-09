@@ -141,11 +141,10 @@ void command_mesh_init(Command *command,
         mat4 transform) {
     command->type = COMMAND_MESH;
     command->mesh = (CommandMesh){
-            texture_id == UINT32_MAX,
-            true,
-            mesh_id,
-            texture_id,
-            GLM_MAT4_IDENTITY_INIT,
+            .instanced = true,
+            .mesh_id = mesh_id,
+            .texture_id = texture_id,
+            .transform = GLM_MAT4_IDENTITY_INIT,
     };
 
     glm_mat4_copy(transform, command->mesh.transform);

@@ -75,7 +75,6 @@ typedef struct CommandImage {
 
 typedef struct CommandMesh {
     bool instanced;
-    bool textured;
     uint32_t mesh_id;
     uint32_t texture_id;
     mat4 transform;

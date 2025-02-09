@@ -11,9 +11,9 @@
 
 #include "internal/utils.h"
 #include "sunset/byte_stream.h"
+#include "sunset/errors.h"
 #include "sunset/io.h"
 #include "sunset/obj_file.h"
-#include "sunset/errors.h"
 #include "vector.h"
 
 void parse_empty(void **state) {

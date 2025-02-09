@@ -4,8 +4,8 @@
 #include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/ecs.h"
-#include "sunset/events.h"
 #include "sunset/engine.h"
+#include "sunset/events.h"
 
 #include "sunset/render.h"
 

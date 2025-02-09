@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -8,7 +9,6 @@
 #include <cglm/mat4.h>
 #include <cglm/types.h>
 #include <log.h>
-#include <stdlib.h>
 
 #include "internal/math.h"
 #include "internal/mem_utils.h"
@@ -315,7 +315,7 @@ static int setup_default_shaders(RenderContext *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -820,7 +820,7 @@ static void instancing_buffer_flush(
 static int run_mesh_command(RenderContext *context, CommandMesh command) {
     struct frame_cache *cache = &context->frame_cache;
 
-    if (!command.instanced || !command.textured) {
+    if (!command.instanced || command.texture_id == UINT32_MAX) {
         struct program program =
                 context->backend_programs[PROGRAM_DRAW_MESH];
         struct compiled_mesh *mesh = &context->meshes[command.mesh_id];
