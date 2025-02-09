@@ -14,18 +14,14 @@ void command_line_init(Command *command, Point from, Point to) {
     command->line = (CommandLine){from, to};
 }
 
-void command_rect_init(Command *command,
-        Rect rect,
-        Color color,
-        WindowPoint origin) {
+void command_rect_init(
+        Command *command, Rect rect, Color color, WindowPoint origin) {
     command->type = COMMAND_RECT;
     command->rect = (CommandRect){origin, rect, color};
 }
 
-void command_filled_rect_init(Command *command,
-        Rect rect,
-        Color color,
-        WindowPoint origin) {
+void command_filled_rect_init(
+        Command *command, Rect rect, Color color, WindowPoint origin) {
     command->type = COMMAND_FILLED_RECT;
     command->filled_rect = (CommandFilledRect){origin, rect, color};
 }
@@ -92,19 +88,15 @@ void cmdbuf_add_line(CommandBuffer *cmdbuf, Point from, Point to) {
     cmdbuf_append(cmdbuf, &command);
 }
 
-void cmdbuf_add_rect(CommandBuffer *cmdbuf,
-        Rect rect,
-        Color color,
-        WindowPoint origin) {
+void cmdbuf_add_rect(
+        CommandBuffer *cmdbuf, Rect rect, Color color, WindowPoint origin) {
     Command command;
     command_rect_init(&command, rect, color, origin);
     cmdbuf_append(cmdbuf, &command);
 }
 
-void cmdbuf_add_filled_rect(CommandBuffer *cmdbuf,
-        Rect rect,
-        Color color,
-        WindowPoint origin) {
+void cmdbuf_add_filled_rect(
+        CommandBuffer *cmdbuf, Rect rect, Color color, WindowPoint origin) {
     Command command;
     command_filled_rect_init(&command, rect, color, origin);
     cmdbuf_append(cmdbuf, &command);
@@ -149,8 +141,8 @@ void command_mesh_init(Command *command,
         mat4 transform) {
     command->type = COMMAND_MESH;
     command->mesh = (CommandMesh){
-            false,
-            false,
+            texture_id == UINT32_MAX,
+            true,
             mesh_id,
             texture_id,
             GLM_MAT4_IDENTITY_INIT,

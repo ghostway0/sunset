@@ -209,13 +209,13 @@ static int compile_model(
     free(ibo);
 
     // position
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_out->vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh_out->vbo);
     glVertexAttribPointer(
             0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
     // texture
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh_out->tbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh_out->tbo);
     glVertexAttribPointer(
             1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(1);
@@ -315,7 +315,7 @@ static int setup_default_shaders(RenderContext *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -820,7 +820,7 @@ static void instancing_buffer_flush(
 static int run_mesh_command(RenderContext *context, CommandMesh command) {
     struct frame_cache *cache = &context->frame_cache;
 
-    if (!command.instanced) {
+    if (!command.instanced || !command.textured) {
         struct program program =
                 context->backend_programs[PROGRAM_DRAW_MESH];
         struct compiled_mesh *mesh = &context->meshes[command.mesh_id];

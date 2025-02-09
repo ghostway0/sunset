@@ -7,7 +7,6 @@
 #include "internal/math.h"
 #include "internal/mem_utils.h"
 #include "internal/utils.h"
-#include "log.h"
 
 #include "sunset/geometry.h"
 
@@ -171,7 +170,7 @@ bool ray_intersects_aabb(vec3 ray_origin,
     float tmin = 0.0f;
     float tmax = FLT_MAX;
 
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; i++) {
         float inv_dir = 1.0f / (ray_dir[i] + EPSILON);
 
         float t1 = (box->min[i] - ray_origin[i]) * inv_dir;

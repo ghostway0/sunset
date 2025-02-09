@@ -19,7 +19,7 @@ add_project_arguments(
   language: 'c',
 )
 
-add_project_link_arguments(['-export-dynamic',], language: 'c')
+add_project_link_arguments([], language: 'c')
     
 
 render_backend = get_option('render_backend')
