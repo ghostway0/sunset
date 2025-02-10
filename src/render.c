@@ -39,7 +39,6 @@ void render_world(
     Bitmask mask;
     bitmask_init_empty(ECS_MAX_COMPONENTS, &mask);
     bitmask_set(&mask, COMPONENT_ID(Renderable));
-    bitmask_set(&mask, COMPONENT_ID(Transform));
 
     WorldIterator it = worldit_create(world, mask);
 
@@ -49,13 +48,16 @@ void render_world(
         Transform *transform =
                 worldit_get_component(&it, COMPONENT_ID(Transform));
 
-        // HACK: when I transition to my own math library, const
-        // when unmutable would be a rule
-        if (camera_box_within_frustum(
-                    (Camera *)camera, transform->bounding_box)) {
-            mat4 model;
-            calculate_model_matrix(transform, model);
+        bool visible = true;
 
+        if (transform) {
+            // HACK: when I transition to my own math library, const
+            // when unmutable would be a rule
+            visible = camera_box_within_frustum(
+                    (Camera *)camera, transform->bounding_box);
+        }
+
+        if (visible) {
             cmdbuf_add_multiple(cmdbuf,
                     renderable->commands,
                     vector_size(renderable->commands));

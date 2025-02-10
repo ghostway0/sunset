@@ -193,6 +193,25 @@ static void log_thing(EngineContext *engine_context, EntityPtr eptr) {
     spawn_axis_arrows(engine_context, eptr);
 }
 
+void crosshair(EngineContext *engine_context) {
+    Renderable rend;
+    vector_init(rend.commands);
+
+    Image crosshair;
+    if (load_image_file("./utc16.tga", &crosshair)) {
+        log_error("wtf");
+    }
+
+    Command image_cmd = {.type = COMMAND_IMAGE,
+            .image = {.pos = {200, 100}, .image = crosshair}};
+    vector_append(rend.commands, image_cmd);
+
+    EntityBuilder builder;
+    entity_builder_init(&builder, &engine_context->world);
+    entity_builder_add(&builder, COMPONENT_ID(Renderable), &rend);
+    entity_builder_finish(&builder);
+}
+
 void test_stuff(EngineContext *engine_context) {
     vector(Model) models;
     vector_init(models);
@@ -273,6 +292,7 @@ int plugin_load(EngineContext *engine_context) {
             (EventHandler){.handler_fn = player_controller_handler_mouse});
 
     test_stuff(engine_context);
+    crosshair(engine_context);
 
     return 0;
 }

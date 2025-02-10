@@ -54,7 +54,7 @@ static int parse_face_element(
         errno = 0;
         int64_t value = strtol(token, NULL, 10);
 
-        if (errno == ERANGE || value > UINT32_MAX) {
+        if (errno != 0 || value > UINT32_MAX) {
             log_error("cannot take this at face value.");
             return ERROR_INVALID_FORMAT;
         }
@@ -62,7 +62,7 @@ static int parse_face_element(
         index = value > 0 ? (uint32_t)value - 1 : vertex_count - value;
 
         if (index >= vertex_count) {
-            log_error("face index larger than vertex count");
+            log_error("face index larger than vertex count (%zu/%zu)", index, vertex_count);
             return ERROR_INVALID_FORMAT;
         }
 

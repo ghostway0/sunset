@@ -83,17 +83,22 @@ const struct program_config default_program_config = {
 const struct program_config direct_program_config = {
         .vertex =
                 "#version 330 core\n"
-                "layout (location = 0) in vec3 aPos;\n"
+                "layout (location = 0) in vec2 aPos;\n"
+                "layout (location = 1) in vec2 aTexCoords;\n"
+                "out vec2 TexCoords;\n"
+                "uniform mat4 projection;\n"
                 "void main() {\n"
-                "   gl_Position = vec4(aPos, 1.0);\n"
+                "    gl_Position = projection * vec4(aPos.xy, 0.0, 1.0);\n"
+                "    TexCoords = aTexCoords;\n"
                 "}\n",
 
         .fragment =
                 "#version 330 core\n"
-                "uniform vec4 color;\n"
+                "in vec2 TexCoords;\n"
                 "out vec4 FragColor;\n"
+                "uniform sampler2D sampler;\n"
                 "void main() {\n"
-                "   FragColor = color;\n"
+                "    FragColor = texture(sampler, TexCoords);\n"
                 "}\n",
 };
 
@@ -1145,6 +1150,60 @@ static void run_fill_rect_command(
     glDeleteBuffers(1, &vbo);
 }
 
+void run_image_command(RenderContext *context, CommandImage command) {
+    GLuint i = compile_texture(&command.image);
+
+    GLuint vao, vbo;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glVertexAttribPointer(
+            0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,
+            2,
+            GL_FLOAT,
+            GL_FALSE,
+            4 * sizeof(float),
+            (void *)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    struct program program = context->backend_programs[PROGRAM_DRAW_DIRECT];
+    use_program(program);
+
+    glBindTexture(GL_TEXTURE_2D, i);
+
+    float xpos = command.pos.x;
+    float ypos = command.pos.y;
+    float h = command.image.h;
+    float w = command.image.w;
+
+    float vertices[6][4] = {{xpos, ypos + h, 0.0f, 1.0f},
+            {xpos, ypos, 0.0f, 0.0f},
+            {xpos + w, ypos, 1.0f, 0.0f},
+
+            {xpos, ypos + h, 0.0f, 1.0f},
+            {xpos + w, ypos, 1.0f, 0.0f},
+            {xpos + w, ypos + h, 1.0f, 1.0f}};
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+
+    program_set_uniform_mat4(
+            program, "projection", &context->ortho_projection, 1);
+    program_set_uniform_int(program, "sampler", 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, i);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+}
+
 void backend_draw(RenderContext *context,
         CommandBuffer *command_buffer,
         mat4 view,
@@ -1183,9 +1242,11 @@ void backend_draw(RenderContext *context,
                 size_t zindex = command.set_zindex.zindex;
                 float depth_offset = zindex * 0.1;
                 glDepthRange(0.0 + depth_offset, 1.0 - depth_offset);
-
                 break;
             }
+            case COMMAND_IMAGE:
+                run_image_command(context, command.image);
+                break;
             default:
                 todo();
                 break;
