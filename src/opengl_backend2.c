@@ -43,10 +43,11 @@ char const default_vertex_shader_source[] =
         "uniform mat4 model;\n"
         "uniform mat4 view;\n"
         "uniform mat4 projection;\n"
+        "uniform vec4 bounds;\n"
         "void main() {\n"
-        "    TexCoords = aTexCoords;\n"
         "    gl_Position = projection * view * model * vec4(aPos, "
         "1.0);\n"
+        "    TexCoords = aTexCoords * bounds.zw + bounds.xy;\n"
         "}\n";
 
 char const textured_fragment_shader_source[] =
@@ -110,11 +111,12 @@ const struct program_config instanced_textured_program_config = {
                 "uniform mat4 transforms[128];\n"
                 "uniform mat4 view;\n"
                 "uniform mat4 projection;\n"
+                "uniform vec4 bounds;\n"
                 "void main() {\n"
                 "    mat4 transform = transforms[gl_InstanceID];\n"
                 "    gl_Position = projection * view * transform * "
                 "vec4(aPos, 1.0);\n"
-                "    TexCoords = aTexCoords;\n"
+                "   TexCoords = aTexCoords * bounds.zw + bounds.xy;\n"
                 "}\n",
         .fragment = textured_fragment_shader_source,
 };
@@ -307,15 +309,20 @@ static int add_preconfigured_shader(
 static int setup_default_shaders(RenderContext *context) {
     int retval = 0;
 
-    if ((retval = add_preconfigured_shader(default_program_config,
+    if ((retval = add_preconfigured_shader(textured_program_config,
                  &context->backend_programs[PROGRAM_DRAW_MESH]))) {
+        return retval;
+    }
+
+    if ((retval = add_preconfigured_shader(default_program_config,
+                 &context->backend_programs[PROGRAM_DEFAULT_MESH]))) {
         return retval;
     }
 
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -741,13 +748,11 @@ static void upload_default_uniforms(
             "projection",
             &context->frame_cache.projection_matrix,
             1);
-
-    // (?) bind textures
 }
 
 static void draw_instanced_mesh(RenderContext *context,
         uint32_t mesh_id,
-        uint32_t atlas_id,
+        uint32_t texture_id,
         mat4 const *transforms,
         size_t num_transforms) {
     const struct compiled_mesh *mesh = &context->meshes[mesh_id];
@@ -756,9 +761,6 @@ static void draw_instanced_mesh(RenderContext *context,
 
     glBindVertexArray(mesh->vao);
 
-    // (?) bind textures
-
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
 
@@ -775,7 +777,15 @@ static void draw_instanced_mesh(RenderContext *context,
             program, "transforms", transforms, num_transforms);
 
     program_set_uniform_int(program, "sampler", 0);
-    glBindTexture(GL_TEXTURE_2D, context->atlases[atlas_id].buffer);
+
+    struct compiled_texture t = context->textures[texture_id];
+
+    program_set_uniform_vec4(program,
+            "bounds",
+            &(vec4){t.bounds.x, t.bounds.y, t.bounds.w, t.bounds.h});
+
+    struct atlas atlas = context->atlases[t.atlas_id];
+    glBindTexture(GL_TEXTURE_2D, atlas.buffer);
 
     glDrawElementsInstanced(GL_TRIANGLES,
             mesh->num_indices,
@@ -820,7 +830,26 @@ static void instancing_buffer_flush(
 static int run_mesh_command(RenderContext *context, CommandMesh command) {
     struct frame_cache *cache = &context->frame_cache;
 
-    if (!command.instanced || command.texture_id == UINT32_MAX) {
+    if (command.texture_id == UINT32_MAX) {
+        struct program program =
+                context->backend_programs[PROGRAM_DEFAULT_MESH];
+        struct compiled_mesh *mesh = &context->meshes[command.mesh_id];
+
+        glm_mat4_copy(command.transform, cache->model_matrix);
+
+        glBindVertexArray(mesh->vao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
+
+        use_program(program);
+
+        upload_default_uniforms(context, program);
+
+        glDrawElements(GL_TRIANGLES, mesh->num_indices, GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+    } else if (!command.instanced) {
         struct program program =
                 context->backend_programs[PROGRAM_DRAW_MESH];
         struct compiled_mesh *mesh = &context->meshes[command.mesh_id];
@@ -829,13 +858,20 @@ static int run_mesh_command(RenderContext *context, CommandMesh command) {
 
         glBindVertexArray(mesh->vao);
 
-        // (?) bind texture
-
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->vbo);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
 
         use_program(program);
+
+        struct compiled_texture t = context->textures[command.texture_id];
+
+        program_set_uniform_vec4(program,
+                "bounds",
+                &(vec4){t.bounds.x, t.bounds.y, t.bounds.w, t.bounds.h});
+
+        program_set_uniform_int(program, "sampler", 0);
+
+        glBindTexture(GL_TEXTURE_2D, context->atlases[t.atlas_id].buffer);
 
         upload_default_uniforms(context, program);
 

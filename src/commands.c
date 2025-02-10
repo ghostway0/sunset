@@ -141,7 +141,7 @@ void command_mesh_init(Command *command,
         mat4 transform) {
     command->type = COMMAND_MESH;
     command->mesh = (CommandMesh){
-            .instanced = true,
+            .instanced = false,
             .mesh_id = mesh_id,
             .texture_id = texture_id,
             .transform = GLM_MAT4_IDENTITY_INIT,

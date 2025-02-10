@@ -239,7 +239,7 @@ void test_stuff(EngineContext *engine_context) {
             .mesh = {.instanced = true,
                     .mesh_id = 0,
                     .transform = {},
-                    .texture_id = first_id}};
+                    .texture_id = UINT32_MAX}};
     calculate_model_matrix(&transform, mesh_cmd.mesh.transform);
 
     vector_append(rend.commands, mesh_cmd);
