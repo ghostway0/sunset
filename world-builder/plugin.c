@@ -5,7 +5,9 @@
 #include <cglm/vec3.h>
 #include <log.h>
 
+#include "internal/math.h"
 #include "internal/utils.h"
+#include "map.h"
 #include "sunset/bitmask.h"
 #include "sunset/camera.h"
 #include "sunset/ecs.h"
@@ -19,6 +21,8 @@
 #include "sunset/rman.h"
 #include "sunset/vector.h"
 #include "sunset/vfs.h"
+
+DECLARE_RESOURCE_ID(spawned_arrows);
 
 typedef struct Clickable {
     void (*clicked_callback)(EngineContext *, EntityPtr clicked_entity);
@@ -204,13 +208,10 @@ static void axis_arrow_dragged(
             axis_arrow->parent,
             COMPONENT_ID(Transform));
 
-    float off = -offset.x + offset.y;
+    float off = (-offset.x + offset.y) * 0.01;
 
     vec3 offset_vec;
     glm_vec3_scale(axis_arrow->axis, off, offset_vec);
-
-    log_debug(
-            "parent moved to " vec3_format, vec3_args(parent_t->position));
 
     glm_vec3_add(parent_t->position, offset_vec, parent_t->position);
     aabb_translate(&parent_t->bounding_box, offset_vec);
@@ -234,7 +235,7 @@ void spawn_axis_arrow(EngineContext *engine_context,
     Transform new_transform = {};
 
     new_transform.bounding_box =
-            (AABB){.min = {0.0, 0.0, 0.0}, .max = {1.1, 1.1, 1.0}};
+            (AABB){.min = {0.0, 0.0, 0.0}, .max = {0.1, 0.1, 0.2}};
     vec3 pos;
     aabb_get_face_center(&transform->bounding_box, axis, pos);
     aabb_translate(&new_transform.bounding_box, pos);
@@ -271,11 +272,41 @@ void spawn_axis_arrow(EngineContext *engine_context,
     entity_builder_finish(&builder);
 }
 
+static Order order_entityptr(const void *a, const void *b) {
+    EntityPtr *eptr_a = (EntityPtr *)a;
+    EntityPtr *eptr_b = (EntityPtr *)b;
+
+    if (eptr_a->archetype < eptr_b->archetype) {
+        return ORDER_LESS_THAN;
+    }
+    
+    if (eptr_a->archetype > eptr_b->archetype) {
+        return ORDER_GREATER_THAN;
+    }
+
+    if (eptr_a->element < eptr_b->element) {
+        return ORDER_LESS_THAN;
+    }
+    
+    if (eptr_a->element > eptr_b->element) {
+        return ORDER_GREATER_THAN;
+    }
+
+    return ORDER_EQUAL;
+}
+
 void spawn_axis_arrows(EngineContext *engine_context, EntityPtr target) {
     Transform const *target_t = ecs_component_from_ptr(
             &engine_context->world, target, COMPONENT_ID(Transform));
 
     if (!target_t) {
+        return;
+    }
+
+    map(EntityPtr) *spawned_arrows = rman_get(
+            &engine_context->rman, RESOURCE_ID(spawned_arrows));
+
+    if (map_get(*spawned_arrows, target, order_entityptr)) {
         return;
     }
 
@@ -292,6 +323,8 @@ void spawn_axis_arrows(EngineContext *engine_context, EntityPtr target) {
             engine_context, target_t, target, (vec3){1, 0, 0}, *texture2);
     spawn_axis_arrow(
             engine_context, target_t, target, (vec3){0, 0, -1}, *texture3);
+
+    map_insert(*spawned_arrows, target, order_entityptr);
 }
 
 static void subject_click(EngineContext *engine_context, EntityPtr eptr) {
@@ -448,7 +481,12 @@ int plugin_load(EngineContext *engine_context) {
             (EventHandler){.handler_fn = player_controller_handler_mouse});
 
     test_stuff(engine_context);
-    crosshair(engine_context);
+    // crosshair(engine_context);
+
+    map(EntityPtr) arrows_created;
+    map_init(arrows_created);
+
+    REGISTER_RESOURCE(&engine_context->rman, spawned_arrows, arrows_created);
 
     return 0;
 }

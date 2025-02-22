@@ -21,10 +21,11 @@ size_t map_find_index(void const *v,
 #define map_insert(v, value, compar)                                       \
     do {                                                                   \
         size_t __i = map_find_index(                                       \
-                v, vector_size(v), sizeof(*v), &value, compar);            \
+                v, vector_size(v), sizeof(*(v)), &value, compar);          \
         vector_resize(v, vector_size(v) + 1);                              \
-        for (size_t __j = vector_size(v); __j > __i; __j--) {              \
-            v[__j] = v[__j - 1];                                           \
+        if (__i < vector_size(v) - 1) {                                    \
+            memmove(&v[__i + 1], &v[__i],                                  \
+                    (vector_size(v) - __i - 1) * sizeof(*(v)));            \
         }                                                                  \
         v[__i] = value;                                                    \
     } while (0)

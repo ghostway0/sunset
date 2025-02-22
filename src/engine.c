@@ -84,6 +84,7 @@ static int engine_setup(EngineContext *context,
     if ((err = backend_setup(&context->render_context,
                  &context->event_queue,
                  render_config))) {
+        log_error("Could not set up backend");
         return err;
     }
 
