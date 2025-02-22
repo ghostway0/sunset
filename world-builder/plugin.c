@@ -239,7 +239,10 @@ void test_stuff(EngineContext *engine_context) {
     REGISTER_COMPONENT(&engine_context->world, AxisArrow);
 
     VfsFile file;
-    vfs_open("axis_arrow.obj", VFS_OPEN_MODE_READ, &file);
+    if (vfs_open("axis_arrow.obj", VFS_OPEN_MODE_READ, &file)) {
+        log_error("oh no");
+    }
+
     Reader r = vfs_file_reader(&file);
 
     obj_model_parse(&r, &models);
@@ -247,10 +250,12 @@ void test_stuff(EngineContext *engine_context) {
     Renderable rend;
     vector_init(rend.commands);
 
-    backend_register_mesh(&engine_context->render_context, models[0]);
+    uint32_t mesh_id = backend_register_mesh(&engine_context->render_context, models[0]);
 
     Image texture;
-    load_image_file("utc16.tga", &texture);
+    if (load_image_file("utc16.tga", &texture)) {
+        log_error("oh no");
+    }
 
     Rect bounds[] = {{0, 0, texture.w, texture.h}};
 
@@ -276,7 +281,7 @@ void test_stuff(EngineContext *engine_context) {
 
     Command mesh_cmd = {.type = COMMAND_MESH,
             .mesh = {.instanced = true,
-                    .mesh_id = 0,
+                    .mesh_id = mesh_id,
                     .transform = {},
                     .texture_id = UINT32_MAX}};
     calculate_model_matrix(&transform, mesh_cmd.mesh.transform);
@@ -284,6 +289,8 @@ void test_stuff(EngineContext *engine_context) {
     vector_append(rend.commands, mesh_cmd);
 
     Clickable clickable = {.clicked_callback = log_thing};
+
+    log_debug("adding many things");
 
     EntityBuilder builder;
     entity_builder_init(&builder, &engine_context->world);

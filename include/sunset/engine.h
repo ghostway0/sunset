@@ -2,6 +2,8 @@
 
 #include <stdbool.h>
 
+#include <cglm/types.h>
+
 #include "sunset/backend.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
@@ -17,6 +19,7 @@ typedef void *PluginHandle;
 
 typedef struct DebugInfo {
     float avg_frametime;
+    vec3 direction;
 } DebugInfo;
 
 typedef struct EngineContext {

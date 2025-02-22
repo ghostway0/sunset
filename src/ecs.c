@@ -1,9 +1,9 @@
+#include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "log.h"
 #include "sunset/bitmask.h"
 #include "sunset/vector.h"
 
@@ -105,13 +105,17 @@ void *worldit_get_component(WorldIterator *iterator, Index component_id) {
     Archetype *archetype =
             &iterator->world->archetypes[iterator->current_archetype];
 
-    size_t column_index = 0;
+    size_t column_index = SIZE_MAX;
     size_t num_columns = archetype_num_columns(archetype);
     for (size_t i = 0; i < num_columns; i++) {
         if (bitmask_is_set(&archetype->columns[i].mask, component_id)) {
             column_index = i;
             break;
         }
+    }
+
+    if (column_index == SIZE_MAX) {
+        return NULL;
     }
 
     Column *column = &archetype->columns[column_index];

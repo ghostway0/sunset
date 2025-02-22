@@ -180,8 +180,6 @@ int engine_run(RenderConfig render_config, Game const *game) {
         render_world(&context.world, &context.camera, &context.cmdbuf);
 
         float frame_time = time_since_s(start);
-        context.debug_info.avg_frametime =
-                (context.debug_info.avg_frametime + frame_time) / 2;
 
         backend_draw(&context.render_context,
                 &context.cmdbuf,
@@ -193,7 +191,11 @@ int engine_run(RenderConfig render_config, Game const *game) {
         }
 
 #ifndef NDEBUG
-        log_debug("DebugInfo(fps: %f)", 1.0 / context.debug_info.avg_frametime);
+        context.debug_info.avg_frametime =
+                (context.debug_info.avg_frametime + frame_time) / 2;
+        glm_vec3_copy(context.camera.direction, context.debug_info.direction);
+
+        // TODO: render overlay
 #endif
     }
 

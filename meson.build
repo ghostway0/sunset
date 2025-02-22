@@ -19,8 +19,9 @@ add_project_arguments(
   language: 'c',
 )
 
-add_project_link_arguments([], language: 'c')
-    
+if target_machine.system() == 'linux'
+  add_project_link_arguments(['-export-dynamic'], language: 'c')
+endif
 
 render_backend = get_option('render_backend')
 

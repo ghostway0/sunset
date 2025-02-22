@@ -1,6 +1,7 @@
 #include <cglm/affine.h>
 #include <cglm/mat4.h>
 
+#include "log.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/ecs.h"
