@@ -107,6 +107,8 @@ typedef struct RenderContext {
     Bitmask mouse_buttons;
     size_t click_id;
 
+    EntityRenderContext *current_context;
+
     Bitmask keyboard_state;
     Bitmask state_temp;
 

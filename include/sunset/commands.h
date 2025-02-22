@@ -22,6 +22,7 @@ enum command_type : uint8_t {
     COMMAND_IMAGE,
     COMMAND_MESH,
     COMMAND_SET_ZINDEX,
+    COMMAND_SET_CONTEXT,
     NUM_COMMANDS,
 };
 
@@ -78,12 +79,15 @@ typedef struct CommandMesh {
     bool instanced;
     uint32_t mesh_id;
     uint32_t texture_id;
-    mat4 transform;
 } CommandMesh;
 
 typedef struct CommandSetZIndex {
     size_t zindex;
 } CommandSetZIndex;
+
+typedef struct CommandSetContext {
+    EntityRenderContext *context;
+} CommandSetContext;
 
 typedef struct Command {
     enum command_type type;
@@ -100,6 +104,7 @@ typedef struct Command {
         CommandImage image;
         CommandMesh mesh;
         CommandSetZIndex set_zindex;
+        CommandSetContext set_context;
     };
 } Command;
 
@@ -130,10 +135,8 @@ void command_text_init(Command *command,
 void command_image_init(
         Command *command, Point pos, Rect bounds, Image const *image);
 
-void command_mesh_init(Command *command,
-        uint32_t mesh_id,
-        uint32_t texture_id,
-        mat4 transform);
+void command_mesh_init(
+        Command *command, uint32_t mesh_id, uint32_t texture_id);
 
 void command_set_zindex_init(Command *command, size_t zindex);
 
@@ -184,14 +187,14 @@ void cmdbuf_add_text(CommandBuffer *cmdbuf,
 void cmdbuf_add_image(
         CommandBuffer *cmdbuf, Point pos, Rect bounds, Image const *image);
 
-void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
-        uint32_t mesh_id,
-        uint32_t texture_id,
-        mat4 transform);
+void cmdbuf_add_mesh(
+        CommandBuffer *cmdbuf, uint32_t mesh_id, uint32_t texture_id);
 
 void cmdbuf_add_set_zindex(CommandBuffer *cmdbuf, size_t zindex);
 
 bool cmdbuf_empty(CommandBuffer *cmdbuf);
 
-void cmdbuf_add_multiple(
-        CommandBuffer *cmdbuf, Command const *commands, size_t count);
+void cmdbuf_add_multiple(CommandBuffer *cmdbuf,
+        Command const *commands,
+        size_t count,
+        EntityRenderContext *context);

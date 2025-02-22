@@ -56,10 +56,6 @@ static void object_drag_handler(EngineContext *engine_context,
         Clickable *clickable = ecs_component_from_ptr(
                 &engine_context->world, eptr, COMPONENT_ID(Clickable));
 
-        log_debug("%zu %zu %p",
-                clickable->click_id + 1,
-                backend_get_click_id(&engine_context->render_context),
-                clickable->dragged_callback);
         if (clickable->dragged_callback
                 && clickable->click_id + 1
                         == backend_get_click_id(
@@ -118,8 +114,6 @@ static void object_click_handler(EngineContext *engine_context,
 
     worldit_destroy(&it);
 }
-
-DECLARE_COMPONENT_ID(AxisGizmo);
 
 static void player_controller_handler_mouse(
         EngineContext *engine_context, void *, Event const event) {
@@ -235,7 +229,6 @@ void spawn_axis_arrow(EngineContext *engine_context,
 
     Command mesh_cmd = {.type = COMMAND_MESH,
             .mesh = {.mesh_id = *mesh_id,
-                    .transform = {},
                     .texture_id = texture}};
 
     Transform new_transform = {};
@@ -262,7 +255,6 @@ void spawn_axis_arrow(EngineContext *engine_context,
         glm_vec3_zero(new_transform.rotation);
     }
 
-    calculate_model_matrix(&new_transform, mesh_cmd.mesh.transform);
     vector_append(rend.commands, mesh_cmd);
 
     AxisArrow arrow = {.parent = parent};
@@ -397,11 +389,9 @@ void test_stuff(EngineContext *engine_context) {
     aabb_translate(&transform.bounding_box, transform.position);
 
     Command mesh_cmd = {.type = COMMAND_MESH,
-            .mesh = {.instanced = true,
+            .mesh = {.instanced = false,
                     .mesh_id = mesh_id,
-                    .transform = {},
                     .texture_id = UINT32_MAX}};
-    calculate_model_matrix(&transform, mesh_cmd.mesh.transform);
 
     vector_append(rend.commands, mesh_cmd);
 

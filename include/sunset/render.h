@@ -28,17 +28,26 @@ typedef struct TransformGraph {
     vector(EntityPtr) children;
 } TransformGraph;
 
+// moves should probably be handled by a separate function
+// that understands the dirty flag
 typedef struct Transform {
+    // probably should have a cached model matrix
     AABB bounding_box;
     vec3 position;
     vec3 rotation;
     float scale;
+    bool dirty;
 } Transform;
 
 typedef void (*RenderFn)(CommandBuffer *cmdbuf);
 
+typedef struct EntityRenderContext {
+    mat4 model;
+} EntityRenderContext;
+
 typedef struct Renderable {
     vector(Command) commands;
+    EntityRenderContext context;
 } Renderable;
 
 typedef struct Chunk {

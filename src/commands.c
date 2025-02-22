@@ -136,27 +136,20 @@ void cmdbuf_add_image(
     cmdbuf_append(cmdbuf, &command);
 }
 
-void command_mesh_init(Command *command,
-        uint32_t mesh_id,
-        uint32_t texture_id,
-        mat4 transform) {
+void command_mesh_init(
+        Command *command, uint32_t mesh_id, uint32_t texture_id) {
     command->type = COMMAND_MESH;
     command->mesh = (CommandMesh){
             .instanced = true,
             .mesh_id = mesh_id,
             .texture_id = texture_id,
-            .transform = GLM_MAT4_IDENTITY_INIT,
     };
-
-    glm_mat4_copy(transform, command->mesh.transform);
 }
 
-void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
-        uint32_t mesh_id,
-        uint32_t texture_id,
-        mat4 transform) {
+void cmdbuf_add_mesh(
+        CommandBuffer *cmdbuf, uint32_t mesh_id, uint32_t texture_id) {
     Command command;
-    command_mesh_init(&command, mesh_id, texture_id, transform);
+    command_mesh_init(&command, mesh_id, texture_id);
     cmdbuf_append(cmdbuf, &command);
 }
 
@@ -175,8 +168,13 @@ void cmdbuf_add_set_zindex(CommandBuffer *cmdbuf, size_t z) {
     cmdbuf_append(cmdbuf, &command);
 }
 
-void cmdbuf_add_multiple(
-        CommandBuffer *cmdbuf, Command const *commands, size_t count) {
+void cmdbuf_add_multiple(CommandBuffer *cmdbuf,
+        Command const *commands,
+        size_t count,
+        EntityRenderContext *context) {
+    Command csc = {.type = COMMAND_SET_CONTEXT, .set_context = {context}};
+    cmdbuf_append(cmdbuf, &csc);
+
     for (size_t i = 0; i < count; i++) {
         cmdbuf_append(cmdbuf, &commands[i]);
     }

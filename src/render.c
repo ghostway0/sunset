@@ -2,6 +2,7 @@
 #include <cglm/mat4.h>
 
 #include "internal/utils.h"
+#include <log.h>
 #include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/ecs.h"
@@ -60,13 +61,15 @@ void render_world(
             // when unmutable would be a rule
             visible = camera_box_within_frustum(
                     (Camera *)camera, transform->bounding_box);
+
+            calculate_model_matrix(transform, renderable->context.model);
         }
-        visible = true;
 
         if (visible) {
             cmdbuf_add_multiple(cmdbuf,
                     renderable->commands,
-                    vector_size(renderable->commands));
+                    vector_size(renderable->commands),
+                    &renderable->context);
         }
 
         worldit_advance(&it);

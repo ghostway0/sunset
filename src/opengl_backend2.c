@@ -853,8 +853,6 @@ static int run_mesh_command(RenderContext *context, CommandMesh command) {
                 context->backend_programs[PROGRAM_DEFAULT_MESH];
         struct compiled_mesh *mesh = &context->meshes[command.mesh_id];
 
-        glm_mat4_copy(command.transform, cache->model_matrix);
-
         glBindVertexArray(mesh->vao);
 
         glBindBuffer(GL_ARRAY_BUFFER, mesh->tbo);
@@ -862,7 +860,14 @@ static int run_mesh_command(RenderContext *context, CommandMesh command) {
 
         use_program(program);
 
-        upload_default_uniforms(context, program);
+        program_set_uniform_mat4(
+                program, "model", &context->current_context->model, 1);
+        program_set_uniform_mat4(
+                program, "view", &context->frame_cache.view_matrix, 1);
+        program_set_uniform_mat4(program,
+                "projection",
+                &context->frame_cache.projection_matrix,
+                1);
 
         glDrawElements(GL_TRIANGLES, mesh->num_indices, GL_UNSIGNED_INT, 0);
 
@@ -872,7 +877,7 @@ static int run_mesh_command(RenderContext *context, CommandMesh command) {
                 context->backend_programs[PROGRAM_DRAW_MESH];
         struct compiled_mesh *mesh = &context->meshes[command.mesh_id];
 
-        glm_mat4_copy(command.transform, cache->model_matrix);
+        glm_mat4_copy(context->current_context->model, cache->model_matrix);
 
         glBindVertexArray(mesh->vao);
 
@@ -926,7 +931,8 @@ static int run_mesh_command(RenderContext *context, CommandMesh command) {
                "it is currently required that anything that gets "
                "instanced together is stored within a single atlas");
 
-        vector_append_copy(buffer->transforms, command.transform);
+        vector_append_copy(
+                buffer->transforms, context->current_context->model);
     }
 
     return 0;
@@ -1263,6 +1269,9 @@ void backend_draw(RenderContext *context,
                 glDepthRange(0.0 + depth_offset, 1.0 - depth_offset);
                 break;
             }
+            case COMMAND_SET_CONTEXT:
+                context->current_context = command.set_context.context;
+                break;
             case COMMAND_IMAGE:
                 run_image_command(context, command.image);
                 break;
