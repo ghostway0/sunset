@@ -10,7 +10,7 @@
 
 #endif
 
-char const *get_filename_extesnion(char const *filename) {
+char const *get_filename_extension(char const *filename) {
     char const *dot = strrchr(filename, '.');
     if (!dot || dot == filename)
         return "";

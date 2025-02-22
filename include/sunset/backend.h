@@ -66,3 +66,5 @@ void backend_show_mouse(RenderContext *context);
 RenderConfig backend_get_params();
 
 void backend_generate_input_events(RenderContext *context);
+
+size_t backend_get_click_id(RenderContext *context);

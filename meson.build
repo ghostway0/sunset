@@ -62,7 +62,6 @@ sunset_files = [
   'src/input.c',
   'src/events.c',
   'src/json.c',
-  # 'src/physics2.c',
   'src/bitmask.c',
   'src/shader.c',
   'src/ecs.c',

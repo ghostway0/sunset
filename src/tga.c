@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <log.h>
+
 #include "sunset/errors.h"
 #include "sunset/images.h"
 #include "sunset/io.h"
@@ -64,26 +66,26 @@ typedef struct TGAFooter {
 } __attribute__((packed)) TGAFooter;
 
 static int decompress_rle(
-        uint8_t *data, size_t size, size_t pixel_size_bytes, Color *out) {
-    size_t offset = 0;
-    Color pixel;
+        Reader *reader, size_t decompressed_size, size_t pixel_size_bytes, Color *out) {
+    size_t decompressed_read = 0;
+    uint8_t pixel[pixel_size_bytes];
 
-    while (offset < size) {
-        uint8_t packet_header = data[offset++];
+    while (decompressed_read < decompressed_size) {
+        uint8_t packet_header;
+        reader_readall(reader, 1, &packet_header);
 
         if (packet_header < 128) { // Raw pixel data
             packet_header++;
-            for (int i = 0; i < packet_header; ++i) {
-                memcpy(&pixel, data + offset, pixel_size_bytes);
-                offset += pixel_size_bytes;
-                *out++ = pixel;
+            for (size_t i = 0; i < packet_header; i++) {
+                decompressed_read += reader_readall(reader, pixel_size_bytes, pixel);
+                *out++ = color_from_bytes(pixel, pixel_size_bytes);
             }
         } else { // RLE packet
             packet_header -= 127;
-            memcpy(&pixel, data + offset, pixel_size_bytes);
-            offset += pixel_size_bytes;
-            for (int i = 0; i < packet_header; ++i) {
-                *out++ = pixel;
+            decompressed_read += reader_readall(reader, pixel_size_bytes, pixel) * packet_header;
+            Color color = color_from_bytes(pixel, pixel_size_bytes);
+            for (size_t i = 0; i < packet_header; i++) {
+                *out++ = color;
             }
         }
     }
@@ -100,12 +102,13 @@ int tga_load_image(Reader *reader, Image *image_out) {
         return -ERROR_IO;
     }
 
-    if (header.bpp % 8 != 0 || header.bpp >= 32) {
+    if (header.bpp % 8 != 0 || header.bpp > 32) {
         return -ERROR_INVALID_FORMAT;
     }
 
     size_t image_size = header.width * header.height;
     size_t pixel_size_bytes = header.bpp / 8;
+
 
     image_out->pixels = sunset_calloc(image_size, sizeof(Color));
     image_out->w = header.width;
@@ -138,21 +141,13 @@ int tga_load_image(Reader *reader, Image *image_out) {
             vector_destroy(color_map_data);
         }
 
-        // Read and decompress RLE data
-        vector(uint8_t) rle_data;
-        vector_init(rle_data);
-        reader_read_to_vec(
-                reader, image_size * pixel_size_bytes, &rle_data);
-
-        if ((retval = decompress_rle(rle_data,
+        if ((retval = decompress_rle(reader,
                      image_size * pixel_size_bytes,
                      pixel_size_bytes,
                      image_out->pixels))
                 != 0) {
-            vector_destroy(rle_data);
             goto cleanup;
         }
-        vector_destroy(rle_data);
 
         if (color_map) {
             free(color_map);
@@ -163,7 +158,8 @@ int tga_load_image(Reader *reader, Image *image_out) {
             uint16_t pixel_data;
             if (reader_read(reader, sizeof(uint16_t), &pixel_data)
                     != sizeof(uint16_t)) {
-                return ERROR_IO;
+                retval = ERROR_IO;
+                break;
             }
 
             if (pixel_size_bytes == 2) {

@@ -12,10 +12,15 @@ typedef void *(*ResourceInitFn)(void);
 
 typedef struct ResourceManager ResourceManager;
 
-size_t _rman_register_resource(ResourceManager *rman, void *ptr);
+size_t _rman_register_resource(
+        ResourceManager *rman, void const *ptr, size_t size);
 
-#define REGISTER_RESOURCE(rman, rname, ptr)                                \
-    RESOURCE_ID(rname) = _rman_register_resource(rman, ptr)
+#define REGISTER_RESOURCE(rman, rname, value)                              \
+    ({                                                                     \
+        auto __local = value;                                              \
+        RESOURCE_ID(rname) =                                               \
+                _rman_register_resource(rman, &__local, sizeof(__local));  \
+    })
 
 typedef struct ResourceManager {
     vector(void *) resources;

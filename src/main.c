@@ -22,7 +22,6 @@ int main() {
     ecs_init(&world);
 
     Game game = {
-            .bounds = {},
             .world = world,
     };
 

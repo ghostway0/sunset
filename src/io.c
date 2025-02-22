@@ -1,6 +1,9 @@
+#include <ctype.h>
+#include <log.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include "internal/math.h"
 #include "internal/utils.h"
@@ -35,6 +38,23 @@ ssize_t reader_read_until(
 
 ssize_t reader_read(Reader *reader, size_t count, void *out) {
     return reader->read(reader->ctx, count, out);
+}
+
+size_t reader_readall(Reader *reader, size_t count, void *out) {
+    size_t bytes_read = 0;
+
+    while (bytes_read < count) {
+        ssize_t read_res =
+                reader_read(reader, count - bytes_read, out + bytes_read);
+
+        if (read_res < 0) {
+            continue;
+        }
+
+        bytes_read += read_res;
+    }
+
+    return bytes_read;
 }
 
 void reader_skip(Reader *reader, size_t num_bytes) {
@@ -254,6 +274,28 @@ ssize_t writer_vprintf(Writer *writer, char const *fmt, ...) {
             p++;
         } else {
             total_written += writer_write_byte(writer, *p);
+            p++;
+        }
+
+        bool left_justify = 0;
+        size_t width = 0;
+        char length_modifier = '\0';
+
+        if (*p == '-') {
+            left_justify = true;
+            p++;
+        }
+
+        if (isdigit(*p)) {
+            while (isdigit(*p)) {
+                width = width * 10 + (*p - '0');
+                p++;
+            }
+        }
+
+        if (*p == 'z') {
+            length_modifier = 'z';
+            p++;
         }
 
         switch (*p) {
@@ -263,13 +305,33 @@ ssize_t writer_vprintf(Writer *writer, char const *fmt, ...) {
                 break;
             }
             case 'u': {
-                unsigned int value = va_arg(args, unsigned int);
-                total_written += writer_print_u64(writer, value);
+                if (length_modifier == 'z') {
+                    size_t value = va_arg(args, size_t);
+                    total_written += writer_print_u64(writer, value);
+                } else {
+                    unsigned int value = va_arg(args, unsigned int);
+                    total_written += writer_print_u64(writer, value);
+                }
                 break;
             }
             case 's': {
                 char const *str = va_arg(args, char const *);
-                total_written += writer_print_string(writer, str);
+                size_t len = strlen(str);
+                if (width > len) {
+                    if (left_justify) {
+                        total_written += writer_print_string(writer, str);
+                        for (size_t i = len; i < width; i++) {
+                            total_written += writer_write_byte(writer, ' ');
+                        }
+                    } else {
+                        for (size_t i = len; i < width; i++) {
+                            total_written += writer_write_byte(writer, ' ');
+                        }
+                        total_written += writer_print_string(writer, str);
+                    }
+                } else {
+                    total_written += writer_print_string(writer, str);
+                }
                 break;
             }
             case 'f': {
@@ -287,7 +349,7 @@ ssize_t writer_vprintf(Writer *writer, char const *fmt, ...) {
                 break;
             }
             default: {
-                // Handle unknown format specifier
+                // Unknown specifier: print '%' and the character
                 total_written += writer_write_byte(writer, '%');
                 total_written += writer_write_byte(writer, *p);
                 break;

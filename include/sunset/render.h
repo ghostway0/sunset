@@ -22,6 +22,12 @@ typedef struct RenderConfig {
     bool enable_vsync;
 } RenderConfig;
 
+typedef struct TransformGraph {
+    // itself if root
+    EntityPtr parent;
+    vector(EntityPtr) children;
+} TransformGraph;
+
 typedef struct Transform {
     AABB bounding_box;
     vec3 position;

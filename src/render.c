@@ -1,7 +1,7 @@
 #include <cglm/affine.h>
 #include <cglm/mat4.h>
 
-#include "log.h"
+#include "internal/utils.h"
 #include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/ecs.h"
@@ -10,6 +10,7 @@
 
 #include "sunset/render.h"
 
+DECLARE_COMPONENT_ID(TransformGraph);
 DECLARE_COMPONENT_ID(Transform);
 DECLARE_COMPONENT_ID(Renderable);
 
@@ -27,12 +28,15 @@ void calculate_model_matrix(Transform const *transform, mat4 model_matrix) {
 
     glm_translate(model_matrix, position);
 
-    glm_rotate(
-            model_matrix, transform->rotation[0], (vec3){1.0f, 0.0f, 0.0f});
-    glm_rotate(
-            model_matrix, transform->rotation[1], (vec3){0.0f, 1.0f, 0.0f});
-    glm_rotate(
-            model_matrix, transform->rotation[2], (vec3){0.0f, 0.0f, 1.0f});
+    // HACK:
+    float angle = glm_vec3_norm((float *)transform->rotation);
+    if (angle > EPSILON) {
+        vec3 axis;
+        glm_vec3_normalize_to((float *)transform->rotation, axis);
+        glm_rotate(model_matrix, angle, axis);
+    }
+
+    glm_scale_uni(model_matrix, transform->scale);
 }
 
 void render_world(
@@ -57,6 +61,7 @@ void render_world(
             visible = camera_box_within_frustum(
                     (Camera *)camera, transform->bounding_box);
         }
+        visible = true;
 
         if (visible) {
             cmdbuf_add_multiple(cmdbuf,

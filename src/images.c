@@ -1,5 +1,5 @@
+#include <stdio_ext.h>
 #include <string.h>
-#include <sys/mman.h>
 
 #include "sunset/byte_stream.h"
 #include "sunset/errors.h"
@@ -13,6 +13,21 @@
 
 Color color_from_rgb(uint8_t r, uint8_t g, uint8_t b) {
     return (Color){r, g, b, 255};
+}
+
+Color color_from_bytes(uint8_t *bytes, size_t count) {
+    switch (count) {
+        case 1:
+            return color_from_grayscale(bytes[0]);
+        case 2:
+            return color_from_16bit(*(uint16_t *)bytes);
+        case 3:
+            return color_from_rgb(bytes[0], bytes[1], bytes[2]);
+        case 4:
+            return (Color){bytes[0], bytes[1], bytes[2], bytes[3]};
+        default:
+            unreachable();
+    }
 }
 
 Color color_from_16bit(uint16_t color) {
@@ -75,7 +90,7 @@ int load_image_file(char const *path, Image *image_out) {
 
     Reader reader = {.read = (ReadFn)bstream_read, .ctx = &stream};
 
-    if (strcmp(get_filename_extesnion(path), ".tga")) {
+    if (strcmp(get_filename_extension(path), ".tga")) {
         retval = tga_load_image(&reader, image_out);
     } else {
         retval = -ERROR_INVALID_ARGUMENTS;
@@ -119,3 +134,15 @@ void image_destroy(Image *image) {
 }
 
 // void image_convert(Image const *image, Image *image_out) {}
+
+int image_slice(Image const *image, Rect bounds, Image *sliced_out) {
+    // TODO: add bounds checking
+
+    sliced_out->w = bounds.w;
+    sliced_out->h = bounds.h;
+
+    sliced_out->pixels =
+            image->pixels + (size_t)bounds.y * image->w + (size_t)bounds.x;
+
+    return 0;
+}

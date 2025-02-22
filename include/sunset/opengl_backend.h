@@ -74,6 +74,7 @@ struct compiled_texture {
 
 struct atlas {
     GLuint buffer;
+    size_t size[2];
     size_t current_size;
 };
 
@@ -104,6 +105,7 @@ typedef struct RenderContext {
     Point mouse;
     bool first_mouse;
     Bitmask mouse_buttons;
+    size_t click_id;
 
     Bitmask keyboard_state;
     Bitmask state_temp;

@@ -18,6 +18,8 @@ void reader_init(Reader *reader, void *ctx, ReadFn read);
 
 ssize_t reader_read(Reader *reader, size_t count, void *out);
 
+size_t reader_readall(Reader *reader, size_t count, void *out);
+
 ssize_t reader_read_until(
         Reader *reader, uint8_t delimiter, vector(uint8_t) * out);
 

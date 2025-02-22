@@ -42,13 +42,6 @@ typedef struct EngineContext {
     DebugInfo debug_info;
 } EngineContext;
 
-// engine context setup:
-// 1. default ui_context
-// 2. command buffer, render context
-// 3. scene
-// 4. event_queue
-// 5. dt (60 fps default for now?)
-
 typedef enum MouseMode {
     MOUSE_MODE_DISABLED,
     MOUSE_MODE_SHOW,
@@ -56,12 +49,10 @@ typedef enum MouseMode {
 
 typedef struct Plugin {
     char const *object_path;
-    Digest expected_digest;
+    // Digest expected_digest;
 } Plugin;
 
 typedef struct Game {
-    AABB bounds;
-
     World world;
 
     vector(Plugin) plugins;

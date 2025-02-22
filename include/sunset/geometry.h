@@ -107,3 +107,7 @@ bool ray_intersects_aabb(
 #define aabb_args(b) vec3_args((b).min), vec3_args((b).max)
 
 void aabb_closest_point(AABB const *aabb, vec3 point, vec3 closest_out);
+
+void aabb_get_face_center(const AABB *aabb,
+        const vec3 axis,
+        vec3 face_center_out);

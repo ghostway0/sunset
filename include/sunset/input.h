@@ -26,6 +26,7 @@ typedef struct MouseMoveEvent {
 
 typedef struct MouseClickEvent {
     MouseButton button;
+    size_t click_id;
 } MouseClickEvent;
 
 typedef enum Focus {

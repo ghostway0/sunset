@@ -9,7 +9,7 @@
 
 #define MAX_NUM_CALLBACKS 8
 
-enum LogLevel {
+typedef enum LogLevel {
     LOG_TRACE,
     LOG_DEBUG,
     LOG_INFO,
@@ -17,7 +17,7 @@ enum LogLevel {
     LOG_ERROR,
     LOG_FATAL,
     NUM_LEVELS,
-} typedef LogLevel;
+} LogLevel;
 
 typedef struct {
     char const *file;
@@ -34,12 +34,12 @@ void log_set_level(LogLevel level);
 void log_set_quiet(bool enable);
 void log_add_callback(LogCallback fn, void *udata, LogLevel level);
 
-struct Logger {
+typedef struct Logger {
     vector(LogCallback) callbacks[NUM_LEVELS];
     vector(void *) udatas[NUM_LEVELS];
     LogLevel level;
     bool quiet;
-} typedef Logger;
+} Logger;
 
 #define log_trace(...)                                                     \
     log_internal(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)

@@ -8,6 +8,7 @@
 #define COLOR_TRANSPARENT (Color){0}
 
 typedef struct Point Point;
+typedef struct Rect Rect;
 
 enum image_format {
     IMAGE_FORMAT_GRAY,
@@ -51,3 +52,7 @@ int load_image_file(char const *path, Image *image_out);
 void show_image_grayscale(Image const *image);
 
 void show_image_grayscale_at(Image const *image, Point pos);
+
+Color color_from_bytes(uint8_t *bytes, size_t count);
+
+int image_slice(Image const *image, Rect bounds, Image *sliced_out);

@@ -147,7 +147,6 @@ struct vector_metadata {
             meta = (struct vector_metadata *)sunset_realloc(meta,          \
                     sizeof(struct vector_metadata)                         \
                             + sizeof(*(v)) * meta->capacity);              \
-            assert(meta);                                                  \
             v = (void *)(meta + 1);                                        \
         }                                                                  \
         if (new_size > meta->size) {                                       \

@@ -327,7 +327,7 @@ static int setup_default_shaders(RenderContext *context) {
     if ((retval = add_preconfigured_shader(
                  instanced_textured_program_config,
                  &context->backend_programs
-                          [PROGRAM_DRAW_INSTANCED_MESH]))) {
+                         [PROGRAM_DRAW_INSTANCED_MESH]))) {
         return retval;
     }
 
@@ -409,6 +409,13 @@ static void mouse_move_callback(
     pthread_mutex_unlock(&context->lock);
 }
 
+size_t backend_get_click_id(RenderContext *context) {
+    pthread_mutex_lock(&context->lock);
+    size_t click_id = context->click_id;
+    pthread_mutex_unlock(&context->lock);
+    return click_id + 1;
+}
+
 static MouseButton sys_to_mouse_button(int button) {
     switch (button) {
         case GLFW_MOUSE_BUTTON_LEFT:
@@ -433,7 +440,8 @@ static void mouse_button_callback(
 
         events_push(context->event_queue,
                 SYSTEM_EVENT_MOUSE_CLICK,
-                (MouseClickEvent){sys_to_mouse_button(button)});
+                (MouseClickEvent){
+                        sys_to_mouse_button(button), ++context->click_id});
     } else if (action == GLFW_RELEASE) {
         bitmask_unset(&context->mouse_buttons, sys_to_mouse_button(button));
     }
@@ -584,14 +592,6 @@ void backend_generate_input_events(RenderContext *context) {
 //
 // }
 
-int backend_register_texture(RenderContext *context, Image const *texture) {
-    unused(context);
-    unused(texture);
-
-    todo();
-    unreachable();
-}
-
 /// first_id_out gets set the id of the first texture that has been
 /// registered in this atlas. the ids are guaranteed to be in-order.
 int backend_register_texture_atlas(RenderContext *context,
@@ -630,7 +630,9 @@ int backend_register_texture_atlas(RenderContext *context,
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    vector_append(context->atlases, (struct atlas){.buffer = atlas});
+    vector_append(context->atlases,
+            (struct atlas){.buffer = atlas,
+                    .size = {atlas_image->w, atlas_image->h}});
 
     uint32_t atlas_id = vector_size(context->atlases) - 1;
     *first_id_out = vector_size(context->textures);
@@ -645,6 +647,13 @@ int backend_register_texture_atlas(RenderContext *context,
     }
 
     return 0;
+}
+
+int backend_register_texture(
+        RenderContext *context, Image const *texture, uint32_t *id_out) {
+    Rect bounds[] = {{0, 0, texture->w, texture->h}};
+    return backend_register_texture_atlas(
+            context, texture, bounds, 1, id_out);
 }
 
 GLint compile_texture(Image const *atlas_image) {
@@ -732,7 +741,7 @@ static int program_set_uniform_vec3(
 }
 
 static int program_set_uniform_vec4(
-        struct program program, char const *name, vec4 const *value) {
+        struct program program, char const *name, vec4 value) {
     GLint loc = glGetUniformLocation((GLuint)program.handle, name);
     if (loc == -1) {
         return -ERROR_SHADER_COMPILATION_FAILED;
@@ -785,12 +794,16 @@ static void draw_instanced_mesh(RenderContext *context,
 
     struct compiled_texture t = context->textures[texture_id];
 
-    program_set_uniform_vec4(program,
-            "bounds",
-            &(vec4){t.bounds.x, t.bounds.y, t.bounds.w, t.bounds.h});
-
     struct atlas atlas = context->atlases[t.atlas_id];
     glBindTexture(GL_TEXTURE_2D, atlas.buffer);
+
+    vec4 bounds = {
+            (t.bounds.x / atlas.size[0]) * 2 - 1,
+            (t.bounds.y / atlas.size[1]) * 2 - 1,
+            (t.bounds.w / atlas.size[0]) * 2 - 1,
+            (t.bounds.h / atlas.size[1]) * 2 - 1,
+    };
+    program_set_uniform_vec4(program, "bounds", bounds);
 
     glDrawElementsInstanced(GL_TRIANGLES,
             mesh->num_indices,
@@ -872,7 +885,7 @@ static int run_mesh_command(RenderContext *context, CommandMesh command) {
 
         program_set_uniform_vec4(program,
                 "bounds",
-                &(vec4){t.bounds.x, t.bounds.y, t.bounds.w, t.bounds.h});
+                (vec4){t.bounds.x, t.bounds.y, t.bounds.w, t.bounds.h});
 
         program_set_uniform_int(program, "sampler", 0);
 
@@ -1081,7 +1094,7 @@ static void run_rect_command(RenderContext *context, CommandRect command) {
             0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    program_set_uniform_vec4(program, "color", &(vec4){r, g, b, a});
+    program_set_uniform_vec4(program, "color", (vec4){r, g, b, a});
 
     glDrawArrays(GL_LINES, 0, 8);
 
@@ -1142,7 +1155,7 @@ static void run_fill_rect_command(
             0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    program_set_uniform_vec4(program, "color", &(vec4){r, g, b, a});
+    program_set_uniform_vec4(program, "color", (vec4){r, g, b, a});
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -1151,7 +1164,12 @@ static void run_fill_rect_command(
 }
 
 void run_image_command(RenderContext *context, CommandImage command) {
-    GLuint i = compile_texture(&command.image);
+    Image sliced;
+    if (image_slice(&command.image, command.bounds, &sliced)) {
+        return;
+    }
+
+    GLuint i = compile_texture(&sliced);
 
     GLuint vao, vbo;
     glGenVertexArrays(1, &vao);
@@ -1189,7 +1207,8 @@ void run_image_command(RenderContext *context, CommandImage command) {
             {xpos + w, ypos, 1.0f, 0.0f},
             {xpos + w, ypos + h, 1.0f, 1.0f}};
 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+    glBufferData(
+            GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
 
     program_set_uniform_mat4(
             program, "projection", &context->ortho_projection, 1);

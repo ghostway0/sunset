@@ -31,6 +31,8 @@ static char const *log_level_string(LogLevel level) {
     }
 }
 
+#undef LOG_USE_COLOR
+
 static void log_callback(
         LogEvent *ev, Writer *writer, char const *fmt, va_list args) {
     if (logger.quiet) {
@@ -53,7 +55,7 @@ static void log_callback(
             ev->line);
 #else
     writer_vprintf(writer,
-            "%s %-5s %s:%zu: ",
+            "%s %s %s:%zu: ",
             buf,
             log_level_string(ev->level),
             ev->file,

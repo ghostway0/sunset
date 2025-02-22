@@ -50,9 +50,10 @@ void command_text_init(Command *command,
             (struct CommandText){start, font, text, text_len, size, origin};
 }
 
-void command_image_init(Command *command, Point pos, Image const *image) {
+void command_image_init(
+        Command *command, Point pos, Rect bounds, Image const *image) {
     command->type = COMMAND_IMAGE;
-    command->image = (CommandImage){pos, *image};
+    command->image = (CommandImage){bounds, pos, *image};
 }
 
 void cmdbuf_init(CommandBuffer *cmdbuf, CommandBufferOptions options) {
@@ -129,9 +130,9 @@ void cmdbuf_add_text(CommandBuffer *cmdbuf,
 }
 
 void cmdbuf_add_image(
-        CommandBuffer *cmdbuf, Point pos, Image const *image) {
+        CommandBuffer *cmdbuf, Point pos, Rect bounds, Image const *image) {
     Command command;
-    command_image_init(&command, pos, image);
+    command_image_init(&command, pos, bounds, image);
     cmdbuf_append(cmdbuf, &command);
 }
 

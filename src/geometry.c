@@ -190,3 +190,20 @@ bool ray_intersects_aabb(vec3 ray_origin,
 
     return tmax >= tmin;
 }
+
+void aabb_get_face_center(
+        const AABB *aabb, const vec3 axis, vec3 face_center_out) {
+    vec3 center;
+    aabb_get_center((AABB *)aabb, center);
+    glm_vec3_copy(center, face_center_out);
+
+    if (fabsf(axis[0]) > 0.0f) {
+        face_center_out[0] = (axis[0] > 0.0f) ? aabb->max[0] : aabb->min[0];
+    }
+    if (fabsf(axis[1]) > 0.0f) {
+        face_center_out[1] = (axis[1] > 0.0f) ? aabb->max[1] : aabb->min[1];
+    }
+    if (fabsf(axis[2]) > 0.0f) {
+        face_center_out[2] = (axis[2] > 0.0f) ? aabb->max[2] : aabb->min[2];
+    }
+}

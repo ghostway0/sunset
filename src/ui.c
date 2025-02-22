@@ -175,6 +175,7 @@ static void render_widget(CommandBuffer *cmdbuf, Widget const *widget) {
             // TODO: resizing?
             cmdbuf_add_image(cmdbuf,
                     (Point){.x = widget->bounds.x, .y = widget->bounds.y},
+                    (Rect){0, 0, widget->bounds.x, widget->bounds.y},
                     &widget->image);
             break;
         default:

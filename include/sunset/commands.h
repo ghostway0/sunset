@@ -69,6 +69,7 @@ typedef struct CommandText {
 } CommandText;
 
 typedef struct CommandImage {
+    Rect bounds;
     Point pos;
     Image image;
 } CommandImage;
@@ -126,7 +127,8 @@ void command_text_init(Command *command,
         size_t size,
         WindowPoint origin);
 
-void command_image_init(Command *command, Point pos, Image const *image);
+void command_image_init(
+        Command *command, Point pos, Rect bounds, Image const *image);
 
 void command_mesh_init(Command *command,
         uint32_t mesh_id,
@@ -179,7 +181,8 @@ void cmdbuf_add_text(CommandBuffer *cmdbuf,
         size_t size,
         WindowPoint origin);
 
-void cmdbuf_add_image(CommandBuffer *cmdbuf, Point pos, Image const *image);
+void cmdbuf_add_image(
+        CommandBuffer *cmdbuf, Point pos, Rect bounds, Image const *image);
 
 void cmdbuf_add_mesh(CommandBuffer *cmdbuf,
         uint32_t mesh_id,

@@ -1,11 +1,16 @@
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "sunset/vector.h"
 
 #include "sunset/rman.h"
 
-size_t _rman_register_resource(ResourceManager *rman, void *ptr) {
-    vector_append(rman->resources, ptr);
+size_t _rman_register_resource(
+        ResourceManager *rman, void const *ptr, size_t size) {
+    void *value_ptr = malloc(size);
+    memcpy(value_ptr, ptr, size);
+    vector_append(rman->resources, value_ptr);
     return vector_size(rman->resources) - 1;
 }
 
