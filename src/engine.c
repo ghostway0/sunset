@@ -170,26 +170,31 @@ int engine_run(RenderConfig render_config, Game const *game) {
                     .local_context = &context.camera});
 
     while (!backend_should_stop(&context.render_context)) {
-        Time timespec = get_time();
+        Time start = get_time();
 
         if ((retval = engine_tick(&context))) {
             goto cleanup;
         }
 
-        // multi camera?
+        // TODO: multi camera support
         render_world(&context.world, &context.camera, &context.cmdbuf);
 
-        [[maybe_unused]]
-        uint64_t frame_time = time_since_us(timespec);
+        float frame_time = time_since_s(start);
+        context.debug_info.avg_frametime =
+                (context.debug_info.avg_frametime + frame_time) / 2;
 
         backend_draw(&context.render_context,
                 &context.cmdbuf,
                 context.camera.view_matrix,
                 context.camera.projection_matrix);
 
-        if (time_since_s(timespec) < FRAME_TIME_S) {
-            usleep(FRAME_TIME_S - time_since_s(timespec));
+        if (time_since_s(start) < FRAME_TIME_S) {
+            usleep(FRAME_TIME_S - time_since_s(start));
         }
+
+#ifndef NDEBUG
+        log_debug("DebugInfo(fps: %f)", 1.0 / context.debug_info.avg_frametime);
+#endif
     }
 
 cleanup:

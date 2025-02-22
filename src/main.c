@@ -8,7 +8,7 @@
 #include "sunset/ecs.h"
 #include "sunset/engine.h"
 #include "sunset/render.h"
-#include "vector.h"
+#include "sunset/vector.h"
 
 // struct mesh create_test_mesh() {
 //     struct mesh test_mesh;
@@ -89,6 +89,9 @@ int main() {
 
     vector_append(game.plugins,
             (Plugin){.object_path = "build/libbuilder.dylib"});
+
+    log_set_level(LOG_TRACE);
+    log_debug("hello");
 
     engine_run(render_config, &game);
 

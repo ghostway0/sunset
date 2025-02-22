@@ -44,6 +44,7 @@ ssize_t writer_print_u64(Writer *writer, uint64_t value);
 ssize_t writer_print_i64(Writer *writer, int64_t value);
 ssize_t writer_print_f32(Writer *writer, float value);
 ssize_t writer_print_f64(Writer *writer, double value);
+ssize_t writer_vprintf(Writer *writer, char const *fmt, ...);
 
 Writer *get_stdout(void);
 

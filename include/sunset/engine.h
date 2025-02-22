@@ -15,6 +15,10 @@ typedef struct UIContext UIContext;
 
 typedef void *PluginHandle;
 
+typedef struct DebugInfo {
+    float avg_frametime;
+} DebugInfo;
+
 typedef struct EngineContext {
     vector(UIContext) ui_contexts;
     UIContext *active_ui;
@@ -31,6 +35,8 @@ typedef struct EngineContext {
     Camera camera;
 
     float dt;
+
+    DebugInfo debug_info;
 } EngineContext;
 
 // engine context setup:

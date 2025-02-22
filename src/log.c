@@ -1,109 +1,33 @@
+#include <assert.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <time.h>
 
-#include <assert.h>
-
+#include "sunset/io.h"
 #include "sunset/vector.h"
 
-#define MAX_NUM_CALLBACKS 8
-
-enum LogLevel {
-    LOG_TRACE,
-    LOG_DEBUG,
-    LOG_INFO,
-    LOG_WARN,
-    LOG_ERROR,
-    LOG_FATAL,
-    NUM_LEVELS,
-} typedef LogLevel;
-
-typedef struct {
-    char const *file;
-    struct tm *time;
-    void *udata;
-    size_t line;
-    LogLevel level;
-} LogEvent;
-
-typedef void (*LogCallback)(LogEvent *ev, char const *fmt, ...);
-
-char const *log_level_string(int level);
-void log_set_level(LogLevel level);
-void log_set_quiet(bool enable);
-int log_add_callback(LogCallback fn, void *udata, int level);
-
-struct Logger {
-    vector(LogCallback) callbacks[NUM_LEVELS];
-    vector(void *) udatas[NUM_LEVELS];
-    LogLevel level;
-    bool quiet;
-} typedef Logger;
-
-#define log_trace(...)                                                     \
-    log_internal(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
-#define log_debug(...)                                                     \
-    log_internal(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...)                                                      \
-    log_internal(LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...)                                                      \
-    log_internal(LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...)                                                     \
-    log_internal(LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define log_fatal(...)                                                     \
-    log_internal(LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+#include "sunset/log.h"
 
 static Logger logger;
 
-void log_add_callback(LogCallback fn, void *udata, int level) {
-    assert(level < NUM_LEVELS);
-
-    if (!logger.callbacks[level]) {
-        vector_init(logger.callbacks[level]);
-        vector_init(logger.udatas[level]);
-    }
-
-    vector_append(logger.callbacks[level], fn);
-    vector_append(logger.udatas[level], udata);
-}
-
-void log_internal(LogLevel level,
-        char const *file,
-        size_t line,
-        char const *fmt,
-        ...) {
-    if (level < logger.level) {
-        return;
-    }
-
-    static bool initialized = false;
-
-    if (!initialized) {
-        for (int i = 0; i < NUM_LEVELS; i++) {
-            vector_init(logger.callbacks[i]);
-            vector_init(logger.udatas[i]);
-        }
-
-        log_add_callback(log_callback, get_stdout(), LOG_TRACE);
-
-        initialized = true;
-    }
-
-    LogEvent ev = {
-            .file = file,
-            .line = line,
-            .level = level,
-    };
-
-    va_list args;
-    for (int i = 0; i < vector_size(logger.callbacks[level]); i++) {
-        Writer *writer = (Writer *)logger.udatas[level][i];
-        va_start(args, fmt);
-        logger.callbacks[level][i](&ev, writer, fmt, args);
-        va_end(args);
-    }
-
-    if (level == LOG_FATAL) {
-        abort();
+static char const *log_level_string(LogLevel level) {
+    switch (level) {
+        case LOG_TRACE:
+            return "TRACE";
+        case LOG_DEBUG:
+            return "DEBUG";
+        case LOG_INFO:
+            return "INFO";
+        case LOG_WARN:
+            return "WARN";
+        case LOG_ERROR:
+            return "ERROR";
+        case LOG_FATAL:
+            return "FATAL";
+        default:
+            unreachable();
     }
 }
 
@@ -128,7 +52,7 @@ static void log_callback(
             ev->file,
             ev->line);
 #else
-    writer_printf(writer,
+    writer_vprintf(writer,
             "%s %-5s %s:%zu: ",
             buf,
             log_level_string(ev->level),
@@ -138,4 +62,64 @@ static void log_callback(
 
     writer_vprintf(writer, fmt, args);
     writer_write(writer, "\n", 1);
+}
+
+void log_add_callback(LogCallback fn, void *udata, LogLevel level) {
+    assert(level < NUM_LEVELS);
+
+    if (!logger.callbacks[level]) {
+        vector_init(logger.callbacks[level]);
+        vector_init(logger.udatas[level]);
+    }
+
+    vector_append(logger.callbacks[level], fn);
+    vector_append(logger.udatas[level], udata);
+}
+
+void log_internal(LogLevel level,
+        char const *file,
+        size_t line,
+        char const *fmt,
+        ...) {
+    if (level < logger.level) {
+        return;
+    }
+
+    static bool initialized = false;
+
+    if (!initialized) {
+        for (LogLevel i = LOG_TRACE; i < NUM_LEVELS; i++) {
+            vector_init(logger.callbacks[i]);
+            vector_init(logger.udatas[i]);
+        }
+
+        log_add_callback(log_callback, get_stdout(), LOG_TRACE);
+
+        initialized = true;
+    }
+
+    LogEvent ev = {
+            .file = file,
+            .line = line,
+            .level = level,
+    };
+
+    va_list args;
+
+    for (LogLevel curr = LOG_TRACE; curr < level; curr++) {
+        for (size_t i = 0; i < vector_size(logger.callbacks[curr]); i++) {
+            Writer *writer = (Writer *)logger.udatas[curr][i];
+            va_start(args, fmt);
+            logger.callbacks[curr][i](&ev, writer, fmt, args);
+            va_end(args);
+        }
+    }
+
+    if (level == LOG_FATAL) {
+        abort();
+    }
+}
+
+void log_set_level(LogLevel level) {
+    logger.level = level;
 }

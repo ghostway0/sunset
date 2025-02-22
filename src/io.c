@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -239,4 +240,62 @@ Reader *get_stdin(void) {
     }
 
     return &stdout_reader;
+}
+
+ssize_t writer_vprintf(Writer *writer, char const *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+
+    ssize_t total_written = 0;
+    char const *p = fmt;
+
+    while (*p != '\0') {
+        if (*p == '%') {
+            p++;
+        } else {
+            total_written += writer_write_byte(writer, *p);
+        }
+
+        switch (*p) {
+            case 'd': {
+                int value = va_arg(args, int);
+                total_written += writer_print_i64(writer, value);
+                break;
+            }
+            case 'u': {
+                unsigned int value = va_arg(args, unsigned int);
+                total_written += writer_print_u64(writer, value);
+                break;
+            }
+            case 's': {
+                char const *str = va_arg(args, char const *);
+                total_written += writer_print_string(writer, str);
+                break;
+            }
+            case 'f': {
+                double value = va_arg(args, double);
+                total_written += writer_print_f64(writer, value);
+                break;
+            }
+            case 'c': {
+                char value = (char)va_arg(args, int);
+                total_written += writer_write_byte(writer, value);
+                break;
+            }
+            case '%': {
+                total_written += writer_write_byte(writer, '%');
+                break;
+            }
+            default: {
+                // Handle unknown format specifier
+                total_written += writer_write_byte(writer, '%');
+                total_written += writer_write_byte(writer, *p);
+                break;
+            }
+        }
+        p++;
+    }
+
+    va_end(args);
+    return total_written;
 }

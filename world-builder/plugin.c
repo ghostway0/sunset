@@ -5,6 +5,7 @@
 #include <cglm/vec3.h>
 #include <log.h>
 
+#include "internal/utils.h"
 #include "sunset/bitmask.h"
 #include "sunset/camera.h"
 #include "sunset/ecs.h"
@@ -193,6 +194,15 @@ static void log_thing(EngineContext *engine_context, EntityPtr eptr) {
     spawn_axis_arrows(engine_context, eptr);
 }
 
+static void crosshair_handler(EngineContext *engine_context, void *command, const Event event) {
+    unused(engine_context);
+    unused(command);
+    unused(event);
+    Command *image_cmd = command;
+    unused(image_cmd);
+    // image_cmd->image.pos = .{};
+}
+
 void crosshair(EngineContext *engine_context) {
     Renderable rend;
     vector_init(rend.commands);
@@ -202,9 +212,19 @@ void crosshair(EngineContext *engine_context) {
         log_error("wtf");
     }
 
+    // TODO: coordinates should probably be screen coordinates [-1, 1]
     Command image_cmd = {.type = COMMAND_IMAGE,
-            .image = {.pos = {200, 100}, .image = crosshair}};
+            .image = {
+                    .pos = {engine_context->render_context.screen_width / 2,
+                            engine_context->render_context.screen_height
+                                    / 2},
+                    .image = crosshair}};
     vector_append(rend.commands, image_cmd);
+
+    event_queue_add_handler(&engine_context->event_queue,
+            SYSTEM_EVENT_VIEWPORT_CHANGED,
+            (EventHandler){.handler_fn = crosshair_handler,
+                    .local_context = rend.commands});
 
     EntityBuilder builder;
     entity_builder_init(&builder, &engine_context->world);
@@ -219,7 +239,7 @@ void test_stuff(EngineContext *engine_context) {
     REGISTER_COMPONENT(&engine_context->world, AxisArrow);
 
     VfsFile file;
-    vfs_open("test.obj", VFS_OPEN_MODE_READ, &file);
+    vfs_open("axis_arrow.obj", VFS_OPEN_MODE_READ, &file);
     Reader r = vfs_file_reader(&file);
 
     obj_model_parse(&r, &models);
