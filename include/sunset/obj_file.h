@@ -5,6 +5,7 @@
 
 #include <cglm/types.h>
 
+#include "sunset/geometry.h"
 #include "sunset/vector.h"
 
 typedef struct Reader Reader;
@@ -22,6 +23,7 @@ typedef struct Model {
     vector(vector(FaceElement)) faces;
     char *material_lib;
     char *object_name;
+    AABB bounding_box;
 } Model;
 
 /// assumptions:

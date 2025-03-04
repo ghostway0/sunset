@@ -217,8 +217,9 @@ static void axis_arrow_dragged(
     aabb_translate(&parent_t->bounding_box, offset_vec);
 }
 
-void spawn_axis_arrow(EngineContext *engine_context,
-        Transform const *transform,
+DECLARE_RESOURCE_ID(axis_arrow_aabb);
+
+static void spawn_axis_arrow(EngineContext *engine_context,
         EntityPtr parent,
         vec3 axis, // should be const
         uint32_t texture) {
@@ -227,19 +228,17 @@ void spawn_axis_arrow(EngineContext *engine_context,
 
     uint32_t *mesh_id =
             rman_get(&engine_context->rman, RESOURCE_ID(axis_arrow_mesh));
+    AABB *arrow_aabb =
+            rman_get(&engine_context->rman, RESOURCE_ID(axis_arrow_aabb));
 
     Command mesh_cmd = {.type = COMMAND_MESH,
-            .mesh = {.mesh_id = *mesh_id,
-                    .texture_id = texture}};
+            .mesh = {.mesh_id = *mesh_id, .texture_id = texture}};
 
-    Transform new_transform = {};
+    Transform new_transform = {
+            .parent = parent, .bounding_box = *arrow_aabb};
 
-    new_transform.bounding_box =
-            (AABB){.min = {0.0, 0.0, 0.0}, .max = {0.1, 0.1, 0.2}};
-    vec3 pos;
-    aabb_get_face_center(&transform->bounding_box, axis, pos);
-    aabb_translate(&new_transform.bounding_box, pos);
-    glm_vec3_copy(pos, new_transform.position);
+    glm_vec3_scale(axis, 0.1, new_transform.position);
+    aabb_translate(&new_transform.bounding_box, new_transform.position);
 
     new_transform.scale = 0.1f;
 
@@ -272,14 +271,14 @@ void spawn_axis_arrow(EngineContext *engine_context,
     entity_builder_finish(&builder);
 }
 
-static Order order_entityptr(const void *a, const void *b) {
+static Order order_entityptr(void const *a, void const *b) {
     EntityPtr *eptr_a = (EntityPtr *)a;
     EntityPtr *eptr_b = (EntityPtr *)b;
 
     if (eptr_a->archetype < eptr_b->archetype) {
         return ORDER_LESS_THAN;
     }
-    
+
     if (eptr_a->archetype > eptr_b->archetype) {
         return ORDER_GREATER_THAN;
     }
@@ -287,7 +286,7 @@ static Order order_entityptr(const void *a, const void *b) {
     if (eptr_a->element < eptr_b->element) {
         return ORDER_LESS_THAN;
     }
-    
+
     if (eptr_a->element > eptr_b->element) {
         return ORDER_GREATER_THAN;
     }
@@ -296,15 +295,8 @@ static Order order_entityptr(const void *a, const void *b) {
 }
 
 void spawn_axis_arrows(EngineContext *engine_context, EntityPtr target) {
-    Transform const *target_t = ecs_component_from_ptr(
-            &engine_context->world, target, COMPONENT_ID(Transform));
-
-    if (!target_t) {
-        return;
-    }
-
-    map(EntityPtr) *spawned_arrows = rman_get(
-            &engine_context->rman, RESOURCE_ID(spawned_arrows));
+    map(EntityPtr) *spawned_arrows =
+            rman_get(&engine_context->rman, RESOURCE_ID(spawned_arrows));
 
     if (map_get(*spawned_arrows, target, order_entityptr)) {
         return;
@@ -317,17 +309,21 @@ void spawn_axis_arrows(EngineContext *engine_context, EntityPtr target) {
     uint32_t *texture3 = rman_get(
             &engine_context->rman, RESOURCE_ID(axis_arrow_texture3));
 
-    spawn_axis_arrow(
-            engine_context, target_t, target, (vec3){0, 1, 0}, *texture1);
-    spawn_axis_arrow(
-            engine_context, target_t, target, (vec3){1, 0, 0}, *texture2);
-    spawn_axis_arrow(
-            engine_context, target_t, target, (vec3){0, 0, -1}, *texture3);
+    spawn_axis_arrow(engine_context, target, (vec3){0, 1, 0}, *texture1);
+    spawn_axis_arrow(engine_context, target, (vec3){1, 0, 0}, *texture2);
+    spawn_axis_arrow(engine_context, target, (vec3){0, 0, -1}, *texture3);
 
     map_insert(*spawned_arrows, target, order_entityptr);
 }
 
 static void subject_click(EngineContext *engine_context, EntityPtr eptr) {
+    Transform const *target_t = ecs_component_from_ptr(
+            &engine_context->world, eptr, COMPONENT_ID(Transform));
+
+    if (!target_t) {
+        return;
+    }
+
     spawn_axis_arrows(engine_context, eptr);
 }
 
@@ -409,6 +405,7 @@ void test_stuff(EngineContext *engine_context) {
             &first_id);
 
     Transform transform = {
+            .parent = ENTITY_PTR_INVALID,
             .bounding_box =
                     {
                             .min = {0.0, 0.0, 0.0},
@@ -437,7 +434,7 @@ void test_stuff(EngineContext *engine_context) {
     entity_builder_add(&builder, COMPONENT_ID(Clickable), &clickable);
     entity_builder_finish(&builder);
 
-    if (load_image_file("axis_arrows.tga", &texture)) {
+    if (load_image_file("utc16.tga", &texture)) {
         log_error("oh no");
     }
 
@@ -457,6 +454,8 @@ void test_stuff(EngineContext *engine_context) {
             &engine_context->rman, axis_arrow_texture2, first_id + 1);
     REGISTER_RESOURCE(
             &engine_context->rman, axis_arrow_texture3, first_id + 2);
+    REGISTER_RESOURCE(
+            &engine_context->rman, axis_arrow_aabb, models[0].bounding_box);
 }
 
 int plugin_load(EngineContext *engine_context) {
@@ -486,7 +485,8 @@ int plugin_load(EngineContext *engine_context) {
     map(EntityPtr) arrows_created;
     map_init(arrows_created);
 
-    REGISTER_RESOURCE(&engine_context->rman, spawned_arrows, arrows_created);
+    REGISTER_RESOURCE(
+            &engine_context->rman, spawned_arrows, arrows_created);
 
     return 0;
 }

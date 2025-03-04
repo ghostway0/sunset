@@ -22,12 +22,6 @@ typedef struct RenderConfig {
     bool enable_vsync;
 } RenderConfig;
 
-typedef struct TransformGraph {
-    // itself if root
-    EntityPtr parent;
-    vector(EntityPtr) children;
-} TransformGraph;
-
 // moves should probably be handled by a separate function
 // that understands the dirty flag
 typedef struct Transform {
@@ -37,6 +31,10 @@ typedef struct Transform {
     vec3 rotation;
     float scale;
     bool dirty;
+
+    // itself if root
+    EntityPtr parent;
+    vector(EntityPtr) children;
 } Transform;
 
 typedef void (*RenderFn)(CommandBuffer *cmdbuf);
@@ -66,9 +64,11 @@ typedef enum WindowPoint {
 extern DECLARE_COMPONENT_ID(Transform);
 extern DECLARE_COMPONENT_ID(Renderable);
 
-void calculate_model_matrix(Transform const *transform, mat4 model_matrix);
+void calculate_model_matrix(
+        World *world, EntityPtr eptr, mat4 model_matrix);
 
-void render_world(
-        World const *world, Camera const *camera, CommandBuffer *cmdbuf);
+void render_world(World /*const*/ *world,
+        Camera const *camera,
+        CommandBuffer *cmdbuf);
 
 void render_setup(EngineContext *engine_context);

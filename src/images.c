@@ -1,4 +1,3 @@
-#include <stdio_ext.h>
 #include <string.h>
 
 #include "sunset/byte_stream.h"

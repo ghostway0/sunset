@@ -62,7 +62,9 @@ static int parse_face_element(
         index = value > 0 ? (uint32_t)value - 1 : vertex_count - value;
 
         if (index >= vertex_count) {
-            log_error("face index larger than vertex count (%zu/%zu)", index, vertex_count);
+            log_error("face index larger than vertex count (%zu/%zu)",
+                    index,
+                    vertex_count);
             return ERROR_INVALID_FORMAT;
         }
 
@@ -129,6 +131,34 @@ bool model_is_empty(Model const *model) {
             && vector_size(model->texcoords) == 0
             && vector_size(model->faces) == 0 && model->object_name == NULL
             && model->material_lib == NULL;
+}
+
+static void compute_model_bounding_box(Model *model) {
+    size_t num_vertices = vector_size(model->vertices);
+
+    if (num_vertices == 0) {
+        glm_vec3_zero(model->bounding_box.min);
+        glm_vec3_zero(model->bounding_box.max);
+        return;
+    }
+
+    vec3 min, max;
+    vec3 *first_vertex = &model->vertices[0];
+    glm_vec3_copy(*first_vertex, min);
+    glm_vec3_copy(*first_vertex, max);
+
+    for (size_t i = 1; i < num_vertices; i++) {
+        vec3 *vertex = &model->vertices[i];
+        for (int j = 0; j < 3; j++) {
+            if ((*vertex)[j] < min[j])
+                min[j] = (*vertex)[j];
+            if ((*vertex)[j] > max[j])
+                max[j] = (*vertex)[j];
+        }
+    }
+
+    glm_vec3_copy(min, model->bounding_box.min);
+    glm_vec3_copy(max, model->bounding_box.max);
 }
 
 /// assumptions:
@@ -203,6 +233,7 @@ int obj_model_parse(Reader *reader, vector(Model) * models_out) {
         } else if (strncmp(line, "g ", 2) == 0
                 || strncmp(line, "o ", 2) == 0) {
             if (!model_is_empty(&current_model)) {
+                compute_model_bounding_box(&current_model);
                 vector_append(*models_out, current_model);
                 model_init(&current_model);
             }
@@ -226,6 +257,7 @@ int obj_model_parse(Reader *reader, vector(Model) * models_out) {
     }
 
     if (!model_is_empty(&current_model)) {
+        compute_model_bounding_box(&current_model);
         vector_append(*models_out, current_model);
     }
 

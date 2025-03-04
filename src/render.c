@@ -2,7 +2,6 @@
 #include <cglm/mat4.h>
 
 #include "internal/utils.h"
-#include <log.h>
 #include "sunset/camera.h"
 #include "sunset/commands.h"
 #include "sunset/ecs.h"
@@ -11,7 +10,6 @@
 
 #include "sunset/render.h"
 
-DECLARE_COMPONENT_ID(TransformGraph);
 DECLARE_COMPONENT_ID(Transform);
 DECLARE_COMPONENT_ID(Renderable);
 
@@ -20,28 +18,44 @@ void render_setup(EngineContext *engine_context) {
     REGISTER_COMPONENT(&engine_context->world, Renderable);
 }
 
-void calculate_model_matrix(Transform const *transform, mat4 model_matrix) {
+void calculate_model_matrix(
+        World *world, EntityPtr entity, mat4 model_matrix) {
     glm_mat4_identity(model_matrix);
 
-    // HACK:
-    vec3 position;
-    memcpy(position, transform->position, sizeof(transform->position));
+    EntityPtr current = entity;
 
-    glm_translate(model_matrix, position);
+    while (true) {
+        Transform *t = ecs_component_from_ptr(
+                world, current, COMPONENT_ID(Transform));
 
-    // HACK:
-    float angle = glm_vec3_norm((float *)transform->rotation);
-    if (angle > EPSILON) {
-        vec3 axis;
-        glm_vec3_normalize_to((float *)transform->rotation, axis);
-        glm_rotate(model_matrix, angle, axis);
+        mat4 local;
+        glm_mat4_identity(local);
+
+        glm_translate(local, t->position);
+
+        // HACK:
+        float angle = glm_vec3_norm((float *)t->rotation);
+        if (angle > EPSILON) {
+            vec3 axis;
+            glm_vec3_normalize_to((float *)t->rotation, axis);
+            glm_rotate(local, angle, axis);
+        }
+
+        glm_scale_uni(local, t->scale);
+
+        glm_mul(local, model_matrix, model_matrix);
+
+        if (eptr_eql(t->parent, ENTITY_PTR_INVALID)) {
+            break;
+        }
+
+        current = t->parent;
     }
-
-    glm_scale_uni(model_matrix, transform->scale);
 }
 
-void render_world(
-        World const *world, Camera const *camera, CommandBuffer *cmdbuf) {
+void render_world(World /*const*/ *world,
+        Camera const *camera,
+        CommandBuffer *cmdbuf) {
     Bitmask mask;
     bitmask_init_empty(ECS_MAX_COMPONENTS, &mask);
     bitmask_set(&mask, COMPONENT_ID(Renderable));
@@ -53,6 +67,7 @@ void render_world(
                 worldit_get_component(&it, COMPONENT_ID(Renderable));
         Transform *transform =
                 worldit_get_component(&it, COMPONENT_ID(Transform));
+        EntityPtr eptr = worldit_get_entityptr(&it);
 
         bool visible = true;
 
@@ -62,7 +77,10 @@ void render_world(
             visible = camera_box_within_frustum(
                     (Camera *)camera, transform->bounding_box);
 
-            calculate_model_matrix(transform, renderable->context.model);
+            // if (transform->dirty) {
+                calculate_model_matrix(
+                        world, eptr, renderable->context.model);
+            // }
         }
 
         if (visible) {

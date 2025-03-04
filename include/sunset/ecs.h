@@ -11,6 +11,8 @@
 
 #define ECS_MAX_COMPONENTS 64
 
+#define ENTITY_PTR_INVALID (EntityPtr){SIZE_T_MAX, SIZE_T_MAX}
+
 #define COMPONENT_ID(type) _component_id_##type
 #define DECLARE_COMPONENT_ID(type)                                         \
     __attribute__((weak)) size_t COMPONENT_ID(type)
@@ -92,5 +94,9 @@ void *ecs_component_from_ptr(
         World *world, EntityPtr eptr, Index component_id);
 
 void ecs_save(World *world, Writer *writer);
+
+static inline bool eptr_eql(EntityPtr a, EntityPtr b) {
+    return a.element == b.element && a.archetype == b.archetype;
+}
 
 #endif // SUNSET_ECS_H_
