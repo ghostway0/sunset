@@ -204,22 +204,17 @@ static void axis_arrow_dragged(
             &engine_context->world, eptr, COMPONENT_ID(AxisArrow));
     assert(axis_arrow);
 
-    Transform *parent_t = ecs_component_from_ptr(&engine_context->world,
-            axis_arrow->parent,
-            COMPONENT_ID(Transform));
-
     float off = (-offset.x + offset.y) * 0.01;
 
     vec3 offset_vec;
     glm_vec3_scale(axis_arrow->axis, off, offset_vec);
 
-    glm_vec3_add(parent_t->position, offset_vec, parent_t->position);
-    aabb_translate(&parent_t->bounding_box, offset_vec);
+    entity_move(&engine_context->world, axis_arrow->parent, offset_vec);
 }
 
 DECLARE_RESOURCE_ID(axis_arrow_aabb);
 
-static void spawn_axis_arrow(EngineContext *engine_context,
+static EntityPtr spawn_axis_arrow(EngineContext *engine_context,
         EntityPtr parent,
         vec3 axis, // should be const
         uint32_t texture) {
@@ -268,7 +263,9 @@ static void spawn_axis_arrow(EngineContext *engine_context,
     entity_builder_add(&builder, COMPONENT_ID(Renderable), &rend);
     entity_builder_add(&builder, COMPONENT_ID(AxisArrow), &arrow);
     entity_builder_add(&builder, COMPONENT_ID(Clickable), &clickable);
-    entity_builder_finish(&builder);
+
+    return engine_context->world
+            .entity_ptrs[entity_builder_finish(&builder)];
 }
 
 static Order order_entityptr(void const *a, void const *b) {
@@ -309,9 +306,19 @@ void spawn_axis_arrows(EngineContext *engine_context, EntityPtr target) {
     uint32_t *texture3 = rman_get(
             &engine_context->rman, RESOURCE_ID(axis_arrow_texture3));
 
-    spawn_axis_arrow(engine_context, target, (vec3){0, 1, 0}, *texture1);
-    spawn_axis_arrow(engine_context, target, (vec3){1, 0, 0}, *texture2);
-    spawn_axis_arrow(engine_context, target, (vec3){0, 0, -1}, *texture3);
+    EntityPtr x = spawn_axis_arrow(
+            engine_context, target, (vec3){1, 0, 0}, *texture2);
+    EntityPtr y = spawn_axis_arrow(
+            engine_context, target, (vec3){0, 1, 0}, *texture1);
+    EntityPtr z = spawn_axis_arrow(
+            engine_context, target, (vec3){0, 0, -1}, *texture3);
+
+    Transform *target_t = ecs_component_from_ptr(
+            &engine_context->world, target, COMPONENT_ID(Transform));
+
+    vector_append(target_t->children, x);
+    vector_append(target_t->children, y);
+    vector_append(target_t->children, z);
 
     map_insert(*spawned_arrows, target, order_entityptr);
 }
@@ -415,6 +422,7 @@ void test_stuff(EngineContext *engine_context) {
             .scale = 1.0,
             .rotation = {},
     };
+    vector_init(transform.children);
 
     aabb_translate(&transform.bounding_box, transform.position);
 

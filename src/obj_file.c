@@ -7,6 +7,7 @@
 #include <cglm/types.h>
 #include <log.h>
 
+#include "cglm/vec3.h"
 #include "sunset/errors.h"
 #include "sunset/geometry.h"
 #include "sunset/io.h"
@@ -148,13 +149,8 @@ static void compute_model_bounding_box(Model *model) {
     glm_vec3_copy(*first_vertex, max);
 
     for (size_t i = 1; i < num_vertices; i++) {
-        vec3 *vertex = &model->vertices[i];
-        for (int j = 0; j < 3; j++) {
-            if ((*vertex)[j] < min[j])
-                min[j] = (*vertex)[j];
-            if ((*vertex)[j] > max[j])
-                max[j] = (*vertex)[j];
-        }
+        glm_vec3_minv(model->vertices[i], min, min);
+        glm_vec3_maxv(model->vertices[i], max, max);
     }
 
     glm_vec3_copy(min, model->bounding_box.min);

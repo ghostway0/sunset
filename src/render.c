@@ -78,8 +78,7 @@ void render_world(World /*const*/ *world,
                     (Camera *)camera, transform->bounding_box);
 
             // if (transform->dirty) {
-                calculate_model_matrix(
-                        world, eptr, renderable->context.model);
+            calculate_model_matrix(world, eptr, renderable->context.model);
             // }
         }
 
@@ -91,5 +90,21 @@ void render_world(World /*const*/ *world,
         }
 
         worldit_advance(&it);
+    }
+}
+
+void entity_move(World *world, EntityPtr eptr, vec3 offset) {
+    Transform *t =
+            ecs_component_from_ptr(world, eptr, COMPONENT_ID(Transform));
+
+    glm_vec3_add(t->position, offset, t->position);
+    aabb_translate(&t->bounding_box, offset);
+
+    if (!t->children) {
+        return;
+    }
+
+    for (size_t i = 0; i < vector_size(t->children); i++) {
+        entity_move(world, t->children[i], offset);
     }
 }

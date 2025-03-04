@@ -72,3 +72,5 @@ void render_world(World /*const*/ *world,
         CommandBuffer *cmdbuf);
 
 void render_setup(EngineContext *engine_context);
+
+void entity_move(World *world, EntityPtr eptr, vec3 offset);
