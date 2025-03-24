@@ -207,3 +207,8 @@ void aabb_get_face_center(
         face_center_out[2] = (axis[2] > 0.0f) ? aabb->max[2] : aabb->min[2];
     }
 }
+
+void aabb_scale(AABB *aabb, float factor) {
+    glm_vec3_scale(aabb->min, factor, aabb->min);
+    glm_vec3_scale(aabb->max, factor, aabb->max);
+}

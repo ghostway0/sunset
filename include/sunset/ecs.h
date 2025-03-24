@@ -11,7 +11,7 @@
 
 #define ECS_MAX_COMPONENTS 64
 
-#define ENTITY_PTR_INVALID (EntityPtr){SIZE_T_MAX, SIZE_T_MAX}
+#define ENTITY_PTR_INVALID (EntityPtr){SIZE_MAX, SIZE_MAX}
 
 #define COMPONENT_ID(type) _component_id_##type
 #define DECLARE_COMPONENT_ID(type)                                         \

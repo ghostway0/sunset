@@ -22,17 +22,13 @@ typedef struct RenderConfig {
     bool enable_vsync;
 } RenderConfig;
 
-// moves should probably be handled by a separate function
-// that understands the dirty flag
 typedef struct Transform {
-    // probably should have a cached model matrix
     AABB bounding_box;
     vec3 position;
     vec3 rotation;
     float scale;
     bool dirty;
 
-    // itself if root
     EntityPtr parent;
     vector(EntityPtr) children;
 } Transform;
@@ -74,3 +70,5 @@ void render_world(World /*const*/ *world,
 void render_setup(EngineContext *engine_context);
 
 void entity_move(World *world, EntityPtr eptr, vec3 offset);
+
+void entity_get_abspos(World *world, EntityPtr eptr, vec3 out);

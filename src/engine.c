@@ -7,6 +7,7 @@
 #include <cglm/types.h>
 #include <log.h>
 
+#include "geometry.h"
 #include "internal/time_utils.h"
 #include "sunset/backend.h"
 #include "sunset/camera.h"
@@ -196,6 +197,7 @@ int engine_run(RenderConfig render_config, Game const *game) {
                 (context.debug_info.avg_frametime + frame_time) / 2;
         glm_vec3_copy(context.camera.direction, context.debug_info.direction);
 
+        log_debug("pointing towards: " vec3_format, vec3_args(context.debug_info.direction));
         // TODO: render overlay
 #endif
     }

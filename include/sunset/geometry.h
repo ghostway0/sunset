@@ -59,6 +59,8 @@ typedef struct AABB {
 
 void aabb_translate(AABB *aabb, vec3 translation);
 
+void aabb_scale(AABB *aabb, float factor);
+
 bool aabb_collide(AABB const *a, AABB const *b);
 
 typedef struct Mesh {

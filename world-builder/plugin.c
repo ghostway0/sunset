@@ -230,9 +230,13 @@ static EntityPtr spawn_axis_arrow(EngineContext *engine_context,
             .mesh = {.mesh_id = *mesh_id, .texture_id = texture}};
 
     Transform new_transform = {
-            .parent = parent, .bounding_box = *arrow_aabb};
+            .parent = parent, .bounding_box = *arrow_aabb, .dirty = true};
 
     glm_vec3_scale(axis, 0.1, new_transform.position);
+    vec3 abspos;
+    entity_get_abspos(&engine_context->world, parent, abspos);
+
+    aabb_translate(&new_transform.bounding_box, abspos);
     aabb_translate(&new_transform.bounding_box, new_transform.position);
 
     new_transform.scale = 0.1f;
@@ -420,6 +424,7 @@ void test_stuff(EngineContext *engine_context) {
                     },
             .position = {0.0, 0.0, -1.0},
             .scale = 1.0,
+            .dirty = true,
             .rotation = {},
     };
     vector_init(transform.children);

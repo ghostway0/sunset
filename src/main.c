@@ -29,7 +29,7 @@ int main() {
     vector_init(game.resources);
 
     vector_append(game.plugins,
-            (Plugin){.object_path = "build/libbuilder.dylib"});
+            (Plugin){.object_path = "build/libbuilder.so"});
 
     log_set_level(LOG_TRACE);
 
