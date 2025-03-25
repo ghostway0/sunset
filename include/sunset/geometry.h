@@ -110,6 +110,5 @@ bool ray_intersects_aabb(
 
 void aabb_closest_point(AABB const *aabb, vec3 point, vec3 closest_out);
 
-void aabb_get_face_center(const AABB *aabb,
-        const vec3 axis,
-        vec3 face_center_out);
+void aabb_get_face_center(
+        const AABB *aabb, vec3 const axis, vec3 face_center_out);

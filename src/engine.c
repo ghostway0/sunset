@@ -195,9 +195,11 @@ int engine_run(RenderConfig render_config, Game const *game) {
 #ifndef NDEBUG
         context.debug_info.avg_frametime =
                 (context.debug_info.avg_frametime + frame_time) / 2;
-        glm_vec3_copy(context.camera.direction, context.debug_info.direction);
+        glm_vec3_copy(
+                context.camera.direction, context.debug_info.direction);
 
-        log_debug("pointing towards: " vec3_format, vec3_args(context.debug_info.direction));
+        log_debug("pointing towards: " vec3_format,
+                vec3_args(context.debug_info.direction));
         // TODO: render overlay
 #endif
     }

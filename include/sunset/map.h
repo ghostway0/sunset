@@ -24,7 +24,8 @@ size_t map_find_index(void const *v,
                 v, vector_size(v), sizeof(*(v)), &value, compar);          \
         vector_resize(v, vector_size(v) + 1);                              \
         if (__i < vector_size(v) - 1) {                                    \
-            memmove(&v[__i + 1], &v[__i],                                  \
+            memmove(&v[__i + 1],                                           \
+                    &v[__i],                                               \
                     (vector_size(v) - __i - 1) * sizeof(*(v)));            \
         }                                                                  \
         v[__i] = value;                                                    \

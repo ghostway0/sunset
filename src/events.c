@@ -1,5 +1,5 @@
-#include <pthread.h>
 #include <log.h>
+#include <pthread.h>
 #include <stdint.h>
 
 #include "internal/mem_utils.h"

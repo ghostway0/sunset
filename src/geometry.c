@@ -192,7 +192,7 @@ bool ray_intersects_aabb(vec3 ray_origin,
 }
 
 void aabb_get_face_center(
-        const AABB *aabb, const vec3 axis, vec3 face_center_out) {
+        const AABB *aabb, vec3 const axis, vec3 face_center_out) {
     vec3 center;
     aabb_get_center((AABB *)aabb, center);
     glm_vec3_copy(center, face_center_out);

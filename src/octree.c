@@ -3,7 +3,6 @@
 #include <string.h>
 
 #include "internal/mem_utils.h"
-#include "rman.h"
 #include "sunset/geometry.h"
 #include "sunset/octree.h"
 
@@ -159,12 +158,4 @@ void octree_destroy(OcTree *tree) {
     assert(tree != NULL);
 
     destroy_node(tree->root, tree->destroy_data);
-}
-
-DECLARE_RESOURCE_ID(OcTree);
-
-void *octree_init_resource(void) {
-    OcTree *octree = sunset_malloc(sizeof(OcTree));
-
-    return octree;
 }

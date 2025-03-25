@@ -65,8 +65,10 @@ typedef struct TGAFooter {
     char null;
 } __attribute__((packed)) TGAFooter;
 
-static int decompress_rle(
-        Reader *reader, size_t decompressed_size, size_t pixel_size_bytes, Color *out) {
+static int decompress_rle(Reader *reader,
+        size_t decompressed_size,
+        size_t pixel_size_bytes,
+        Color *out) {
     size_t decompressed_read = 0;
     uint8_t pixel[pixel_size_bytes];
 
@@ -77,12 +79,15 @@ static int decompress_rle(
         if (packet_header < 128) { // Raw pixel data
             packet_header++;
             for (size_t i = 0; i < packet_header; i++) {
-                decompressed_read += reader_readall(reader, pixel_size_bytes, pixel);
+                decompressed_read +=
+                        reader_readall(reader, pixel_size_bytes, pixel);
                 *out++ = color_from_bytes(pixel, pixel_size_bytes);
             }
         } else { // RLE packet
             packet_header -= 127;
-            decompressed_read += reader_readall(reader, pixel_size_bytes, pixel) * packet_header;
+            decompressed_read +=
+                    reader_readall(reader, pixel_size_bytes, pixel)
+                    * packet_header;
             Color color = color_from_bytes(pixel, pixel_size_bytes);
             for (size_t i = 0; i < packet_header; i++) {
                 *out++ = color;
@@ -108,7 +113,6 @@ int tga_load_image(Reader *reader, Image *image_out) {
 
     size_t image_size = header.width * header.height;
     size_t pixel_size_bytes = header.bpp / 8;
-
 
     image_out->pixels = sunset_calloc(image_size, sizeof(Color));
     image_out->w = header.width;

@@ -5,6 +5,7 @@
 DECLARE_RESOURCE_ID(input_focus);
 
 void input_setup(EngineContext *engine_context) {
-    Focus focus = FOCUS_NULL;;
+    Focus focus = FOCUS_NULL;
+    ;
     REGISTER_RESOURCE(&engine_context->rman, input_focus, focus);
 }
