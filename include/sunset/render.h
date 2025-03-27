@@ -31,18 +31,9 @@ typedef struct Transform {
 
     EntityPtr parent;
     vector(EntityPtr) children;
+
+    mat4 cached_model;
 } Transform;
-
-typedef void (*RenderFn)(CommandBuffer *cmdbuf);
-
-typedef struct EntityRenderContext {
-    mat4 model;
-} EntityRenderContext;
-
-typedef struct Renderable {
-    vector(Command) commands;
-    EntityRenderContext context;
-} Renderable;
 
 typedef struct Chunk {
     AABB bounds;
@@ -58,7 +49,6 @@ typedef enum WindowPoint {
 } WindowPoint;
 
 extern DECLARE_COMPONENT_ID(Transform);
-extern DECLARE_COMPONENT_ID(Renderable);
 
 void calculate_model_matrix(
         World *world, EntityPtr eptr, mat4 model_matrix);

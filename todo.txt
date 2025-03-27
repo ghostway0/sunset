@@ -1,5 +1,4 @@
 Big:
-* World builder
 * Animation system
 
 Todo:

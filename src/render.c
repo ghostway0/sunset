@@ -14,11 +14,9 @@
 #include "sunset/render.h"
 
 DECLARE_COMPONENT_ID(Transform);
-DECLARE_COMPONENT_ID(Renderable);
 
 void render_setup(EngineContext *engine_context) {
     REGISTER_COMPONENT(&engine_context->world, Transform);
-    REGISTER_COMPONENT(&engine_context->world, Renderable);
 }
 
 void calculate_model_matrix(

@@ -2,113 +2,27 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include <cglm/types.h>
-
 #include "internal/time_utils.h"
-#include "sunset/ecs.h"
-#include "sunset/images.h"
-#include "sunset/render.h"
+#include "vector.h"
 
-#define ANIMATION_DONE 1
+#include "sunset/anim.h"
 
-typedef enum Interpolation {
-    INTERPOLATION_LINEAR,
-    INTERPOLATION_CUBICSPLINE,
-    INTERPOLATION_STEP,
-} Interpolation;
-
-typedef enum KeyframeType {
-    KEYFRAME_TRANSFORM,
-    KEYFRAME_MORPH,
-    KEYFRAME_WEIGHTS,
-    KEYFRAME_VISIBILITY,
-    KEYFRAME_COLOR,
-    KEYFRAME_INTENSITY,
-    KEYFRAME_TEXTURE,
-    KEYFRAME_MATERIAL,
-} KeyframeType;
-
-typedef struct KeyframeTransform {
-    vec3 direction;
-    vec3 rotation;
-    float scale;
-    Interpolation dir_inter;
-    Interpolation rot_inter;
-    Interpolation scale_inter;
-} KeyframeTransform;
-
-typedef struct KeyframeMorph {
-    size_t target;
-    float weight;
-    Interpolation weight_inter;
-} KeyframeMorph;
-
-typedef struct KeyframeWeights {
-    size_t target;
-    float weight;
-    Interpolation weight_inter;
-} KeyframeWeights;
-
-typedef struct KeyframeVisibility {
-    bool visible;
-    Interpolation inter;
-} KeyframeVisibility;
-
-typedef struct KeyframeColor {
-    Color color;
-    Interpolation inter;
-} KeyframeColor;
-
-typedef struct KeyframeTexture {
-    size_t target;
-    struct texture *texture;
-    Interpolation inter;
-} KeyframeTexture;
-
-typedef struct Keyframe {
-    float duration;
-    KeyframeType tag;
-
-    union {
-        KeyframeTransform transform;
-        KeyframeMorph morph;
-        KeyframeWeights weights;
-        KeyframeVisibility visibility;
-    };
-} Keyframe;
-
-typedef struct Animation {
-    char const *name;
-    Keyframe *keyframes;
-    size_t num_keyframes;
-} Animation;
-
-typedef struct ActiveAnimation {
-    float keyframe_time;
-    Animation *animation;
-    size_t keyframe;
-} ActiveAnimation;
-
-DECLARE_COMPONENT_ID(ActiveAnimation);
-DECLARE_COMPONENT_ID(Morph);
-DECLARE_COMPONENT_ID(Weights);
-DECLARE_COMPONENT_ID(Color);
-
-float interpolate_linear(float start, float end, float t) {
+static float interpolate_linear(float start, float end, float t) {
     return start + (end - start) * t;
 }
 
-float interpolate_cubic_spline(float start, float end, float t) {
+static float interpolate_cubic_spline(float start, float end, float t) {
     float t2 = t * t;
     float t3 = t * t * t;
     return start * (2 * t3 - 3 * t2 + 1) + end * (t3 - 2 * t2 + t);
 }
 
-float interpolate_step(float start, float end, float t) {
+static float interpolate_step(float start, float end, float t) {
     return t < 0.5f ? start : end;
 }
 
-float interpolate(float start, float end, float t, Interpolation type) {
+static float interpolate(
+        float start, float end, float t, Interpolation type) {
     switch (type) {
         case INTERPOLATION_LINEAR:
             return interpolate_linear(start, end, t);
@@ -121,33 +35,10 @@ float interpolate(float start, float end, float t, Interpolation type) {
     }
 }
 
-void interpolate_transform(World *world,
-        EntityPtr eptr,
-        KeyframeTransform *start_keyframe,
-        KeyframeTransform *end_keyframe,
-        float t) {
-    Transform *transform =
-            ecs_component_from_ptr(world, eptr, COMPONENT_ID(Transform));
-
-    // ...
-
-    transform->scale = interpolate(start_keyframe->scale,
-            end_keyframe->scale,
-            t,
-            start_keyframe->scale_inter);
-}
-
-// skeleton?
-// should this be a registration system and this would just iterate over
-// pointers?
-
-int anim_tick(World *world, EntityPtr eptr, float dt) {
-    ActiveAnimation *anim = ecs_component_from_ptr(
-            world, eptr, COMPONENT_ID(ActiveAnimation));
-
+static int anim_step(ActiveAnimation *anim, float dt) {
     anim->keyframe_time += dt;
 
-    if (anim->keyframe + 1 >= anim->animation->num_keyframes) {
+    if (anim->keyframe >= anim->animation->num_keyframes) {
         return ANIMATION_DONE;
     }
 
@@ -158,51 +49,29 @@ int anim_tick(World *world, EntityPtr eptr, float dt) {
         anim->keyframe++;
         anim->keyframe_time -= keyframe->duration;
 
-        if (anim->keyframe + 1 >= anim->animation->num_keyframes) {
-            return ANIMATION_DONE;
+        if (anim->keyframe >= anim->animation->num_keyframes) {
+            break;
         }
 
         keyframe = &anim->animation->keyframes[anim->keyframe];
     }
 
-    Keyframe *next_keyframe =
-            &anim->animation->keyframes[anim->keyframe + 1];
-
-    assert(keyframe->tag == next_keyframe->tag);
-
     float t = anim->keyframe_time / keyframe->duration;
 
-    switch (keyframe->tag) {
-        case KEYFRAME_TRANSFORM:
-            interpolate_transform(world,
-                    eptr,
-                    &keyframe->transform,
-                    &next_keyframe->transform,
-                    t);
-            break;
-        // case KEYFRAME_MORPH:
-        //     interpolate_morph(world,
-        //             eptr,
-        //             &keyframe->morph,
-        //             &next_keyframe->morph,
-        //             t);
-        //     break;
-        // case KEYFRAME_WEIGHTS:
-        //     interpolate_weights(world,
-        //             eptr,
-        //             &keyframe->weights,
-        //             &next_keyframe->weights,
-        //             t);
-        //     break;
-        // case KEYFRAME_VISIBILITY:
-        //     interpolate_visibility(world,
-        //             eptr,
-        //             &keyframe->visibility,
-        //             &next_keyframe->visibility,
-        //             t);
-        //     break;
-        default:
-            unreachable();
+    for (size_t i = 0; i < keyframe->num_targets; i++) {
+        KeyframeTarget *target = &keyframe->targets[i];
+        *target->value =
+                interpolate(target->start, target->end, t, target->interp);
+    }
+
+    return anim->keyframe >= anim->animation->num_keyframes;
+}
+
+int anim_tick(AnimationContext *anim_ctx, float dt) {
+    for (size_t i = 0; i < vector_size(anim_ctx->anims); i++) {
+        if (anim_step(&anim_ctx->anims[i], dt) == ANIMATION_DONE) {
+            vector_remove_index(anim_ctx->anims, i);
+        }
     }
 
     return 0;
