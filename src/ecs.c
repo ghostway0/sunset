@@ -58,6 +58,14 @@ void ecs_init(World *world) {
     vector_init(world->free_ids);
 }
 
+size_t ecs_get_component_size(World const *world, size_t component_id) {
+    if (component_id >= vector_size(world->component_sizes)) {
+        return -1;
+    }
+
+    return world->component_sizes[component_id];
+}
+
 void ecs_destroy(World *world) {
     for (size_t i = 0; i < vector_size(world->archetypes); i++) {
         Archetype *archetype = &world->archetypes[i];
@@ -204,6 +212,11 @@ void ecs_remove_entity(World *world, uint32_t entity_id) {
     vector_append(world->free_ids, entity_id);
 }
 
+void ecs_remove_ptr(World *world, EntityPtr eptr) {
+    vector_append(
+            world->archetypes[eptr.archetype].free_elems, eptr.element);
+}
+
 void entity_builder_init(EntityBuilder *builder, World *world) {
     builder->world = world;
     bitmask_init_empty(ECS_MAX_COMPONENTS, &builder->mask);
@@ -291,6 +304,11 @@ void *ecs_get_component(
 
     return ecs_component_from_ptr(world, eptr, component_id);
 }
+
+Bitmask const *ecs_get_entity_archetype(World const *world, EntityPtr eptr) {
+    return &world->archetypes[eptr.archetype].mask;
+}
+
 //
 // void ecs_save(World *world, Writer *writer) {
 //

@@ -75,6 +75,7 @@ void ecs_init(World *world);
 
 Index ecs_add_entity(World *world, Bitmask mask);
 void ecs_remove_entity(World *world, uint32_t entity_id);
+void ecs_remove_ptr(World *world, EntityPtr eptr);
 
 void *ecs_get_component(
         World *world, uint32_t entity_id, uint32_t component_id);
@@ -82,6 +83,7 @@ void *ecs_get_component(
 void entity_builder_init(EntityBuilder *builder, World *world);
 void entity_builder_add(EntityBuilder *builder, size_t id, void *component);
 Index entity_builder_finish(EntityBuilder *builder);
+void entity_builder_destroy(EntityBuilder *builder);
 
 WorldIterator worldit_create(World const *world, Bitmask mask);
 bool worldit_is_valid(WorldIterator const *iterator);
@@ -98,5 +100,9 @@ void ecs_save(World *world, Writer *writer);
 static inline bool eptr_eql(EntityPtr a, EntityPtr b) {
     return a.element == b.element && a.archetype == b.archetype;
 }
+
+size_t ecs_get_component_size(World const *world, size_t component_id);
+
+Bitmask const *ecs_get_entity_archetype(World const *world, EntityPtr eptr);
 
 #endif // SUNSET_ECS_H_

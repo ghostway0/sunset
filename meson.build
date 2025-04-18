@@ -48,6 +48,7 @@ sunset_inc = include_directories('include/', 'include/sunset/')
 subdir('external')
 
 sunset_files = [
+  'src/network5.c',
   'src/map.c',
   'src/btree.c',
   'src/crc64.c',

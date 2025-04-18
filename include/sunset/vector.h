@@ -105,7 +105,7 @@ struct vector_metadata {
         size_t size = meta->size;                                          \
         vector_resize(v, size + size2);                                    \
         for (size_t i = 0; i < size2; i++) {                               \
-            v[size + i] = data[i];                                         \
+            v[size + i] = (data)[i];                                         \
         }                                                                  \
     } while (0)
 
